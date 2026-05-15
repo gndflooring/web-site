@@ -1,0 +1,27 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 900 700" role="img" aria-label="PROJECT 04 placeholder image">
+  <defs>
+    <linearGradient id="g" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#8a6432"/>
+      <stop offset=".55" stop-color="#ab7f44"/>
+      <stop offset="1" stop-color="#c49a5e"/>
+    </linearGradient>
+    <pattern id="p" width="86" height="34" patternUnits="userSpaceOnUse" patternTransform="rotate(-4)">
+      <rect width="86" height="34" fill="none"/>
+      <path d="M0 33h86M43 0v34" stroke="#ffffff" stroke-opacity=".06" stroke-width="2"/>
+    </pattern>
+    <radialGradient id="glow" cx="80%" cy="18%" r="62%">
+      <stop offset="0" stop-color="#ffffff" stop-opacity=".10"/>
+      <stop offset="1" stop-color="#ffffff" stop-opacity="0"/>
+    </radialGradient>
+  </defs>
+  <rect width="900" height="700" fill="url(#g)"/>
+  <rect y="364" width="900" height="336" fill="url(#p)"/>
+  <rect width="900" height="700" fill="url(#glow)"/>
+  <g transform="translate(450 273)" fill="none" stroke="#ffffff" stroke-opacity=".82" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round">
+    <rect x="-46" y="-46" width="92" height="92" rx="15"/>
+    <path d="M-24 10l18-21 13 13 11-16 18 24"/>
+    <circle cx="16" cy="-18" r="7.5"/>
+  </g>
+  <text x="450" y="420" text-anchor="middle" font-family="Georgia,'Times New Roman',serif" font-size="43" fill="#ffffff" letter-spacing="2">PROJECT 04</text>
+  <text x="450" y="462" text-anchor="middle" font-family="Arial,sans-serif" font-size="20" fill="#ffffff" fill-opacity=".60" letter-spacing="4">PLACEHOLDER</text>
+</svg>

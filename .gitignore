@@ -1,0 +1,9 @@
+.env
+.env.*
+.serena
+node_modules
+dist
+.vite
+*.local
+*.swp
+.DS_Store

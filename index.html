@@ -1,0 +1,683 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="theme-color" content="#275f8c" />
+    <title>G&amp;D Flooring — Premium Flooring &amp; Renovations</title>
+    <meta
+      name="description"
+      content="G&D Flooring is a premium flooring contractor specializing in hardwood, luxury vinyl, tile & stone, and bathroom renovations. Craftsmanship you can stand on."
+    />
+    <link rel="canonical" href="https://www.gnd-flooring.com/" />
+    <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
+
+    <!-- Open Graph (placeholder image — swap with a real project photo) -->
+    <meta property="og:type" content="website" />
+    <meta property="og:title" content="G&D Flooring — Premium Flooring & Renovations" />
+    <meta
+      property="og:description"
+      content="Hardwood, luxury vinyl, tile & stone, and bathroom renovations. Craftsmanship you can stand on."
+    />
+    <meta property="og:url" content="https://www.gnd-flooring.com/" />
+    <meta property="og:image" content="https://www.gnd-flooring.com/images/hero.svg" />
+
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,500;9..144,600;9..144,700&family=Inter:wght@400;500;600;700&display=swap"
+      rel="stylesheet"
+    />
+
+    <script type="application/ld+json">
+      {
+        "@context": "https://schema.org",
+        "@type": "GeneralContractor",
+        "name": "G&D Flooring",
+        "url": "https://www.gnd-flooring.com",
+        "telephone": "+1-555-123-4567",
+        "email": "hello@gnd-flooring.com",
+        "address": {
+          "@type": "PostalAddress",
+          "streetAddress": "123 Placeholder Ave, Suite 100",
+          "addressLocality": "Your City",
+          "addressRegion": "ST",
+          "postalCode": "00000",
+          "addressCountry": "US"
+        },
+        "areaServed": "Greater Your City metro area"
+      }
+    </script>
+  </head>
+
+  <body>
+    <a
+      href="#main"
+      class="sr-only focus:not-sr-only focus:fixed focus:left-4 focus:top-4 focus:z-[100] focus:rounded-full focus:bg-ink focus:px-5 focus:py-3 focus:text-sm focus:text-white"
+      >Skip to content</a
+    >
+
+    <!-- ===================== HEADER ===================== -->
+    <header class="site-header fixed inset-x-0 top-0 z-50 py-5">
+      <div class="container-x flex items-center justify-between">
+        <a href="#home" class="brand-mark flex items-center gap-3 text-white">
+          <span
+            class="grid h-11 w-11 place-items-center rounded-xl bg-brand-600 font-display text-lg font-700 text-white shadow-soft"
+            >G&amp;D</span
+          >
+          <span class="font-display text-xl font-600 tracking-tight"
+            >G&amp;D Flooring</span
+          >
+        </a>
+
+        <nav class="hidden items-center gap-9 lg:flex" aria-label="Primary">
+          <a href="#services" class="nav-link text-sm font-500">Services</a>
+          <a href="#about" class="nav-link text-sm font-500">Why Us</a>
+          <a href="#process" class="nav-link text-sm font-500">Process</a>
+          <a href="#gallery" class="nav-link text-sm font-500">Gallery</a>
+          <a href="#contact" class="nav-link text-sm font-500">Contact</a>
+        </nav>
+
+        <a href="#contact" class="btn-gold hidden lg:inline-flex"
+          >Get a Free Quote</a
+        >
+
+        <button
+          id="menuToggle"
+          class="grid h-11 w-11 place-items-center rounded-xl border border-white/30 text-white lg:hidden"
+          aria-label="Open menu"
+          aria-expanded="false"
+          aria-controls="mobileMenu"
+        >
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M3 6h18M3 12h18M3 18h18"/></svg>
+        </button>
+      </div>
+
+      <!-- Mobile menu -->
+      <div
+        id="mobileMenu"
+        class="mobile-menu absolute inset-x-4 top-[calc(100%+0.5rem)] rounded-2xl bg-cream p-6 shadow-lift lg:hidden"
+        data-open="false"
+      >
+        <nav class="flex flex-col gap-1" aria-label="Mobile">
+          <a href="#services" class="rounded-xl px-4 py-3 text-base font-500 text-ink-700 hover:bg-brand-50">Services</a>
+          <a href="#about" class="rounded-xl px-4 py-3 text-base font-500 text-ink-700 hover:bg-brand-50">Why Us</a>
+          <a href="#process" class="rounded-xl px-4 py-3 text-base font-500 text-ink-700 hover:bg-brand-50">Process</a>
+          <a href="#gallery" class="rounded-xl px-4 py-3 text-base font-500 text-ink-700 hover:bg-brand-50">Gallery</a>
+          <a href="#contact" class="rounded-xl px-4 py-3 text-base font-500 text-ink-700 hover:bg-brand-50">Contact</a>
+          <a href="#contact" class="btn-gold mt-3 w-full">Get a Free Quote</a>
+        </nav>
+      </div>
+    </header>
+
+    <main id="main">
+      <!-- ===================== HERO ===================== -->
+      <section id="home" class="relative flex min-h-screen items-center overflow-hidden">
+        <div class="hero-bg absolute inset-0 -z-10 scale-110">
+          <img
+            src="/images/hero.svg"
+            alt=""
+            class="h-full w-full object-cover"
+            fetchpriority="high"
+          />
+          <div
+            class="absolute inset-0 bg-gradient-to-br from-ink/80 via-brand-800/70 to-brand-700/55"
+          ></div>
+          <div
+            class="absolute inset-0 bg-gradient-to-t from-ink/70 via-transparent to-transparent"
+          ></div>
+        </div>
+
+        <div class="container-x py-32">
+          <div class="max-w-3xl">
+            <p class="eyebrow reveal text-sand-300">
+              <span class="h-px w-8 bg-sand-300"></span>
+              Flooring &amp; Renovation Specialists
+            </p>
+            <h1
+              class="reveal mt-6 font-display text-5xl font-600 leading-[1.05] text-white sm:text-6xl lg:text-7xl"
+              style="--reveal-i: 1"
+            >
+              Floors that
+              <span class="italic text-sand-300">elevate</span><br />
+              every room.
+            </h1>
+            <p
+              class="reveal mt-7 max-w-xl text-lg leading-relaxed text-white/80"
+              style="--reveal-i: 2"
+            >
+              G&amp;D Flooring brings craftsmanship, premium materials, and a
+              meticulous eye to hardwood, luxury vinyl, tile, and full bathroom
+              renovations — built to last and finished beautifully.
+            </p>
+
+            <div
+              class="reveal mt-10 flex flex-wrap items-center gap-4"
+              style="--reveal-i: 3"
+            >
+              <a href="#contact" class="btn-gold">Get a Free Quote</a>
+              <a href="#services" class="btn-ghost">
+                Explore Services
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M13 6l6 6-6 6"/></svg>
+              </a>
+            </div>
+
+            <dl
+              class="reveal mt-16 grid max-w-xl grid-cols-3 gap-6 border-t border-white/15 pt-8"
+              style="--reveal-i: 4"
+            >
+              <div>
+                <dt class="font-display text-3xl font-600 text-white">15+</dt>
+                <dd class="mt-1 text-sm text-white/60">Years of craft</dd>
+              </div>
+              <div>
+                <dt class="font-display text-3xl font-600 text-white">800+</dt>
+                <dd class="mt-1 text-sm text-white/60">Floors installed</dd>
+              </div>
+              <div>
+                <dt class="font-display text-3xl font-600 text-white">100%</dt>
+                <dd class="mt-1 text-sm text-white/60">Satisfaction focus</dd>
+              </div>
+            </dl>
+          </div>
+        </div>
+
+        <a
+          href="#services"
+          class="absolute bottom-8 left-1/2 hidden -translate-x-1/2 flex-col items-center gap-2 text-white/60 md:flex"
+          aria-label="Scroll to services"
+        >
+          <span class="text-[10px] uppercase tracking-[0.3em]">Scroll</span>
+          <span class="relative grid h-9 w-5 place-items-start justify-center rounded-full border border-white/40 pt-1.5">
+            <span class="h-1.5 w-1 rounded-full bg-white/70 animate-float-soft"></span>
+          </span>
+        </a>
+      </section>
+
+      <!-- ===================== TRUST STRIP ===================== -->
+      <section class="border-y border-ink/5 bg-cream-200/60">
+        <div
+          class="container-x flex flex-wrap items-center justify-center gap-x-12 gap-y-4 py-6 text-center text-sm font-500 text-muted"
+        >
+          <span class="reveal">Licensed &amp; Insured</span>
+          <span class="hidden h-4 w-px bg-ink/15 sm:block"></span>
+          <span class="reveal" style="--reveal-i: 1">Free On-Site Estimates</span>
+          <span class="hidden h-4 w-px bg-ink/15 sm:block"></span>
+          <span class="reveal" style="--reveal-i: 2">Lifetime Workmanship Warranty</span>
+          <span class="hidden h-4 w-px bg-ink/15 sm:block"></span>
+          <span class="reveal" style="--reveal-i: 3">Locally Owned &amp; Operated</span>
+        </div>
+      </section>
+
+      <!-- ===================== SERVICES ===================== -->
+      <section id="services" class="py-24 lg:py-32">
+        <div class="container-x">
+          <div class="mx-auto max-w-2xl text-center">
+            <p class="eyebrow reveal justify-center">
+              <span class="h-px w-8 bg-brand-600"></span>
+              Our Services
+              <span class="h-px w-8 bg-brand-600"></span>
+            </p>
+            <h2
+              class="reveal mt-5 font-display text-4xl font-600 text-ink sm:text-5xl"
+              style="--reveal-i: 1"
+            >
+              A full catalog of flooring craft
+            </h2>
+            <p class="reveal mt-5 text-lg text-muted" style="--reveal-i: 2">
+              From timeless hardwood to a complete bathroom transformation —
+              every project gets the same obsessive attention to detail.
+            </p>
+          </div>
+
+          <div class="mt-16 grid gap-7 sm:grid-cols-2 lg:grid-cols-4">
+            <!-- Card -->
+            <article
+              class="card-lift reveal group overflow-hidden rounded-3xl bg-white shadow-soft ring-1 ring-ink/5"
+            >
+              <div class="media-zoom relative aspect-[4/3] overflow-hidden">
+                <img src="/images/service-hardwood.svg" alt="Hardwood flooring placeholder" class="h-full w-full object-cover" loading="lazy" />
+              </div>
+              <div class="p-7">
+                <h3 class="font-display text-xl font-600 text-ink">Hardwood Flooring</h3>
+                <p class="mt-3 text-sm leading-relaxed text-muted">
+                  Solid &amp; engineered hardwood installation, sanding, staining, and refinishing for warmth that lasts generations.
+                </p>
+                <ul class="mt-5 space-y-2 text-sm text-ink-700">
+                  <li class="flex items-center gap-2"><span class="text-brand-600">✓</span> Custom stains &amp; finishes</li>
+                  <li class="flex items-center gap-2"><span class="text-brand-600">✓</span> Dust-contained sanding</li>
+                </ul>
+                <a href="#contact" class="mt-6 inline-flex items-center gap-1.5 text-sm font-600 text-brand-700">
+                  Request this service
+                  <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" class="transition-transform duration-300 group-hover:translate-x-1"><path d="M5 12h14M13 6l6 6-6 6"/></svg>
+                </a>
+              </div>
+            </article>
+
+            <article
+              class="card-lift reveal group overflow-hidden rounded-3xl bg-white shadow-soft ring-1 ring-ink/5"
+              style="--reveal-i: 1"
+            >
+              <div class="media-zoom relative aspect-[4/3] overflow-hidden">
+                <img src="/images/service-vinyl.svg" alt="Laminate and luxury vinyl placeholder" class="h-full w-full object-cover" loading="lazy" />
+              </div>
+              <div class="p-7">
+                <h3 class="font-display text-xl font-600 text-ink">Laminate &amp; Vinyl</h3>
+                <p class="mt-3 text-sm leading-relaxed text-muted">
+                  Waterproof luxury vinyl plank and premium laminate — the look of wood with everyday, family-proof durability.
+                </p>
+                <ul class="mt-5 space-y-2 text-sm text-ink-700">
+                  <li class="flex items-center gap-2"><span class="text-brand-600">✓</span> 100% waterproof options</li>
+                  <li class="flex items-center gap-2"><span class="text-brand-600">✓</span> Fast, clean installs</li>
+                </ul>
+                <a href="#contact" class="mt-6 inline-flex items-center gap-1.5 text-sm font-600 text-brand-700">
+                  Request this service
+                  <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" class="transition-transform duration-300 group-hover:translate-x-1"><path d="M5 12h14M13 6l6 6-6 6"/></svg>
+                </a>
+              </div>
+            </article>
+
+            <article
+              class="card-lift reveal group overflow-hidden rounded-3xl bg-white shadow-soft ring-1 ring-ink/5"
+              style="--reveal-i: 2"
+            >
+              <div class="media-zoom relative aspect-[4/3] overflow-hidden">
+                <img src="/images/service-tile.svg" alt="Tile and stone placeholder" class="h-full w-full object-cover" loading="lazy" />
+              </div>
+              <div class="p-7">
+                <h3 class="font-display text-xl font-600 text-ink">Tile &amp; Stone</h3>
+                <p class="mt-3 text-sm leading-relaxed text-muted">
+                  Porcelain, ceramic, and natural stone — precision-set floors, showers, and feature walls with flawless grout lines.
+                </p>
+                <ul class="mt-5 space-y-2 text-sm text-ink-700">
+                  <li class="flex items-center gap-2"><span class="text-brand-600">✓</span> Heated-floor ready</li>
+                  <li class="flex items-center gap-2"><span class="text-brand-600">✓</span> Custom patterns &amp; inlays</li>
+                </ul>
+                <a href="#contact" class="mt-6 inline-flex items-center gap-1.5 text-sm font-600 text-brand-700">
+                  Request this service
+                  <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" class="transition-transform duration-300 group-hover:translate-x-1"><path d="M5 12h14M13 6l6 6-6 6"/></svg>
+                </a>
+              </div>
+            </article>
+
+            <article
+              class="card-lift reveal group overflow-hidden rounded-3xl bg-white shadow-soft ring-1 ring-ink/5"
+              style="--reveal-i: 3"
+            >
+              <div class="media-zoom relative aspect-[4/3] overflow-hidden">
+                <img src="/images/service-bathroom.svg" alt="Bathroom renovation placeholder" class="h-full w-full object-cover" loading="lazy" />
+              </div>
+              <div class="p-7">
+                <h3 class="font-display text-xl font-600 text-ink">Bathroom Renovations</h3>
+                <p class="mt-3 text-sm leading-relaxed text-muted">
+                  Full bathroom transformations — floors, tile surrounds, vanities, and waterproofing handled end to end.
+                </p>
+                <ul class="mt-5 space-y-2 text-sm text-ink-700">
+                  <li class="flex items-center gap-2"><span class="text-brand-600">✓</span> Full project management</li>
+                  <li class="flex items-center gap-2"><span class="text-brand-600">✓</span> Waterproofing guaranteed</li>
+                </ul>
+                <a href="#contact" class="mt-6 inline-flex items-center gap-1.5 text-sm font-600 text-brand-700">
+                  Request this service
+                  <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" class="transition-transform duration-300 group-hover:translate-x-1"><path d="M5 12h14M13 6l6 6-6 6"/></svg>
+                </a>
+              </div>
+            </article>
+          </div>
+        </div>
+      </section>
+
+      <!-- ===================== WHY US ===================== -->
+      <section id="about" class="bg-ink py-24 text-white lg:py-32">
+        <div class="container-x grid items-center gap-14 lg:grid-cols-2">
+          <div class="reveal relative">
+            <div class="media-zoom overflow-hidden rounded-[2rem] shadow-lift">
+              <img src="/images/about.svg" alt="Our craft placeholder" class="aspect-[4/5] w-full object-cover" loading="lazy" />
+            </div>
+            <div
+              class="absolute -bottom-7 -right-3 hidden rounded-2xl bg-sand-400 p-6 text-ink shadow-lift sm:block lg:-right-7"
+            >
+              <p class="font-display text-3xl font-700">15+</p>
+              <p class="text-xs font-600 uppercase tracking-wider">Years perfecting the craft</p>
+            </div>
+          </div>
+
+          <div>
+            <p class="eyebrow reveal text-sand-300">
+              <span class="h-px w-8 bg-sand-300"></span> Why G&amp;D
+            </p>
+            <h2
+              class="reveal mt-5 font-display text-4xl font-600 sm:text-5xl"
+              style="--reveal-i: 1"
+            >
+              Built on detail,<br />finished with pride
+            </h2>
+            <p class="reveal mt-5 max-w-lg text-white/70" style="--reveal-i: 2">
+              We treat every home like our own. From the first measurement to
+              the final sweep, you work with the same dedicated team — no
+              shortcuts, no surprises.
+            </p>
+
+            <div class="mt-10 grid gap-7 sm:grid-cols-2">
+              <div class="reveal flex gap-4" style="--reveal-i: 1">
+                <span class="grid h-11 w-11 shrink-0 place-items-center rounded-xl bg-brand-600/20 text-brand-300">
+                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m12 2 2.4 5 5.6.8-4 4 1 5.6L12 19l-5 2.4 1-5.6-4-4 5.6-.8z"/></svg>
+                </span>
+                <div>
+                  <h3 class="font-display text-lg font-600">Master Craftsmanship</h3>
+                  <p class="mt-1.5 text-sm text-white/65">Seasoned installers with an obsessive eye for level, seams, and finish.</p>
+                </div>
+              </div>
+              <div class="reveal flex gap-4" style="--reveal-i: 2">
+                <span class="grid h-11 w-11 shrink-0 place-items-center rounded-xl bg-brand-600/20 text-brand-300">
+                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3 4 6v6c0 5 3.5 8 8 9 4.5-1 8-4 8-9V6z"/></svg>
+                </span>
+                <div>
+                  <h3 class="font-display text-lg font-600">Licensed &amp; Insured</h3>
+                  <p class="mt-1.5 text-sm text-white/65">Fully covered, code-compliant work backed by a written warranty.</p>
+                </div>
+              </div>
+              <div class="reveal flex gap-4" style="--reveal-i: 3">
+                <span class="grid h-11 w-11 shrink-0 place-items-center rounded-xl bg-brand-600/20 text-brand-300">
+                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg>
+                </span>
+                <div>
+                  <h3 class="font-display text-lg font-600">On-Time, On-Budget</h3>
+                  <p class="mt-1.5 text-sm text-white/65">Clear timelines and transparent quotes — what we promise is what you pay.</p>
+                </div>
+              </div>
+              <div class="reveal flex gap-4" style="--reveal-i: 4">
+                <span class="grid h-11 w-11 shrink-0 place-items-center rounded-xl bg-brand-600/20 text-brand-300">
+                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg>
+                </span>
+                <div>
+                  <h3 class="font-display text-lg font-600">Spotless Cleanup</h3>
+                  <p class="mt-1.5 text-sm text-white/65">We leave your home cleaner than we found it — guaranteed.</p>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ===================== PROCESS ===================== -->
+      <section id="process" class="py-24 lg:py-32">
+        <div class="container-x">
+          <div class="mx-auto max-w-2xl text-center">
+            <p class="eyebrow reveal justify-center">
+              <span class="h-px w-8 bg-brand-600"></span> How We Work
+              <span class="h-px w-8 bg-brand-600"></span>
+            </p>
+            <h2 class="reveal mt-5 font-display text-4xl font-600 text-ink sm:text-5xl" style="--reveal-i: 1">
+              A simple, four-step process
+            </h2>
+          </div>
+
+          <div class="mt-16 grid gap-8 md:grid-cols-2 lg:grid-cols-4">
+            <div class="reveal relative rounded-3xl bg-white p-8 shadow-soft ring-1 ring-ink/5">
+              <span class="font-display text-5xl font-700 text-brand-100">01</span>
+              <h3 class="mt-3 font-display text-xl font-600 text-ink">Consultation</h3>
+              <p class="mt-3 text-sm leading-relaxed text-muted">We listen to your vision, measure the space, and talk materials and budget.</p>
+            </div>
+            <div class="reveal relative rounded-3xl bg-white p-8 shadow-soft ring-1 ring-ink/5" style="--reveal-i: 1">
+              <span class="font-display text-5xl font-700 text-brand-100">02</span>
+              <h3 class="mt-3 font-display text-xl font-600 text-ink">Design &amp; Quote</h3>
+              <p class="mt-3 text-sm leading-relaxed text-muted">You get a clear, itemized proposal with samples — no hidden costs, ever.</p>
+            </div>
+            <div class="reveal relative rounded-3xl bg-white p-8 shadow-soft ring-1 ring-ink/5" style="--reveal-i: 2">
+              <span class="font-display text-5xl font-700 text-brand-100">03</span>
+              <h3 class="mt-3 font-display text-xl font-600 text-ink">Installation</h3>
+              <p class="mt-3 text-sm leading-relaxed text-muted">Our craftsmen install with precision, protecting your home throughout.</p>
+            </div>
+            <div class="reveal relative rounded-3xl bg-white p-8 shadow-soft ring-1 ring-ink/5" style="--reveal-i: 3">
+              <span class="font-display text-5xl font-700 text-brand-100">04</span>
+              <h3 class="mt-3 font-display text-xl font-600 text-ink">Final Walkthrough</h3>
+              <p class="mt-3 text-sm leading-relaxed text-muted">We review every detail together and don't leave until you're delighted.</p>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ===================== GALLERY ===================== -->
+      <section id="gallery" class="bg-cream-200/50 py-24 lg:py-32">
+        <div class="container-x">
+          <div class="flex flex-wrap items-end justify-between gap-6">
+            <div class="max-w-xl">
+              <p class="eyebrow reveal">
+                <span class="h-px w-8 bg-brand-600"></span> Recent Work
+              </p>
+              <h2 class="reveal mt-5 font-display text-4xl font-600 text-ink sm:text-5xl" style="--reveal-i: 1">
+                A look at our floors
+              </h2>
+            </div>
+            <a href="#contact" class="btn-outline reveal" style="--reveal-i: 2">Start your project</a>
+          </div>
+
+          <div class="mt-14 columns-1 gap-6 sm:columns-2 lg:columns-3 [&>*]:mb-6">
+            <figure class="media-zoom reveal group relative overflow-hidden rounded-2xl shadow-soft">
+              <img src="/images/gallery-1.svg" alt="Project placeholder 1" class="w-full" loading="lazy" />
+              <figcaption class="absolute inset-x-0 bottom-0 translate-y-2 bg-gradient-to-t from-ink/80 to-transparent p-5 text-sm font-500 text-white opacity-0 transition-all duration-500 group-hover:translate-y-0 group-hover:opacity-100">Hardwood — Living space</figcaption>
+            </figure>
+            <figure class="media-zoom reveal group relative overflow-hidden rounded-2xl shadow-soft" style="--reveal-i: 1">
+              <img src="/images/gallery-2.svg" alt="Project placeholder 2" class="w-full" loading="lazy" />
+              <figcaption class="absolute inset-x-0 bottom-0 translate-y-2 bg-gradient-to-t from-ink/80 to-transparent p-5 text-sm font-500 text-white opacity-0 transition-all duration-500 group-hover:translate-y-0 group-hover:opacity-100">Tile — Kitchen</figcaption>
+            </figure>
+            <figure class="media-zoom reveal group relative overflow-hidden rounded-2xl shadow-soft" style="--reveal-i: 2">
+              <img src="/images/gallery-3.svg" alt="Project placeholder 3" class="w-full" loading="lazy" />
+              <figcaption class="absolute inset-x-0 bottom-0 translate-y-2 bg-gradient-to-t from-ink/80 to-transparent p-5 text-sm font-500 text-white opacity-0 transition-all duration-500 group-hover:translate-y-0 group-hover:opacity-100">Vinyl — Open plan</figcaption>
+            </figure>
+            <figure class="media-zoom reveal group relative overflow-hidden rounded-2xl shadow-soft" style="--reveal-i: 1">
+              <img src="/images/gallery-4.svg" alt="Project placeholder 4" class="w-full" loading="lazy" />
+              <figcaption class="absolute inset-x-0 bottom-0 translate-y-2 bg-gradient-to-t from-ink/80 to-transparent p-5 text-sm font-500 text-white opacity-0 transition-all duration-500 group-hover:translate-y-0 group-hover:opacity-100">Bathroom — Full reno</figcaption>
+            </figure>
+            <figure class="media-zoom reveal group relative overflow-hidden rounded-2xl shadow-soft" style="--reveal-i: 2">
+              <img src="/images/gallery-5.svg" alt="Project placeholder 5" class="w-full" loading="lazy" />
+              <figcaption class="absolute inset-x-0 bottom-0 translate-y-2 bg-gradient-to-t from-ink/80 to-transparent p-5 text-sm font-500 text-white opacity-0 transition-all duration-500 group-hover:translate-y-0 group-hover:opacity-100">Stone — Entryway</figcaption>
+            </figure>
+            <figure class="media-zoom reveal group relative overflow-hidden rounded-2xl shadow-soft" style="--reveal-i: 0">
+              <img src="/images/gallery-6.svg" alt="Project placeholder 6" class="w-full" loading="lazy" />
+              <figcaption class="absolute inset-x-0 bottom-0 translate-y-2 bg-gradient-to-t from-ink/80 to-transparent p-5 text-sm font-500 text-white opacity-0 transition-all duration-500 group-hover:translate-y-0 group-hover:opacity-100">Hardwood — Staircase</figcaption>
+            </figure>
+          </div>
+        </div>
+      </section>
+
+      <!-- ===================== TESTIMONIALS ===================== -->
+      <section class="py-24 lg:py-32">
+        <div class="container-x">
+          <div class="mx-auto max-w-2xl text-center">
+            <p class="eyebrow reveal justify-center">
+              <span class="h-px w-8 bg-brand-600"></span> Kind Words
+              <span class="h-px w-8 bg-brand-600"></span>
+            </p>
+            <h2 class="reveal mt-5 font-display text-4xl font-600 text-ink sm:text-5xl" style="--reveal-i: 1">
+              Homeowners love the result
+            </h2>
+          </div>
+
+          <div class="mt-16 grid gap-7 lg:grid-cols-3">
+            <figure class="reveal rounded-3xl bg-white p-8 shadow-soft ring-1 ring-ink/5">
+              <div class="flex gap-1 text-sand-400" aria-label="5 out of 5 stars">★★★★★</div>
+              <blockquote class="mt-5 text-ink-700">"The hardwood floors completely transformed our home. The crew was punctual, tidy, and the finish is flawless."</blockquote>
+              <figcaption class="mt-6 text-sm font-600 text-ink">— Placeholder Name <span class="font-400 text-muted">· Homeowner</span></figcaption>
+            </figure>
+            <figure class="reveal rounded-3xl bg-white p-8 shadow-soft ring-1 ring-ink/5" style="--reveal-i: 1">
+              <div class="flex gap-1 text-sand-400" aria-label="5 out of 5 stars">★★★★★</div>
+              <blockquote class="mt-5 text-ink-700">"Our bathroom renovation was on time and on budget. G&amp;D handled everything and the tile work is stunning."</blockquote>
+              <figcaption class="mt-6 text-sm font-600 text-ink">— Placeholder Name <span class="font-400 text-muted">· Client</span></figcaption>
+            </figure>
+            <figure class="reveal rounded-3xl bg-white p-8 shadow-soft ring-1 ring-ink/5" style="--reveal-i: 2">
+              <div class="flex gap-1 text-sand-400" aria-label="5 out of 5 stars">★★★★★</div>
+              <blockquote class="mt-5 text-ink-700">"Professional from quote to cleanup. The luxury vinyl looks like real wood and survives our kids and dogs."</blockquote>
+              <figcaption class="mt-6 text-sm font-600 text-ink">— Placeholder Name <span class="font-400 text-muted">· Homeowner</span></figcaption>
+            </figure>
+          </div>
+        </div>
+      </section>
+
+      <!-- ===================== CTA BAND ===================== -->
+      <section class="container-x">
+        <div class="reveal relative overflow-hidden rounded-[2.5rem] bg-brand-700 px-8 py-16 text-center text-white shadow-lift sm:px-16 sm:py-20">
+          <div class="absolute -right-16 -top-16 h-64 w-64 rounded-full bg-brand-600/60"></div>
+          <div class="absolute -bottom-20 -left-10 h-64 w-64 rounded-full bg-sand-400/20"></div>
+          <div class="relative">
+            <h2 class="mx-auto max-w-2xl font-display text-4xl font-600 sm:text-5xl">Ready to transform your floors?</h2>
+            <p class="mx-auto mt-5 max-w-xl text-white/75">Book a free, no-obligation on-site estimate. We'll bring the samples and the honest advice.</p>
+            <div class="mt-9 flex flex-wrap justify-center gap-4">
+              <a href="#contact" class="btn-gold">Get a Free Quote</a>
+              <a href="tel:+15551234567" class="btn-ghost">Call (555) 123-4567</a>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ===================== CONTACT ===================== -->
+      <section id="contact" class="py-24 lg:py-32">
+        <div class="container-x grid gap-14 lg:grid-cols-2">
+          <div>
+            <p class="eyebrow reveal">
+              <span class="h-px w-8 bg-brand-600"></span> Get In Touch
+            </p>
+            <h2 class="reveal mt-5 font-display text-4xl font-600 text-ink sm:text-5xl" style="--reveal-i: 1">
+              Let's plan your project
+            </h2>
+            <p class="reveal mt-5 max-w-md text-muted" style="--reveal-i: 2">
+              Tell us about your space and we'll get back within one business
+              day with next steps. All estimates are free.
+            </p>
+
+            <ul class="reveal mt-10 space-y-6" style="--reveal-i: 3">
+              <li class="flex items-start gap-4">
+                <span class="grid h-11 w-11 shrink-0 place-items-center rounded-xl bg-brand-50 text-brand-700">
+                  <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 16.9v3a2 2 0 0 1-2.2 2 19.8 19.8 0 0 1-8.6-3.1 19.5 19.5 0 0 1-6-6A19.8 19.8 0 0 1 2.1 4.2 2 2 0 0 1 4.1 2h3a2 2 0 0 1 2 1.7c.1 1 .4 1.9.7 2.8a2 2 0 0 1-.5 2.1L8.1 9.9a16 16 0 0 0 6 6l1.3-1.3a2 2 0 0 1 2.1-.5c.9.3 1.8.6 2.8.7a2 2 0 0 1 1.7 2z"/></svg>
+                </span>
+                <div>
+                  <p class="text-xs font-600 uppercase tracking-wider text-muted">Phone</p>
+                  <a href="tel:+15551234567" class="text-lg font-600 text-ink hover:text-brand-700">(555) 123-4567</a>
+                </div>
+              </li>
+              <li class="flex items-start gap-4">
+                <span class="grid h-11 w-11 shrink-0 place-items-center rounded-xl bg-brand-50 text-brand-700">
+                  <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="4" width="20" height="16" rx="2"/><path d="m2 7 10 6 10-6"/></svg>
+                </span>
+                <div>
+                  <p class="text-xs font-600 uppercase tracking-wider text-muted">Email</p>
+                  <a href="mailto:hello@gnd-flooring.com" class="text-lg font-600 text-ink hover:text-brand-700">hello@gnd-flooring.com</a>
+                </div>
+              </li>
+              <li class="flex items-start gap-4">
+                <span class="grid h-11 w-11 shrink-0 place-items-center rounded-xl bg-brand-50 text-brand-700">
+                  <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0z"/><circle cx="12" cy="10" r="3"/></svg>
+                </span>
+                <div>
+                  <p class="text-xs font-600 uppercase tracking-wider text-muted">Service Area</p>
+                  <p class="text-lg font-600 text-ink">Greater Your City — within 50 miles</p>
+                  <p class="text-sm text-muted">123 Placeholder Ave, Suite 100, Your City, ST 00000</p>
+                </div>
+              </li>
+              <li class="flex items-start gap-4">
+                <span class="grid h-11 w-11 shrink-0 place-items-center rounded-xl bg-brand-50 text-brand-700">
+                  <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg>
+                </span>
+                <div>
+                  <p class="text-xs font-600 uppercase tracking-wider text-muted">Hours</p>
+                  <p class="text-lg font-600 text-ink">Mon–Fri 8am–6pm · Sat 9am–2pm</p>
+                </div>
+              </li>
+            </ul>
+          </div>
+
+          <div class="reveal" style="--reveal-i: 1">
+            <form
+              class="rounded-3xl bg-white p-8 shadow-soft ring-1 ring-ink/5 sm:p-10"
+              action="mailto:hello@gnd-flooring.com"
+              method="post"
+              enctype="text/plain"
+            >
+              <div class="grid gap-5 sm:grid-cols-2">
+                <label class="block">
+                  <span class="text-sm font-600 text-ink">Full name</span>
+                  <input type="text" name="name" required class="mt-2 w-full rounded-xl border border-ink/10 bg-cream/50 px-4 py-3 text-sm outline-none transition focus:border-brand-500 focus:ring-2 focus:ring-brand-200" placeholder="Jane Doe" />
+                </label>
+                <label class="block">
+                  <span class="text-sm font-600 text-ink">Phone</span>
+                  <input type="tel" name="phone" class="mt-2 w-full rounded-xl border border-ink/10 bg-cream/50 px-4 py-3 text-sm outline-none transition focus:border-brand-500 focus:ring-2 focus:ring-brand-200" placeholder="(555) 000-0000" />
+                </label>
+              </div>
+              <label class="mt-5 block">
+                <span class="text-sm font-600 text-ink">Email</span>
+                <input type="email" name="email" required class="mt-2 w-full rounded-xl border border-ink/10 bg-cream/50 px-4 py-3 text-sm outline-none transition focus:border-brand-500 focus:ring-2 focus:ring-brand-200" placeholder="jane@example.com" />
+              </label>
+              <label class="mt-5 block">
+                <span class="text-sm font-600 text-ink">Service of interest</span>
+                <select name="service" class="mt-2 w-full rounded-xl border border-ink/10 bg-cream/50 px-4 py-3 text-sm outline-none transition focus:border-brand-500 focus:ring-2 focus:ring-brand-200">
+                  <option>Hardwood Flooring</option>
+                  <option>Laminate &amp; Vinyl</option>
+                  <option>Tile &amp; Stone</option>
+                  <option>Bathroom Renovation</option>
+                  <option>Not sure yet</option>
+                </select>
+              </label>
+              <label class="mt-5 block">
+                <span class="text-sm font-600 text-ink">Project details</span>
+                <textarea name="message" rows="4" class="mt-2 w-full rounded-xl border border-ink/10 bg-cream/50 px-4 py-3 text-sm outline-none transition focus:border-brand-500 focus:ring-2 focus:ring-brand-200" placeholder="Tell us about the space, square footage, timeline…"></textarea>
+              </label>
+              <button type="submit" class="btn-primary mt-7 w-full">Request My Free Quote</button>
+              <p class="mt-4 text-center text-xs text-muted">Placeholder form — connect to your email or a form service before launch.</p>
+            </form>
+          </div>
+        </div>
+      </section>
+    </main>
+
+    <!-- ===================== FOOTER ===================== -->
+    <footer class="bg-ink text-white">
+      <div class="container-x grid gap-12 py-16 md:grid-cols-[1.4fr_1fr_1fr_1fr]">
+        <div>
+          <div class="flex items-center gap-3">
+            <span class="grid h-11 w-11 place-items-center rounded-xl bg-brand-600 font-display text-lg font-700">G&amp;D</span>
+            <span class="font-display text-xl font-600">G&amp;D Flooring</span>
+          </div>
+          <p class="mt-5 max-w-xs text-sm leading-relaxed text-white/60">
+            Premium flooring &amp; renovation craftsmanship. Hardwood, vinyl,
+            tile &amp; full bathroom transformations — done right.
+          </p>
+        </div>
+        <div>
+          <h3 class="text-sm font-700 uppercase tracking-wider text-white/80">Services</h3>
+          <ul class="mt-5 space-y-3 text-sm text-white/60">
+            <li><a href="#services" class="hover:text-white">Hardwood Flooring</a></li>
+            <li><a href="#services" class="hover:text-white">Laminate &amp; Vinyl</a></li>
+            <li><a href="#services" class="hover:text-white">Tile &amp; Stone</a></li>
+            <li><a href="#services" class="hover:text-white">Bathroom Renovations</a></li>
+          </ul>
+        </div>
+        <div>
+          <h3 class="text-sm font-700 uppercase tracking-wider text-white/80">Company</h3>
+          <ul class="mt-5 space-y-3 text-sm text-white/60">
+            <li><a href="#about" class="hover:text-white">Why Us</a></li>
+            <li><a href="#process" class="hover:text-white">Our Process</a></li>
+            <li><a href="#gallery" class="hover:text-white">Gallery</a></li>
+            <li><a href="#contact" class="hover:text-white">Contact</a></li>
+          </ul>
+        </div>
+        <div>
+          <h3 class="text-sm font-700 uppercase tracking-wider text-white/80">Contact</h3>
+          <ul class="mt-5 space-y-3 text-sm text-white/60">
+            <li><a href="tel:+15551234567" class="hover:text-white">(555) 123-4567</a></li>
+            <li><a href="mailto:hello@gnd-flooring.com" class="hover:text-white">hello@gnd-flooring.com</a></li>
+            <li>Mon–Fri 8am–6pm</li>
+            <li>License #PLACEHOLDER-000000</li>
+          </ul>
+        </div>
+      </div>
+      <div class="border-t border-white/10">
+        <div class="container-x flex flex-col items-center justify-between gap-3 py-6 text-xs text-white/50 sm:flex-row">
+          <p>© <span id="year">2026</span> G&amp;D Flooring. All rights reserved.</p>
+          <p>Placeholder content — replace business details &amp; imagery before launch.</p>
+        </div>
+      </div>
+    </footer>
+
+    <script type="module" src="/src/main.js"></script>
+  </body>
+</html>
