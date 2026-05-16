@@ -588,10 +588,9 @@
 
           <div class="reveal" style="--reveal-i: 1">
             <form
+              id="quoteForm"
               class="rounded-3xl bg-white p-8 shadow-soft ring-1 ring-ink/5 sm:p-10"
-              action="mailto:hello@gnd-flooring.com"
-              method="post"
-              enctype="text/plain"
+              novalidate
             >
               <div class="grid gap-5 sm:grid-cols-2">
                 <label class="block">
@@ -621,8 +620,20 @@
                 <span class="text-sm font-600 text-ink">Project details</span>
                 <textarea name="message" rows="4" class="mt-2 w-full rounded-xl border border-ink/10 bg-cream/50 px-4 py-3 text-sm outline-none transition focus:border-brand-500 focus:ring-2 focus:ring-brand-200" placeholder="Tell us about the space, square footage, timeline…"></textarea>
               </label>
-              <button type="submit" class="btn-primary mt-7 w-full">Request My Free Quote</button>
-              <p class="mt-4 text-center text-xs text-muted">Placeholder form — connect to your email or a form service before launch.</p>
+              <button type="submit" id="quoteSubmit" class="btn-primary mt-7 w-full">Request My Free Quote</button>
+              <p
+                id="quoteStatus"
+                role="status"
+                aria-live="polite"
+                class="mt-4 text-center text-sm font-500 empty:hidden"
+              ></p>
+              <p class="mt-4 text-center text-xs text-muted">
+                Protected by reCAPTCHA — the Google
+                <a href="https://policies.google.com/privacy" class="underline hover:text-ink" target="_blank" rel="noopener">Privacy Policy</a>
+                and
+                <a href="https://policies.google.com/terms" class="underline hover:text-ink" target="_blank" rel="noopener">Terms of Service</a>
+                apply.
+              </p>
             </form>
           </div>
         </div>
