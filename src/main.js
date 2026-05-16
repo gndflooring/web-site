@@ -177,31 +177,24 @@ if (form) {
         submittedAt: new Date().toISOString(),
       }
 
-      const response = await fetch(SHEETS_URL, {
+      // Google Apps Script web apps cannot return CORS headers, so we POST
+      // in no-cors mode: a "simple" text/plain request still reaches the
+      // script (the row is saved and the reCAPTCHA token is verified
+      // server-side), but the response is opaque and unreadable. We
+      // therefore optimistically confirm success. Note: server-side
+      // reCAPTCHA rejections can't be surfaced to the user this way.
+      await fetch(SHEETS_URL, {
         method: 'POST',
-        mode: 'cors',
-        // text/plain keeps it a "simple" request (no CORS preflight),
-        // which Apps Script web apps require.
+        mode: 'no-cors',
         headers: { 'Content-Type': 'text/plain;charset=utf-8' },
         body: JSON.stringify(payload),
       })
 
-      const result = await response.json().catch(() => ({}))
-
-      if (response.ok && result.result === 'success') {
-        setStatus(
-          "Thanks! Your request has been sent — we'll be in touch within one business day.",
-          true
-        )
-        form.reset()
-      } else {
-        setStatus(
-          result.error
-            ? `Submission blocked: ${result.error}`
-            : 'Something went wrong. Please call us or try again shortly.',
-          false
-        )
-      }
+      setStatus(
+        "Thanks! Your request has been sent — we'll be in touch within one business day.",
+        true
+      )
+      form.reset()
     } catch (err) {
       console.error('Quote form error:', err)
       setStatus(
