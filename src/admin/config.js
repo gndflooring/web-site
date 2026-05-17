@@ -20,6 +20,8 @@ export const TABS = {
   SCHEDULE: 'Schedule',
   TASKS: 'Tasks',
   SNOOZES: 'Snoozes',
+  NOTES: 'Notes',
+  ADDRESSES: 'Addresses',
 }
 
 // FormResponses positional columns A..I (no header row).
@@ -37,11 +39,13 @@ export const LEAD_COLS = [
 
 // Header rows for auto-created tabs.
 export const HEADERS = {
-  [TABS.TRACKING]: ['id', 'status', 'tags', 'notes', 'updated_at', 'updated_by'],
+  [TABS.TRACKING]: ['id', 'status', 'tags', 'notes', 'updated_at', 'updated_by', 'title', 'address_id'],
   [TABS.ACTIVITY]: ['timestamp', 'id', 'actor', 'action', 'old_value', 'new_value', 'note'],
   [TABS.SCHEDULE]: ['appt_id', 'lead_id', 'type', 'start', 'end', 'notes', 'created_by', 'created_at'],
   [TABS.TASKS]: ['task_id', 'lead_id', 'title', 'due_date', 'done', 'created_by', 'created_at', 'done_at'],
   [TABS.SNOOZES]: ['heuristic_key', 'lead_id', 'snooze_until', 'by', 'created_at'],
+  [TABS.NOTES]: ['note_id', 'lead_id', 'timestamp', 'author', 'text'],
+  [TABS.ADDRESSES]: ['address_id', 'label', 'address', 'notes', 'created_by', 'created_at'],
 }
 
 export const PIPELINE = [

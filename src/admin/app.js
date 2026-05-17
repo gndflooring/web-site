@@ -10,6 +10,8 @@ import {
   addTask,
   setTaskDone,
   addSnooze,
+  addNote,
+  addAddress,
 } from './sheets.js'
 import { computeNeedsAction, severityByLead } from './heuristics.js'
 
@@ -35,6 +37,10 @@ let calCursor = new Date()
 let wired = false
 const collapsedCols = new Set()
 const savingLeads = new Set()
+const selectedLeads = new Set()
+const leadTitle = (lead, track) =>
+  ((track && track.title) || '').trim() ||
+  `${lead.name || 'Lead'}${lead.service ? ' — ' + lead.service : ''}`
 
 function toast(msg) {
   const t = $('toast')
@@ -422,46 +428,280 @@ function leads(v) {
       new Date(b.lead.submittedAt || b.lead.timestamp) -
       new Date(a.lead.submittedAt || a.lead.timestamp)
   )
+  const present = new Set(rows.map((r) => r.lead.id))
+  ;[...selectedLeads].forEach((id) => present.has(id) || selectedLeads.delete(id))
+
   v.innerHTML = `
-    <div class="mb-4 flex items-center gap-3">
+    <div class="mb-4 flex flex-wrap items-center gap-3">
       <span class="text-sm text-muted">${rows.length} lead${rows.length === 1 ? '' : 's'}</span>
-      <button id="csv" class="btn-ghost ml-auto">Export CSV</button>
+      <span id="selCount" class="text-sm font-600 text-brand-700"></span>
+      <div class="ml-auto flex gap-2">
+        <button id="printBtn" class="btn-primary" disabled>Print Visits PDF</button>
+        <button id="csv" class="btn-ghost">Export CSV</button>
+      </div>
     </div>
     <div class="card overflow-hidden">
-      <div class="max-h-[calc(100vh-220px)] overflow-auto">
+      <div class="max-h-[calc(100vh-200px)] overflow-auto">
         <table class="tbl">
           <thead><tr>
-            <th>Received</th><th>Name</th><th>Service</th><th>Status</th><th>Tags</th><th>Updated</th><th></th>
+            <th class="w-10"><input type="checkbox" id="selAll" class="h-4 w-4 accent-brand-600" aria-label="Select all"/></th>
+            <th>Title</th><th>Status</th><th>Tags</th><th>Received</th><th></th>
           </tr></thead>
           <tbody id="rows">
             ${
               rows
                 .map(({ lead, track }) => {
-                  const s = [lead.name, lead.email, lead.phone, lead.service, lead.message, track?.tags]
+                  const t = leadTitle(lead, track)
+                  const s = [t, lead.name, lead.email, lead.phone, lead.service, lead.message, track?.tags]
                     .join(' ')
                     .toLowerCase()
                   return `<tr data-id="${esc(lead.id)}" data-s="${esc(s)}">
-                  <td class="whitespace-nowrap text-xs text-muted">${fmtDT(lead.submittedAt || lead.timestamp)}</td>
-                  <td class="font-700">${esc(lead.name || '—')}</td>
-                  <td>${esc(lead.service || '—')}</td>
+                  <td><input type="checkbox" class="sel h-4 w-4 accent-brand-600" data-id="${esc(lead.id)}" ${
+                    selectedLeads.has(lead.id) ? 'checked' : ''
+                  }/></td>
+                  <td><p class="font-700">${esc(t)}</p><p class="text-xs text-muted">${esc(lead.email || '')}</p></td>
                   <td>${badge(track?.status || 'New')}</td>
                   <td class="max-w-[180px] truncate text-xs text-brand-700">${esc(track?.tags || '')}</td>
-                  <td class="whitespace-nowrap text-xs text-muted">${track?.updated_at ? fmtDT(track.updated_at) : '—'}</td>
+                  <td class="whitespace-nowrap text-xs text-muted">${fmtDT(lead.submittedAt || lead.timestamp)}</td>
                   <td class="text-muted"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18l6-6-6-6"/></svg></td>
                 </tr>`
                 })
                 .join('') ||
-              '<tr><td colspan="7" class="p-10 text-center text-muted">No leads yet</td></tr>'
+              '<tr><td colspan="6" class="p-10 text-center text-muted">No leads yet</td></tr>'
             }
           </tbody>
         </table>
       </div>
     </div>`
+
+  const visibleBoxes = () =>
+    [...v.querySelectorAll('#rows tr')]
+      .filter((tr) => !tr.hidden)
+      .map((tr) => tr.querySelector('.sel'))
+      .filter(Boolean)
+  const updateSel = () => {
+    $('selCount').textContent = selectedLeads.size ? `${selectedLeads.size} selected` : ''
+    $('printBtn').disabled = selectedLeads.size === 0
+    const boxes = visibleBoxes()
+    $('selAll').checked = boxes.length > 0 && boxes.every((b) => b.checked)
+  }
+
   v.querySelectorAll('#rows tr[data-id]').forEach((tr) =>
-    tr.addEventListener('click', () => openLead(tr.dataset.id))
+    tr.addEventListener('click', (e) => {
+      if (e.target.closest('.sel')) return
+      openLead(tr.dataset.id)
+    })
   )
+  v.querySelectorAll('.sel').forEach((cb) =>
+    cb.addEventListener('change', () => {
+      cb.checked ? selectedLeads.add(cb.dataset.id) : selectedLeads.delete(cb.dataset.id)
+      updateSel()
+    })
+  )
+  $('selAll').addEventListener('change', () => {
+    const on = $('selAll').checked
+    visibleBoxes().forEach((b) => {
+      b.checked = on
+      on ? selectedLeads.add(b.dataset.id) : selectedLeads.delete(b.dataset.id)
+    })
+    updateSel()
+  })
+  $('printBtn').addEventListener('click', () => {
+    const recs = rows.filter((r) => selectedLeads.has(r.lead.id))
+    if (recs.length) openVisitsDialog(recs)
+  })
   $('csv').addEventListener('click', () => exportCsv(rows))
   applySearch()
+  updateSel()
+}
+
+/* ---------- Visits PDF ---------- */
+function openVisitsDialog(recs) {
+  const opt = (idv, label, def) =>
+    `<label class="flex items-center gap-2.5 text-sm"><input type="checkbox" id="${idv}" class="h-4 w-4 accent-brand-600" ${
+      def ? 'checked' : ''
+    }/> ${label}</label>`
+  openDrawer(`
+    <header class="flex items-start justify-between border-b border-line p-5">
+      <div><h2 class="text-xl font-700">Visits PDF</h2>
+        <p class="text-sm text-muted">${recs.length} stop${recs.length === 1 ? '' : 's'} selected</p></div>
+      <button id="dwClose" class="btn-ghost !px-2"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M18 6 6 18M6 6l12 12"/></svg></button>
+    </header>
+    <div class="flex-1 space-y-5 overflow-y-auto p-5">
+      <div>
+        <p class="text-xs font-700 uppercase tracking-wider text-muted">Include on each stop</p>
+        <div class="mt-3 space-y-2.5">
+          ${opt('optAddress', 'Address', true)}
+          ${opt('optPhones', 'Phone &amp; email', true)}
+          ${opt('optNotes', 'Notes', true)}
+          ${opt('optSpace', 'Blank write-space + checkboxes', true)}
+        </div>
+      </div>
+      <div>
+        <p class="text-xs font-700 uppercase tracking-wider text-muted">Stops</p>
+        <ol class="mt-2 list-decimal space-y-1 pl-5 text-sm">
+          ${recs.map((r) => `<li>${esc(leadTitle(r.lead, r.track))}</li>`).join('')}
+        </ol>
+      </div>
+      <button id="genPdf" class="btn-primary w-full">Generate PDF</button>
+    </div>`)
+  $('dwClose').onclick = closeDrawer
+  $('genPdf').onclick = async () => {
+    const btn = $('genPdf')
+    btn.disabled = true
+    btn.textContent = 'Generating…'
+    try {
+      await generateVisitsPdf(recs, {
+        address: $('optAddress').checked,
+        phones: $('optPhones').checked,
+        notes: $('optNotes').checked,
+        space: $('optSpace').checked,
+      })
+      toast('PDF generated')
+      closeDrawer()
+    } catch (e) {
+      toast('PDF failed: ' + e.message)
+      btn.disabled = false
+      btn.textContent = 'Generate PDF'
+    }
+  }
+}
+
+async function generateVisitsPdf(recs, opts) {
+  const { jsPDF } = await import('jspdf')
+  const doc = new jsPDF({ unit: 'pt', format: 'letter' })
+  const M = 48
+  const W = doc.internal.pageSize.getWidth()
+  const Hp = doc.internal.pageSize.getHeight()
+  let y = M
+  const ensure = (need) => {
+    if (y + need > Hp - M) {
+      doc.addPage()
+      y = M
+    }
+  }
+  const wrap = (txt, size, maxW) => {
+    doc.setFontSize(size)
+    return doc.splitTextToSize(String(txt || ''), maxW)
+  }
+
+  doc.setFont('helvetica', 'bold')
+  doc.setFontSize(18)
+  doc.text('G&D Flooring — Visit Sheet', M, y)
+  y += 20
+  doc.setFont('helvetica', 'normal')
+  doc.setFontSize(10)
+  doc.setTextColor(110)
+  doc.text(
+    `${new Date().toLocaleDateString([], { dateStyle: 'full' })}  ·  ${recs.length} stop${
+      recs.length === 1 ? '' : 's'
+    }`,
+    M,
+    y
+  )
+  doc.setTextColor(20)
+  y += 16
+  doc.setDrawColor(205)
+  doc.line(M, y, W - M, y)
+  y += 22
+
+  const row = (label, val) => {
+    if (!val) return
+    const lines = wrap(val, 10, W - 2 * M - 64)
+    ensure(lines.length * 13 + 4)
+    doc.setFont('helvetica', 'bold')
+    doc.setFontSize(9)
+    doc.text(label, M, y)
+    doc.setFont('helvetica', 'normal')
+    doc.setFontSize(10)
+    doc.text(lines, M + 64, y)
+    y += lines.length * 13 + 4
+  }
+
+  recs.forEach((r, i) => {
+    const { lead, track } = r
+    ensure(54)
+    const headLines = wrap(`${i + 1}. ${leadTitle(lead, track)}`, 13, W - 2 * M - 80)
+    doc.setFont('helvetica', 'bold')
+    doc.setFontSize(13)
+    doc.text(headLines, M, y)
+    doc.setFont('helvetica', 'normal')
+    doc.setFontSize(9)
+    doc.setTextColor(120)
+    doc.text((track?.status || 'New').toUpperCase(), W - M, y, { align: 'right' })
+    doc.setTextColor(20)
+    y += headLines.length * 16 + 6
+
+    if (opts.address) {
+      const ad = track?.address_id ? state.addrMap[track.address_id] : null
+      row(
+        'Address',
+        ad
+          ? [ad.label, ad.address, ad.notes && `(${ad.notes})`].filter(Boolean).join('  ·  ')
+          : '—'
+      )
+    }
+    if (opts.phones) {
+      row('Phone', lead.phone || '—')
+      row('Email', lead.email || '')
+    }
+    if (opts.notes) {
+      const ns = (state.notesByLead[lead.id] || [])
+        .slice()
+        .sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp))
+      if (ns.length) {
+        ensure(16)
+        doc.setFont('helvetica', 'bold')
+        doc.setFontSize(9)
+        doc.text('Notes', M, y)
+        y += 13
+        doc.setFont('helvetica', 'normal')
+        doc.setFontSize(10)
+        ns.slice(0, 6).forEach((n) => {
+          const ls = wrap(
+            `- ${new Date(n.timestamp).toLocaleDateString()}  ${n.text}`,
+            10,
+            W - 2 * M - 14
+          )
+          ensure(ls.length * 13 + 2)
+          doc.text(ls, M + 14, y)
+          y += ls.length * 13 + 2
+        })
+      } else row('Notes', '—')
+    }
+    if (opts.space) {
+      ensure(78)
+      doc.setDrawColor(225)
+      for (let k = 0; k < 3; k++) {
+        y += 20
+        doc.line(M + 14, y, W - M, y)
+      }
+      y += 16
+      doc.setDrawColor(90)
+      doc.rect(M + 14, y - 9, 10, 10)
+      doc.setFontSize(10)
+      doc.text('Done', M + 30, y)
+      doc.rect(M + 96, y - 9, 10, 10)
+      doc.text('Follow-up', M + 112, y)
+      y += 8
+    }
+    ensure(22)
+    y += 8
+    doc.setDrawColor(200)
+    doc.line(M, y, W - M, y)
+    y += 22
+  })
+
+  const pages = doc.getNumberOfPages()
+  for (let p = 1; p <= pages; p++) {
+    doc.setPage(p)
+    doc.setFontSize(8)
+    doc.setTextColor(140)
+    doc.text(`G&D Flooring · Visit Sheet · Page ${p} / ${pages}`, W / 2, Hp - 20, {
+      align: 'center',
+    })
+  }
+  doc.save(`gnd-visits-${new Date().toISOString().slice(0, 10)}.pdf`)
 }
 
 /* ---------- Lead detail + history drawer ---------- */
@@ -477,12 +717,18 @@ function openLead(id) {
     .sort((a, b) => new Date(a.start) - new Date(b.start))
   const pool = tagPool()
 
+  const notes = (state.notesByLead[id] || [])
+    .slice()
+    .sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp))
+  const linked = track?.address_id ? state.addrMap[track.address_id] : null
+  const addrDisplay = (a) => `${a.label ? a.label + ' — ' : ''}${a.address}`
+
   openDrawer(`
     <header class="flex items-start gap-3 border-b border-line p-5">
       <div class="min-w-0 flex-1">
         <div class="flex items-center gap-2">${badge(track?.status || 'New')}</div>
-        <h2 class="mt-2 truncate text-xl font-700">${esc(lead.name || 'Lead')}</h2>
-        <p class="text-sm text-muted">${esc(lead.service || '')} · ${fmtDT(lead.submittedAt || lead.timestamp)}</p>
+        <h2 class="mt-2 truncate text-xl font-700">${esc(title)}</h2>
+        <p class="text-sm text-muted">${esc(lead.name || '')} · ${fmtDT(lead.submittedAt || lead.timestamp)}</p>
       </div>
       <button id="dwClose" class="btn-ghost !px-2" aria-label="Close">
         <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M18 6 6 18M6 6l12 12"/></svg>
@@ -501,8 +747,11 @@ function openLead(id) {
       </section>
 
       <section class="rounded-xl border border-line p-4">
-        <p class="text-xs font-700 uppercase tracking-wider text-muted">Update</p>
+        <p class="text-xs font-700 uppercase tracking-wider text-muted">Details</p>
         <div class="mt-3 space-y-3">
+          <label class="block text-sm font-600">Title
+            <input id="dwTitle" class="field mt-1" value="${esc(track?.title || '')}" placeholder="${esc(title)}"/>
+          </label>
           <label class="block text-sm font-600">Status
             <select id="dwStatus" class="field mt-1">
               ${PIPELINE.map((s) => `<option ${(track?.status || 'New') === s ? 'selected' : ''}>${esc(s)}</option>`).join('')}
@@ -512,11 +761,60 @@ function openLead(id) {
             <input id="dwTags" class="field mt-1" list="tagPool" value="${esc(track?.tags || '')}" placeholder="kitchen, urgent"/>
             <datalist id="tagPool">${pool.map((t) => `<option value="${esc(t)}">`).join('')}</datalist>
           </label>
-          <label class="block text-sm font-600">Notes
-            <textarea id="dwNotes" rows="3" class="field mt-1" placeholder="Internal notes…">${esc(track?.notes || '')}</textarea>
-          </label>
           <button id="dwSave" class="btn-primary w-full">Save changes</button>
         </div>
+      </section>
+
+      <section class="rounded-xl border border-line p-4">
+        <div class="flex items-center justify-between">
+          <p class="text-xs font-700 uppercase tracking-wider text-muted">Address</p>
+          ${linked ? '<button id="dwUnlink" class="text-xs font-600 text-rose-600">unlink</button>' : ''}
+        </div>
+        ${
+          linked
+            ? `<div class="mt-2 rounded-lg bg-app p-3 text-sm">
+                 <p class="font-600">${esc(linked.label || 'Address')}</p>
+                 <p>${esc(linked.address || '')}</p>
+                 ${linked.notes ? `<p class="mt-0.5 text-xs text-muted">${esc(linked.notes)}</p>` : ''}
+               </div>`
+            : '<p class="mt-2 text-sm text-muted">No address linked.</p>'
+        }
+        <div class="mt-3 space-y-2">
+          <div class="flex gap-2">
+            <input id="dwAddrSearch" class="field" list="addrOpts" placeholder="Search existing addresses…"/>
+            <datalist id="addrOpts">${state.addresses
+              .map((a) => `<option value="${esc(addrDisplay(a))}">`)
+              .join('')}</datalist>
+            <button id="dwAddrLink" class="btn-ghost shrink-0">Link</button>
+          </div>
+          <button id="dwAddrNewToggle" class="text-xs font-600 text-brand-700">+ New address</button>
+          <div id="dwAddrNew" hidden class="space-y-2 rounded-lg border border-line p-3">
+            <input id="naLabel" class="field" placeholder="Label (e.g. Job site)"/>
+            <input id="naAddr" class="field" placeholder="Address — street, city, ZIP"/>
+            <input id="naNotes" class="field" placeholder="Notes (gate code, parking…)"/>
+            <button id="naSave" class="btn-primary w-full">Save &amp; link</button>
+          </div>
+        </div>
+      </section>
+
+      <section class="rounded-xl border border-line p-4">
+        <p class="text-xs font-700 uppercase tracking-wider text-muted">Notes</p>
+        <div class="mt-3 flex gap-2">
+          <textarea id="dwNote" rows="2" class="field" placeholder="Add a note…"></textarea>
+          <button id="dwNoteAdd" class="btn-primary shrink-0 self-start">Add</button>
+        </div>
+        <ul class="mt-3 space-y-2">
+          ${
+            notes
+              .map(
+                (n) => `<li class="rounded-lg bg-app p-3 text-sm">
+              <p class="whitespace-pre-wrap">${esc(n.text)}</p>
+              <p class="mt-1 text-[11px] text-muted">${fmtDT(n.timestamp)} · ${esc(n.author)}</p>
+            </li>`
+              )
+              .join('') || '<li class="text-sm text-muted">No notes yet</li>'
+          }
+        </ul>
       </section>
 
       <section>
@@ -575,7 +873,7 @@ function openLead(id) {
         {
           status: $('dwStatus').value,
           tags: $('dwTags').value.trim(),
-          notes: $('dwNotes').value.trim(),
+          title: $('dwTitle').value.trim(),
         },
         getEmail(),
         track
@@ -588,6 +886,64 @@ function openLead(id) {
       btn.disabled = false
     }
   })
+
+  const relinkAddress = async (addressId) => {
+    try {
+      await saveTracking(id, { address_id: addressId }, getEmail(), track)
+      toast(addressId ? 'Address linked' : 'Address unlinked')
+      await reload(false)
+      openLead(id)
+    } catch (e) {
+      toast('Failed: ' + e.message)
+    }
+  }
+  const addrByDisplay = {}
+  state.addresses.forEach(
+    (a) => (addrByDisplay[`${a.label ? a.label + ' — ' : ''}${a.address}`] = a.address_id)
+  )
+  $('dwAddrLink').addEventListener('click', () => {
+    const aid = addrByDisplay[$('dwAddrSearch').value.trim()]
+    if (!aid) return toast('Pick an address from the list')
+    relinkAddress(aid)
+  })
+  if ($('dwUnlink')) $('dwUnlink').addEventListener('click', () => relinkAddress(''))
+  $('dwAddrNewToggle').addEventListener('click', () => {
+    const el = $('dwAddrNew')
+    el.hidden = !el.hidden
+  })
+  $('naSave').addEventListener('click', async () => {
+    const label = $('naLabel').value.trim()
+    const address = $('naAddr').value.trim()
+    if (!label && !address) return toast('Enter an address')
+    const btn = $('naSave')
+    btn.disabled = true
+    try {
+      const aid = await addAddress(
+        { label, address, notes: $('naNotes').value.trim() },
+        getEmail()
+      )
+      await relinkAddress(aid)
+    } catch (e) {
+      toast('Failed: ' + e.message)
+      btn.disabled = false
+    }
+  })
+  $('dwNoteAdd').addEventListener('click', async () => {
+    const text = $('dwNote').value.trim()
+    if (!text) return
+    const btn = $('dwNoteAdd')
+    btn.disabled = true
+    try {
+      await addNote(id, text, getEmail())
+      toast('Note added')
+      await reload(false)
+      openLead(id)
+    } catch (e) {
+      toast('Failed: ' + e.message)
+      btn.disabled = false
+    }
+  })
+
   $('dwAddAppt').addEventListener('click', () => openApptForm(new Date(), id))
   $('drawerBody')
     .querySelectorAll('[data-del-appt]')

@@ -58,6 +58,27 @@ export async function ensureTabs() {
       })
     }
   }
+  // Header reconcile: extend headers of existing managed tabs (e.g. Tracking
+  // gaining title/address_id) WITHOUT reordering existing columns.
+  const managed = Object.values(TABS).filter((t) => t !== TABS.LEADS && existing.has(t))
+  if (managed.length) {
+    const hq = managed.map((t) => `ranges=${a1(`${t}!1:1`)}`).join('&')
+    const hd = await gFetch(`${BASE}/values:batchGet?${hq}&majorDimension=ROWS`)
+    const hvr = hd.valueRanges || []
+    for (let i = 0; i < managed.length; i++) {
+      const title = managed[i]
+      const cur = (hvr[i]?.values?.[0] || []).map(String)
+      const want = HEADERS[title]
+      const isPrefix = cur.every((c, idx) => c === want[idx])
+      if (isPrefix && cur.length < want.length) {
+        await gFetch(`${BASE}/values/${a1(`${title}!A1`)}?valueInputOption=RAW`, {
+          method: 'PUT',
+          body: JSON.stringify({ values: [want] }),
+        })
+      }
+    }
+  }
+
   if (!existing.has(TABS.LEADS) && sheetIds[TABS.LEADS] === undefined) {
     throw new Error(`Sheet tab "${TABS.LEADS}" not found in the spreadsheet.`)
   }
@@ -75,11 +96,13 @@ function rowsToObjects(rows, headers) {
 export async function loadAll() {
   const ranges = [
     `${TABS.LEADS}!A:I`,
-    `${TABS.TRACKING}!A:F`,
+    `${TABS.TRACKING}!A:H`,
     `${TABS.ACTIVITY}!A:G`,
     `${TABS.SCHEDULE}!A:H`,
     `${TABS.TASKS}!A:H`,
     `${TABS.SNOOZES}!A:E`,
+    `${TABS.NOTES}!A:E`,
+    `${TABS.ADDRESSES}!A:F`,
   ]
   const q = ranges.map((r) => `ranges=${a1(r)}`).join('&')
   const data = await gFetch(`${BASE}/values:batchGet?${q}&majorDimension=ROWS`)
@@ -99,14 +122,34 @@ export async function loadAll() {
   const tasks = rowsToObjects(get(4).slice(1), HEADERS[TABS.TASKS])
   const snoozes = rowsToObjects(get(5).slice(1), HEADERS[TABS.SNOOZES])
 
+  const notes = rowsToObjects(get(6).slice(1), HEADERS[TABS.NOTES])
+  const addresses = rowsToObjects(get(7).slice(1), HEADERS[TABS.ADDRESSES])
+
   const trackMap = {}
   tracking.forEach((t) => (trackMap[t.id] = t))
+  const addrMap = {}
+  addresses.forEach((a) => (addrMap[a.address_id] = a))
+  const notesByLead = {}
+  notes.forEach((n) => (notesByLead[n.lead_id] ||= []).push(n))
 
   const records = leads
     .filter((l) => l.id) // ignore any not-yet-backfilled rows
     .map((l) => ({ lead: l, track: trackMap[l.id] || null }))
 
-  return { leads, tracking, activity, schedule, tasks, snoozes, trackMap, records }
+  return {
+    leads,
+    tracking,
+    activity,
+    schedule,
+    tasks,
+    snoozes,
+    notes,
+    addresses,
+    trackMap,
+    addrMap,
+    notesByLead,
+    records,
+  }
 }
 
 async function updateRow(tab, row, values) {
@@ -148,7 +191,7 @@ export async function appendActivity(id, actor, action, oldV, newV, note = '') {
 
 /** Upsert one Tracking row and log every changed field to Activity. */
 export async function saveTracking(id, patch, actor, prevTrack) {
-  const prev = prevTrack || { status: '', tags: '', notes: '' }
+  const prev = prevTrack || {}
   const next = {
     id,
     status: patch.status ?? prev.status ?? 'New',
@@ -156,17 +199,43 @@ export async function saveTracking(id, patch, actor, prevTrack) {
     notes: patch.notes ?? prev.notes ?? '',
     updated_at: nowIso(),
     updated_by: actor,
+    title: patch.title ?? prev.title ?? '',
+    address_id: patch.address_id ?? prev.address_id ?? '',
   }
-  const values = [next.id, next.status, next.tags, next.notes, next.updated_at, next.updated_by]
+  // Build the row in the tab's header order (robust to added columns).
+  const values = HEADERS[TABS.TRACKING].map((h) => next[h] ?? '')
   if (prevTrack && prevTrack._row) await updateRow(TABS.TRACKING, prevTrack._row, values)
   else await appendRow(TABS.TRACKING, values)
 
-  for (const f of ['status', 'tags', 'notes']) {
-    if (patch[f] !== undefined && (prev[f] || '') !== next[f]) {
-      await appendActivity(id, actor, `${f} changed`, prev[f] || '', next[f])
+  for (const f of ['status', 'tags', 'title']) {
+    if (patch[f] !== undefined && (prev[f] || '') !== (next[f] || '')) {
+      await appendActivity(id, actor, `${f} changed`, prev[f] || '', next[f] || '')
     }
   }
+  if (patch.address_id !== undefined && (prev.address_id || '') !== (next.address_id || '')) {
+    await appendActivity(id, actor, 'address changed', prev.address_id || '', next.address_id || '')
+  }
   return next
+}
+
+export async function addNote(lead_id, text, author) {
+  const note_id = crypto.randomUUID()
+  await appendRow(TABS.NOTES, [note_id, lead_id, nowIso(), author, text])
+  await appendActivity(lead_id, author, 'note added', '', text.slice(0, 80))
+  return note_id
+}
+
+export async function addAddress(addr, actor) {
+  const address_id = crypto.randomUUID()
+  await appendRow(TABS.ADDRESSES, [
+    address_id,
+    addr.label || '',
+    addr.address || '',
+    addr.notes || '',
+    actor,
+    nowIso(),
+  ])
+  return address_id
 }
 
 export async function addAppointment(appt, actor) {
