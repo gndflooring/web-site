@@ -709,6 +709,7 @@ function openLead(id) {
   const rec = state.records.find((r) => r.lead.id === id)
   if (!rec) return
   const { lead, track } = rec
+  const title = leadTitle(lead, track)
   const hist = state.activity
     .filter((a) => a.id === id)
     .sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp))
