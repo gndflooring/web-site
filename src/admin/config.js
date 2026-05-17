@@ -22,6 +22,7 @@ export const TABS = {
   SNOOZES: 'Snoozes',
   NOTES: 'Notes',
   ADDRESSES: 'Addresses',
+  TAGS: 'Tags',
 }
 
 // FormResponses positional columns A..I (no header row).
@@ -46,7 +47,14 @@ export const HEADERS = {
   [TABS.SNOOZES]: ['heuristic_key', 'lead_id', 'snooze_until', 'by', 'created_at'],
   [TABS.NOTES]: ['note_id', 'lead_id', 'timestamp', 'author', 'text', 'appt_id', 'tags'],
   [TABS.ADDRESSES]: ['address_id', 'label', 'address', 'notes', 'created_by', 'created_at'],
+  [TABS.TAGS]: ['tag', 'color'],
 }
+
+// Default palette offered when assigning a colour to a new tag.
+export const TAG_PALETTE = [
+  '#2f7cb5', '#c49a5e', '#2e7d54', '#b4434e', '#7b54c4',
+  '#c2701f', '#3a8fa0', '#9c5a8a', '#5d6b75', '#1d3f5b',
+]
 
 export const PIPELINE = [
   'New',

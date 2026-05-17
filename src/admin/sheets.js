@@ -103,6 +103,7 @@ export async function loadAll() {
     `${TABS.SNOOZES}!A:E`,
     `${TABS.NOTES}!A:G`,
     `${TABS.ADDRESSES}!A:F`,
+    `${TABS.TAGS}!A:B`,
   ]
   const q = ranges.map((r) => `ranges=${a1(r)}`).join('&')
   const data = await gFetch(`${BASE}/values:batchGet?${q}&majorDimension=ROWS`)
@@ -124,6 +125,11 @@ export async function loadAll() {
 
   const notes = rowsToObjects(get(6).slice(1), HEADERS[TABS.NOTES])
   const addresses = rowsToObjects(get(7).slice(1), HEADERS[TABS.ADDRESSES])
+  const tagRows = rowsToObjects(get(8).slice(1), HEADERS[TABS.TAGS])
+  const tagColors = {}
+  tagRows.forEach((t) => {
+    if (t.tag) tagColors[String(t.tag).trim().toLowerCase()] = String(t.color || '').trim()
+  })
 
   const trackMap = {}
   tracking.forEach((t) => (trackMap[t.id] = t))
@@ -153,6 +159,8 @@ export async function loadAll() {
     addrMap,
     notesByLead,
     notesByAppt,
+    tagRows,
+    tagColors,
     records,
   }
 }
@@ -263,6 +271,35 @@ export async function updateNote(noteRow, fields, actor, prev = {}) {
 export async function deleteNote(noteRow, leadId, actor) {
   await deleteRow(TABS.NOTES, noteRow)
   if (leadId) await appendActivity(leadId, actor, 'note deleted', '', '')
+}
+
+/** Set (or create) a tag's colour in the Tags tab. */
+export async function upsertTag(name, color) {
+  const tag = String(name || '').trim()
+  if (!tag) return
+  const cur = await gFetch(`${BASE}/values/${a1(`${TABS.TAGS}!A:B`)}`)
+  const rows = cur.values || []
+  let row = -1
+  for (let i = 1; i < rows.length; i++) {
+    if (String(rows[i][0] || '').trim().toLowerCase() === tag.toLowerCase()) {
+      row = i + 1
+      break
+    }
+  }
+  if (row > 0) await updateRow(TABS.TAGS, row, [tag, color || ''])
+  else await appendRow(TABS.TAGS, [tag, color || ''])
+}
+
+export async function deleteTag(name) {
+  const tag = String(name || '').trim().toLowerCase()
+  const cur = await gFetch(`${BASE}/values/${a1(`${TABS.TAGS}!A:B`)}`)
+  const rows = cur.values || []
+  for (let i = 1; i < rows.length; i++) {
+    if (String(rows[i][0] || '').trim().toLowerCase() === tag) {
+      await deleteRow(TABS.TAGS, i + 1)
+      return
+    }
+  }
 }
 
 export async function addAddress(addr, actor) {

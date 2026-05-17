@@ -1,5 +1,5 @@
 import './admin.css'
-import { CLIENT_ID, SPREADSHEET_ID, PIPELINE, APPT_TYPES } from './config.js'
+import { CLIENT_ID, SPREADSHEET_ID, PIPELINE, APPT_TYPES, TAG_PALETTE } from './config.js'
 import { signIn, signOut, resume, getEmail } from './auth.js'
 import {
   ensureTabs,
@@ -15,6 +15,8 @@ import {
   updateNote,
   deleteNote,
   addAddress,
+  upsertTag,
+  deleteTag,
 } from './sheets.js'
 import { computeNeedsAction, severityByLead } from './heuristics.js'
 
@@ -31,7 +33,7 @@ const fmtD = (v) => {
   return isNaN(d) ? esc(v || '—') : d.toLocaleDateString([], { dateStyle: 'medium' })
 }
 const badge = (s) => `<span class="badge ${stCls(s)}"><span class="dot"></span>${esc(s || 'New')}</span>`
-const TITLES = { dashboard: 'Dashboard', board: 'Pipeline Board', leads: 'Leads', calendar: 'Calendar', todo: 'To-Do', notes: 'Notes' }
+const TITLES = { dashboard: 'Dashboard', board: 'Pipeline Board', leads: 'Leads', calendar: 'Calendar', todo: 'To-Do', notes: 'Notes', settings: 'Settings' }
 
 let state = null
 let items = []
@@ -45,6 +47,114 @@ const selectedLeads = new Set()
 const leadTitle = (lead, track) =>
   ((track && track.title) || '').trim() ||
   `${lead.name || 'Lead'}${lead.service ? ' — ' + lead.service : ''}`
+
+/* ---------- Tags: colours & pills ---------- */
+const splitTags = (csv) =>
+  String(csv || '')
+    .split(',')
+    .map((s) => s.trim())
+    .filter(Boolean)
+const tagColor = (name) =>
+  (state?.tagColors && state.tagColors[String(name).trim().toLowerCase()]) || ''
+function tagText(hex) {
+  const m = /^#?([0-9a-f]{6})$/i.exec(hex || '')
+  if (!m) return '#15212b'
+  const n = parseInt(m[1], 16)
+  const lum = (0.299 * (n >> 16) + 0.587 * ((n >> 8) & 255) + 0.114 * (n & 255)) / 255
+  return lum > 0.6 ? '#15212b' : '#ffffff'
+}
+const pillStyle = (c) =>
+  c ? `style="background:${c};color:${tagText(c)}"` : 'style="background:#eef0f3;color:#2b3a45"'
+const tagPills = (csv) =>
+  splitTags(csv)
+    .map(
+      (t) =>
+        `<span class="inline-block rounded-full px-2 py-0.5 text-[11px] font-600" ${pillStyle(tagColor(t))}>${esc(t)}</span>`
+    )
+    .join(' ')
+function allKnownTags() {
+  const set = new Set()
+  ;(state?.tagRows || []).forEach((r) => r.tag && set.add(String(r.tag).trim()))
+  ;(state?.tracking || []).forEach((t) => splitTags(t.tags).forEach((x) => set.add(x)))
+  ;(state?.notes || []).forEach((n) => splitTags(n.tags).forEach((x) => set.add(x)))
+  return [...set].sort((a, b) => a.localeCompare(b))
+}
+// Interactive tag editor — keeps a hidden CSV input (#id) in sync; pills carry
+// a colour-swatch button (native colour picker; dashed when no colour set).
+function tagEditorHtml(id, csv) {
+  return `<input type="hidden" id="${id}" value="${esc(splitTags(csv).join(', '))}"/>
+    <div class="mt-1 rounded-lg border border-line bg-surface p-2">
+      <div id="${id}_pills" class="flex flex-wrap items-center gap-1.5"></div>
+      <div class="mt-2 flex gap-2">
+        <input id="${id}_in" list="${id}_dl" class="field !py-1.5 text-sm" placeholder="add tag…"/>
+        <datalist id="${id}_dl">${allKnownTags().map((t) => `<option value="${esc(t)}">`).join('')}</datalist>
+        <button id="${id}_add" type="button" class="btn-ghost shrink-0">Add</button>
+      </div>
+      <input type="color" id="${id}_color" class="sr-only" tabindex="-1" aria-hidden="true"/>
+    </div>`
+}
+function wireTagEditor(id) {
+  const hidden = $(id)
+  const pills = $(id + '_pills')
+  const inp = $(id + '_in')
+  const colorIn = $(id + '_color')
+  const get = () => splitTags(hidden.value)
+  const setArr = (arr) => {
+    hidden.value = arr.join(', ')
+    render()
+  }
+  function render() {
+    pills.innerHTML =
+      get()
+        .map((t) => {
+          const c = tagColor(t)
+          return `<span class="inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-xs font-600" ${pillStyle(c)}>
+            <button type="button" data-sw="${esc(t)}" title="Set colour" class="h-3.5 w-3.5 rounded-full ${c ? '' : 'border border-dashed'}" style="${c ? `background:${tagText(c)};opacity:.7` : 'border-color:currentColor'}"></button>
+            ${esc(t)}
+            <button type="button" data-rm="${esc(t)}" class="-mr-1 px-1 opacity-70 hover:opacity-100">×</button>
+          </span>`
+        })
+        .join('') || '<span class="text-xs text-muted">No tags yet</span>'
+    pills.querySelectorAll('[data-rm]').forEach((b) =>
+      b.addEventListener('click', () => setArr(get().filter((x) => x !== b.dataset.rm)))
+    )
+    pills.querySelectorAll('[data-sw]').forEach((b) =>
+      b.addEventListener('click', () => {
+        colorIn.dataset.tag = b.dataset.sw
+        colorIn.value = tagColor(b.dataset.sw) || '#2f7cb5'
+        colorIn.click()
+      })
+    )
+  }
+  const add = () => {
+    const v = inp.value.trim()
+    if (!v) return
+    const a = get()
+    if (!a.some((x) => x.toLowerCase() === v.toLowerCase())) a.push(v)
+    inp.value = ''
+    setArr(a)
+  }
+  $(id + '_add').addEventListener('click', add)
+  inp.addEventListener('keydown', (e) => {
+    if (e.key === 'Enter') {
+      e.preventDefault()
+      add()
+    }
+  })
+  colorIn.addEventListener('change', async () => {
+    const t = colorIn.dataset.tag
+    const c = colorIn.value
+    if (!t) return
+    state.tagColors[t.trim().toLowerCase()] = c
+    render()
+    try {
+      await upsertTag(t, c)
+    } catch (e) {
+      toast('Colour save failed: ' + e.message)
+    }
+  })
+  render()
+}
 
 function toast(msg) {
   const t = $('toast')
@@ -142,6 +252,84 @@ const skeleton = () =>
     4
   )}</div><div class="card mt-4 h-72 animate-pulse"></div>`
 
+/* ---------- Duration combo & time picker ---------- */
+const DUR_PRESETS = [15, 30, 45, 60, 90]
+function durationFieldHtml(id, val) {
+  const v = Number(val) || 60
+  const preset = DUR_PRESETS.includes(v)
+  return `<input type="hidden" id="${id}" value="${v}"/>
+    <div class="mt-1 flex gap-2">
+      <select id="${id}_sel" class="field">
+        ${DUR_PRESETS.map((p) => `<option value="${p}" ${preset && p === v ? 'selected' : ''}>${p} min</option>`).join('')}
+        <option value="custom" ${preset ? '' : 'selected'}>Custom…</option>
+      </select>
+      <input id="${id}_custom" type="number" min="5" step="5" value="${v}" class="field !w-24 ${preset ? 'hidden' : ''}" aria-label="Custom minutes"/>
+    </div>`
+}
+function wireDuration(id) {
+  const hid = $(id)
+  const sel = $(id + '_sel')
+  const cust = $(id + '_custom')
+  const sync = () => {
+    if (sel.value === 'custom') {
+      cust.classList.remove('hidden')
+      hid.value = Number(cust.value) || 60
+    } else {
+      cust.classList.add('hidden')
+      hid.value = sel.value
+    }
+  }
+  sel.addEventListener('change', sync)
+  cust.addEventListener('input', () => {
+    if (sel.value === 'custom') hid.value = Number(cust.value) || 60
+  })
+  sync()
+}
+const fmt12 = (t) => {
+  const [h, m] = String(t).split(':').map(Number)
+  const ap = h >= 12 ? 'PM' : 'AM'
+  const hh = h % 12 || 12
+  return `${hh}:${String(m).padStart(2, '0')} ${ap}`
+}
+function timeOptions() {
+  const o = []
+  for (let h = 6; h <= 20; h++)
+    for (const m of [0, 15, 30, 45]) o.push(`${String(h).padStart(2, '0')}:${String(m).padStart(2, '0')}`)
+  return o
+}
+function timeFieldHtml(id, val) {
+  const v = val || '09:00'
+  const opts = timeOptions()
+  const known = opts.includes(v)
+  return `<input type="hidden" id="${id}" value="${v}"/>
+    <div class="mt-1 flex gap-2">
+      <select id="${id}_sel" class="field">
+        ${opts.map((t) => `<option value="${t}" ${known && t === v ? 'selected' : ''}>${fmt12(t)}</option>`).join('')}
+        <option value="other" ${known ? '' : 'selected'}>Other…</option>
+      </select>
+      <input id="${id}_other" type="time" value="${v}" class="field !w-32 ${known ? 'hidden' : ''}" aria-label="Custom time"/>
+    </div>`
+}
+function wireTime(id) {
+  const hid = $(id)
+  const sel = $(id + '_sel')
+  const oth = $(id + '_other')
+  const sync = () => {
+    if (sel.value === 'other') {
+      oth.classList.remove('hidden')
+      hid.value = oth.value || '09:00'
+    } else {
+      oth.classList.add('hidden')
+      hid.value = sel.value
+    }
+  }
+  sel.addEventListener('change', sync)
+  oth.addEventListener('input', () => {
+    if (sel.value === 'other') hid.value = oth.value
+  })
+  sync()
+}
+
 /* ---------- Drawer: generic back-stack ---------- */
 let drawerStack = []
 function renderDrawer() {
@@ -226,6 +414,7 @@ function render() {
   else if (view === 'calendar') calendar(v)
   else if (view === 'todo') todo(v)
   else if (view === 'notes') notesView(v)
+  else if (view === 'settings') settingsView(v)
 }
 
 const sevColor = { urgent: 'bg-rose-500', due: 'bg-amber-500', normal: 'bg-slate-300' }
@@ -341,7 +530,7 @@ function cardHtml(r, sev) {
   )}">
     <p class="text-sm font-700">${esc(r.lead.name || 'Lead')}</p>
     <p class="truncate text-xs text-muted">${esc(r.lead.service || '')}</p>
-    ${r.track?.tags ? `<p class="mt-1.5 truncate text-[11px] text-brand-700">${esc(r.track.tags)}</p>` : ''}
+    ${r.track?.tags ? `<div class="mt-1.5 flex flex-wrap gap-1">${tagPills(r.track.tags)}</div>` : ''}
   </div>`
 }
 
@@ -523,7 +712,7 @@ function leads(v) {
                   }/></td>
                   <td><p class="font-700">${esc(t)}</p><p class="text-xs text-muted">${esc(lead.email || '')}</p></td>
                   <td>${badge(track?.status || 'New')}</td>
-                  <td class="max-w-[180px] truncate text-xs text-brand-700">${esc(track?.tags || '')}</td>
+                  <td class="max-w-[200px]"><div class="flex flex-wrap gap-1">${tagPills(track?.tags)}</div></td>
                   <td class="whitespace-nowrap text-xs text-muted">${fmtDT(lead.submittedAt || lead.timestamp)}</td>
                   <td class="text-muted"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18l6-6-6-6"/></svg></td>
                 </tr>`
@@ -767,6 +956,368 @@ async function generateVisitsPdf(recs, opts) {
   doc.save(`gnd-visits-${new Date().toISOString().slice(0, 10)}.pdf`)
 }
 
+/* ---------- Calendar print ---------- */
+function apptMeta(a) {
+  const start = new Date(a.start)
+  const dur =
+    Number(a.duration_min) ||
+    (a.end && !isNaN(new Date(a.end)) ? Math.max(15, Math.round((new Date(a.end) - start) / 60000)) : 60)
+  const end = new Date(start.getTime() + dur * 60000)
+  const rec = state.records.find((r) => r.lead.id === a.lead_id)
+  const lead = rec?.lead
+  const track = rec?.track
+  const addr = track?.address_id ? state.addrMap[track.address_id] : null
+  const notes = (state.notesByAppt[a.appt_id] || [])
+    .slice()
+    .sort((x, y) => new Date(y.timestamp) - new Date(x.timestamp))
+  return {
+    a,
+    start,
+    end,
+    dur,
+    rec,
+    lead,
+    track,
+    addr,
+    notes,
+    title: rec ? leadTitle(lead, track) : a.notes || a.type,
+  }
+}
+const apptsBetween = (from, to) =>
+  state.schedule
+    .map(apptMeta)
+    .filter((m) => !isNaN(m.start) && m.start >= from && m.start < to)
+    .sort((x, y) => x.start - y.start)
+
+function openPrintDialog() {
+  pushPanel(() => printPanel())
+}
+function printPanel() {
+  const mode = calMode
+  const opt = (id, label, def) =>
+    `<label class="flex items-center gap-2.5 text-sm"><input type="checkbox" id="${id}" class="h-4 w-4 accent-brand-600" ${
+      def ? 'checked' : ''
+    }/> ${label}</label>`
+  let periodText = ''
+  let listHtml = ''
+  if (mode === 'day') periodText = calCursor.toLocaleDateString([], { dateStyle: 'full' })
+  else if (mode === 'week') {
+    const ws = new Date(calCursor)
+    ws.setDate(ws.getDate() - ws.getDay())
+    const we = new Date(ws)
+    we.setDate(ws.getDate() + 6)
+    periodText = `Week of ${ws.toLocaleDateString([], { month: 'short', day: 'numeric' })} – ${we.toLocaleDateString([], { month: 'short', day: 'numeric' })}`
+  } else if (mode === 'month')
+    periodText = calCursor.toLocaleString([], { month: 'long', year: 'numeric' })
+  else {
+    periodText = 'Selected appointments'
+    const all = state.schedule
+      .map(apptMeta)
+      .filter((m) => !isNaN(m.start))
+      .sort((x, y) => x.start - y.start)
+    listHtml = `<div>
+      <div class="mb-2 flex items-center justify-between">
+        <p class="text-xs font-700 uppercase tracking-wider text-muted">Pick appointments</p>
+        <button id="pkAll" type="button" class="text-xs font-600 text-brand-700">Select all</button>
+      </div>
+      <div class="max-h-64 space-y-1 overflow-y-auto rounded-lg border border-line p-2">
+        ${
+          all
+            .map(
+              (m) =>
+                `<label class="flex items-center gap-2 rounded px-2 py-1.5 text-sm hover:bg-app"><input type="checkbox" class="pk h-4 w-4 accent-brand-600" data-appt="${m.a._row}"/> <span class="text-xs text-muted">${esc(m.start.toLocaleDateString([], { month: 'short', day: 'numeric' }))} ${esc(fmt12(`${m.start.getHours()}:${m.start.getMinutes()}`))}</span> ${esc(m.title)}</label>`
+            )
+            .join('') || '<p class="p-3 text-sm text-muted">No appointments.</p>'
+        }
+      </div>
+    </div>`
+  }
+  const monthNote =
+    mode === 'month'
+      ? '<p class="rounded-lg bg-app p-3 text-xs text-muted">Month prints a one-page landscape grid (time + title per day). The detail toggles below apply to Day, Week and List, which are the on-the-road formats.</p>'
+      : ''
+  setDrawerBody(`${drawerHeader('<h2 class="text-xl font-700">Print schedule</h2>', `${TITLES.calendar} · ${esc(periodText)}`)}
+    <div class="flex-1 space-y-5 overflow-y-auto p-5">
+      <div class="rounded-lg border border-line p-3 text-sm">
+        <span class="font-600">${esc(mode.charAt(0).toUpperCase() + mode.slice(1))}</span> — ${esc(periodText)}
+      </div>
+      ${monthNote}
+      ${listHtml}
+      <div>
+        <p class="text-xs font-700 uppercase tracking-wider text-muted">Include per appointment</p>
+        <div class="mt-3 space-y-2.5">
+          ${opt('pAddr', 'Address', true)}
+          ${opt('pPhone', 'Phone &amp; email', true)}
+          ${opt('pNotes', 'Latest notes', true)}
+          ${opt('pGaps', 'Free-time between appointments', true)}
+          ${opt('pSpace', 'Blank write-space + done box', true)}
+          ${mode === 'week' ? opt('pSkip', 'Skip days with no appointments', true) : ''}
+        </div>
+      </div>
+      <button id="genCal" class="btn-primary w-full">Generate PDF</button>
+    </div>`)
+  if (mode === 'list') {
+    $('pkAll').addEventListener('click', () => {
+      const boxes = [...$('drawerBody').querySelectorAll('.pk')]
+      const allOn = boxes.every((b) => b.checked)
+      boxes.forEach((b) => (b.checked = !allOn))
+    })
+  }
+  $('genCal').onclick = async () => {
+    const opts = {
+      address: $('pAddr').checked,
+      phone: $('pPhone').checked,
+      notes: $('pNotes').checked,
+      gaps: $('pGaps').checked,
+      space: $('pSpace').checked,
+      skipEmpty: $('pSkip') ? $('pSkip').checked : true,
+    }
+    let picked = []
+    if (mode === 'list') {
+      picked = [...$('drawerBody').querySelectorAll('.pk:checked')].map((b) => +b.dataset.appt)
+      if (!picked.length) return toast('Select at least one appointment')
+    }
+    try {
+      await withSaving($('genCal'), () => generateSchedulePdf(mode, opts, picked), 'Done ✓')
+      toast('PDF generated')
+      closeDrawer()
+    } catch {
+      /* handled */
+    }
+  }
+}
+
+async function generateSchedulePdf(mode, opts, picked) {
+  const { jsPDF } = await import('jspdf')
+  const landscape = mode === 'month'
+  const doc = new jsPDF({ orientation: landscape ? 'landscape' : 'portrait', unit: 'pt', format: 'letter' })
+  const W = doc.internal.pageSize.getWidth()
+  const Hp = doc.internal.pageSize.getHeight()
+  const M = 44
+  let y = M
+  const t12 = (d) => fmt12(`${d.getHours()}:${d.getMinutes()}`)
+  const wrap = (txt, size, w) => {
+    doc.setFontSize(size)
+    return doc.splitTextToSize(String(txt || ''), w)
+  }
+  const ensure = (need) => {
+    if (y + need > Hp - M) {
+      doc.addPage()
+      y = M
+    }
+  }
+  const pageTitle = (text, sub) => {
+    doc.setFont('helvetica', 'bold')
+    doc.setFontSize(16)
+    doc.text(text, M, y)
+    y += 18
+    if (sub) {
+      doc.setFont('helvetica', 'normal')
+      doc.setFontSize(10)
+      doc.setTextColor(120)
+      doc.text(sub, M, y)
+      doc.setTextColor(20)
+      y += 14
+    }
+    doc.setDrawColor(205)
+    doc.line(M, y, W - M, y)
+    y += 16
+  }
+
+  function renderDay(date, list) {
+    pageTitle(date.toLocaleDateString([], { weekday: 'long', month: 'long', day: 'numeric', year: 'numeric' }),
+      `${list.length} appointment${list.length === 1 ? '' : 's'}`)
+    if (!list.length) {
+      doc.setFont('helvetica', 'italic')
+      doc.setFontSize(11)
+      doc.setTextColor(140)
+      doc.text('No appointments scheduled.', M, y)
+      doc.setTextColor(20)
+      doc.setFont('helvetica', 'normal')
+      y += 20
+      return
+    }
+    list.forEach((m, i) => {
+      ensure(64)
+      doc.setFont('helvetica', 'bold')
+      doc.setFontSize(11)
+      doc.text(`${t12(m.start)} – ${t12(m.end)}`, M, y)
+      doc.setFontSize(12)
+      const titleLines = wrap(`${m.title}  (${m.a.type})`, 12, W - 2 * M - 140)
+      doc.text(titleLines, M + 140, y)
+      y += Math.max(16, titleLines.length * 15)
+      doc.setFont('helvetica', 'normal')
+      doc.setFontSize(10)
+      const line = (label, val) => {
+        if (!val) return
+        const ls = wrap(`${label}: ${val}`, 10, W - 2 * M - 140)
+        ensure(ls.length * 13 + 2)
+        doc.text(ls, M + 140, y)
+        y += ls.length * 13 + 2
+      }
+      if (opts.address && m.addr)
+        line('Address', [m.addr.label, m.addr.address, m.addr.notes && `(${m.addr.notes})`].filter(Boolean).join(' · '))
+      if (opts.phone && m.lead) {
+        line('Phone', m.lead.phone || '')
+        line('Email', m.lead.email || '')
+      }
+      if (opts.notes && m.notes.length) {
+        m.notes.slice(0, 3).forEach((n) => {
+          const ls = wrap(`- ${new Date(n.timestamp).toLocaleDateString()}  ${n.text}`, 10, W - 2 * M - 152)
+          ensure(ls.length * 13 + 2)
+          doc.text(ls, M + 152, y)
+          y += ls.length * 13 + 2
+        })
+      }
+      if (opts.space) {
+        ensure(58)
+        doc.setDrawColor(225)
+        for (let k = 0; k < 2; k++) {
+          y += 18
+          doc.line(M + 140, y, W - M, y)
+        }
+        y += 14
+        doc.setDrawColor(90)
+        doc.rect(M + 140, y - 9, 10, 10)
+        doc.setFontSize(10)
+        doc.text('Done', M + 156, y)
+        y += 6
+      }
+      // free-time gap
+      if (opts.gaps && i < list.length - 1) {
+        const gapMin = Math.round((list[i + 1].start - m.end) / 60000)
+        if (gapMin > 0) {
+          const h = Math.floor(gapMin / 60)
+          const mm = gapMin % 60
+          ensure(20)
+          y += 8
+          doc.setDrawColor(220)
+          doc.setLineDashPattern([2, 2], 0)
+          doc.line(M, y, W - M, y)
+          doc.setLineDashPattern([], 0)
+          doc.setFont('helvetica', 'italic')
+          doc.setFontSize(9)
+          doc.setTextColor(140)
+          doc.text(`free ${h ? h + 'h ' : ''}${mm}m`, W / 2, y - 3, { align: 'center' })
+          doc.setTextColor(20)
+          doc.setFont('helvetica', 'normal')
+          y += 12
+        }
+      } else {
+        y += 6
+      }
+      ensure(10)
+      doc.setDrawColor(210)
+      doc.line(M, y, W - M, y)
+      y += 14
+    })
+  }
+
+  const startOfDay = (d) => {
+    const x = new Date(d)
+    x.setHours(0, 0, 0, 0)
+    return x
+  }
+
+  if (mode === 'day') {
+    const from = startOfDay(calCursor)
+    const to = new Date(from.getTime() + 864e5)
+    renderDay(from, apptsBetween(from, to))
+  } else if (mode === 'week') {
+    const ws = startOfDay(calCursor)
+    ws.setDate(ws.getDate() - ws.getDay())
+    let first = true
+    for (let i = 0; i < 7; i++) {
+      const d = new Date(ws)
+      d.setDate(ws.getDate() + i)
+      const list = apptsBetween(d, new Date(d.getTime() + 864e5))
+      if (opts.skipEmpty && !list.length) continue
+      if (!first) {
+        doc.addPage()
+        y = M
+      }
+      first = false
+      renderDay(d, list)
+    }
+    if (first) {
+      // nothing rendered
+      pageTitle('Week', 'No appointments')
+    }
+  } else if (mode === 'list') {
+    const picks = picked
+      .map((row) => state.schedule.find((s) => s._row === row))
+      .filter(Boolean)
+      .map(apptMeta)
+      .sort((x, y2) => x.start - y2.start)
+    const byDay = {}
+    picks.forEach((m) => ((byDay[startOfDay(m.start).getTime()] ||= []).push(m)))
+    const keys = Object.keys(byDay)
+      .map(Number)
+      .sort((a, b) => a - b)
+    keys.forEach((k, idx) => {
+      if (idx) {
+        ensure(120)
+      }
+      renderDay(new Date(k), byDay[k])
+    })
+  } else {
+    // month — landscape grid
+    const y0 = calCursor.getFullYear()
+    const mo = calCursor.getMonth()
+    pageTitle(calCursor.toLocaleString([], { month: 'long', year: 'numeric' }), '')
+    const cols = 7
+    const cellW = (W - 2 * M) / cols
+    const startDow = new Date(y0, mo, 1).getDay()
+    const days = new Date(y0, mo + 1, 0).getDate()
+    const rows = Math.ceil((startDow + days) / 7)
+    const gridTop = y
+    const cellH = (Hp - M - gridTop) / rows
+    const WD = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat']
+    doc.setFontSize(9)
+    doc.setFont('helvetica', 'bold')
+    WD.forEach((d, i) => doc.text(d, M + i * cellW + 4, gridTop - 4))
+    doc.setFont('helvetica', 'normal')
+    let cell = 0
+    for (let i = 0; i < startDow; i++, cell++) {
+      // empty leading cells
+      const cx = M + (cell % 7) * cellW
+      const cy = gridTop + Math.floor(cell / 7) * cellH
+      doc.setDrawColor(225)
+      doc.rect(cx, cy, cellW, cellH)
+    }
+    for (let d = 1; d <= days; d++, cell++) {
+      const cx = M + (cell % 7) * cellW
+      const cy = gridTop + Math.floor(cell / 7) * cellH
+      doc.setDrawColor(210)
+      doc.rect(cx, cy, cellW, cellH)
+      doc.setFontSize(9)
+      doc.setFont('helvetica', 'bold')
+      doc.text(String(d), cx + 4, cy + 12)
+      doc.setFont('helvetica', 'normal')
+      doc.setFontSize(8)
+      const day = new Date(y0, mo, d)
+      const list = apptsBetween(day, new Date(day.getTime() + 864e5))
+      let ly = cy + 24
+      list.slice(0, 5).forEach((m) => {
+        if (ly > cy + cellH - 6) return
+        const txt = doc.splitTextToSize(`${t12(m.start)} ${m.title}`, cellW - 8)[0]
+        doc.text(txt, cx + 4, ly)
+        ly += 10
+      })
+      if (list.length > 5) doc.text(`+${list.length - 5} more`, cx + 4, Math.min(ly, cy + cellH - 4))
+    }
+  }
+
+  const pages = doc.getNumberOfPages()
+  for (let p = 1; p <= pages; p++) {
+    doc.setPage(p)
+    doc.setFontSize(8)
+    doc.setTextColor(140)
+    doc.text(`G&D Flooring · Schedule · ${p}/${pages}`, W / 2, Hp - 18, { align: 'center' })
+  }
+  doc.save(`gnd-schedule-${mode}-${new Date().toISOString().slice(0, 10)}.pdf`)
+}
+
 /* ---------- Lead panel ---------- */
 function openLead(id) {
   pushPanel(() => leadPanel(id))
@@ -818,10 +1369,9 @@ function leadPanel(id) {
               ${PIPELINE.map((s) => `<option ${(track?.status || 'New') === s ? 'selected' : ''}>${esc(s)}</option>`).join('')}
             </select>
           </label>
-          <label class="block text-sm font-600">Tags
-            <input id="dwTags" class="field mt-1" list="tagPool" value="${esc(track?.tags || '')}" placeholder="kitchen, urgent"/>
-            <datalist id="tagPool">${pool.map((t) => `<option value="${esc(t)}">`).join('')}</datalist>
-          </label>
+          <div class="block text-sm font-600">Tags
+            ${tagEditorHtml('dwTags', track?.tags || '')}
+          </div>
           <button id="dwSave" class="btn-primary w-full">Save changes</button>
         </div>
       </section>
@@ -889,7 +1439,8 @@ function leadPanel(id) {
               .map(
                 (n) => `<li data-note="${n._row}" class="cursor-pointer rounded-lg bg-app p-3 text-sm hover:bg-brand-50">
               <p class="whitespace-pre-wrap">${esc(n.text)}</p>
-              <p class="mt-1 text-[11px] text-muted">${fmtDT(n.timestamp)} · ${esc(n.author)}${n.tags ? ` · ${esc(n.tags)}` : ''}</p>
+              <p class="mt-1 text-[11px] text-muted">${fmtDT(n.timestamp)} · ${esc(n.author)}</p>
+              ${n.tags ? `<div class="mt-1 flex flex-wrap gap-1">${tagPills(n.tags)}</div>` : ''}
             </li>`
               )
               .join('') || '<li class="text-sm text-muted">No notes yet</li>'
@@ -922,6 +1473,7 @@ function leadPanel(id) {
       </details>
     </div>`)
 
+  wireTagEditor('dwTags')
   $('dwSave').addEventListener('click', async () => {
     try {
       await withSaving($('dwSave'), async () => {
@@ -1040,16 +1592,18 @@ function visitPanel(apptRow) {
           <datalist id="vLeadPool">${state.records.map((r) => `<option value="${esc(leadOpt(r))}">`).join('')}</datalist>
         </label>
         <div class="grid grid-cols-2 gap-3">
-          <label class="block text-sm font-600">Date<input id="vDate" type="date" class="field mt-1" value="${dVal}"/></label>
-          <label class="block text-sm font-600">Start<input id="vTime" type="time" class="field mt-1" value="${tVal}"/></label>
-          <label class="block text-sm font-600">Duration (min)<input id="vDur" type="number" min="15" step="15" class="field mt-1" value="${dur}"/></label>
-          <label class="block text-sm font-600">Type<select id="vType" class="field mt-1">${APPT_TYPES.map((t) => `<option ${a.type === t ? 'selected' : ''}>${esc(t)}</option>`).join('')}</select></label>
+          <div class="block text-sm font-600">Date<input id="vDate" type="date" class="field mt-1" value="${dVal}"/></div>
+          <div class="block text-sm font-600">Start${timeFieldHtml('vTime', tVal)}</div>
+          <div class="block text-sm font-600">Duration${durationFieldHtml('vDur', dur)}</div>
+          <div class="block text-sm font-600">Type<select id="vType" class="field mt-1">${APPT_TYPES.map((t) => `<option ${a.type === t ? 'selected' : ''}>${esc(t)}</option>`).join('')}</select></div>
         </div>
         <div class="flex gap-2">
           <button id="vSave" class="btn-primary flex-1">Save changes</button>
           <button id="vCancel" class="btn-ghost">Cancel</button>
         </div>
       </div>`)
+    wireTime('vTime')
+    wireDuration('vDur')
     $('vCancel').addEventListener('click', () => {
       visitEditing = false
       refreshDrawer()
@@ -1169,13 +1723,15 @@ function newApptPanel({ date, leadId } = {}) {
         <datalist id="vLeadPool">${state.records.map((r) => `<option value="${esc(leadOpt(r))}">`).join('')}</datalist>
       </label>
       <div class="grid grid-cols-2 gap-3">
-        <label class="block text-sm font-600">Date<input id="vDate" type="date" class="field mt-1" value="${dVal}"/></label>
-        <label class="block text-sm font-600">Start<input id="vTime" type="time" class="field mt-1" value="09:00"/></label>
-        <label class="block text-sm font-600">Duration (min)<input id="vDur" type="number" min="15" step="15" class="field mt-1" value="60"/></label>
-        <label class="block text-sm font-600">Type<select id="vType" class="field mt-1">${APPT_TYPES.map((t) => `<option>${esc(t)}</option>`).join('')}</select></label>
+        <div class="block text-sm font-600">Date<input id="vDate" type="date" class="field mt-1" value="${dVal}"/></div>
+        <div class="block text-sm font-600">Start${timeFieldHtml('vTime', '09:00')}</div>
+        <div class="block text-sm font-600">Duration${durationFieldHtml('vDur', 60)}</div>
+        <div class="block text-sm font-600">Type<select id="vType" class="field mt-1">${APPT_TYPES.map((t) => `<option>${esc(t)}</option>`).join('')}</select></div>
       </div>
       <button id="vCreate" class="btn-primary w-full">Create appointment</button>
     </div>`)
+  wireTime('vTime')
+  wireDuration('vDur')
   $('vCreate').addEventListener('click', async () => {
     const lid = optMap[$('vLead').value.trim()] || (presetRec ? presetRec.lead.id : '')
     const startIso = new Date(`${$('vDate').value}T${$('vTime').value || '09:00'}`).toISOString()
@@ -1230,16 +1786,16 @@ function editNotePanel(noteRow) {
       <label class="block text-sm font-600">Note
         <textarea id="enText" rows="6" class="field mt-1">${esc(n.text)}</textarea>
       </label>
-      <label class="block text-sm font-600">Tags
-        <input id="enTags" class="field mt-1" list="enTagPool" value="${esc(n.tags || '')}" placeholder="visit, follow-up"/>
-        <datalist id="enTagPool">${allTags.map((t) => `<option value="${esc(t)}">`).join('')}</datalist>
-      </label>
+      <div class="block text-sm font-600">Tags
+        ${tagEditorHtml('enTags', n.tags || '')}
+      </div>
       <p class="text-[11px] text-muted">${fmtDT(n.timestamp)} · ${esc(n.author)}${n.appt_id ? ' · visit note' : ''}</p>
       <div class="flex gap-2">
         <button id="enSave" class="btn-primary flex-1">Save</button>
         <button id="enDelete" class="btn-danger">Delete</button>
       </div>
     </div>`)
+  wireTagEditor('enTags')
   if (rec) $('enLead').addEventListener('click', () => openLead(n.lead_id))
   $('enSave').addEventListener('click', async () => {
     try {
@@ -1453,7 +2009,10 @@ function calendar(v) {
           : ''
       }
       <h2 class="text-lg font-700">${esc(title)}</h2>
-      <button id="addAppt" class="btn-primary ml-auto">+ Appointment</button>
+      <div class="ml-auto flex gap-2">
+        <button id="printCal" class="btn-ghost">Print</button>
+        <button id="addAppt" class="btn-primary">+ Appointment</button>
+      </div>
     </div>
     ${body}`
 
@@ -1481,6 +2040,7 @@ function calendar(v) {
   }
   $('addAppt').onclick = () =>
     openNewAppt({ date: calMode === 'day' ? new Date(calCursor) : new Date() })
+  $('printCal').onclick = () => openPrintDialog()
   v.querySelectorAll('[data-date]').forEach((el) =>
     el.addEventListener('click', (e) => {
       if (e.target.closest('[data-appt]')) return
@@ -1631,9 +2191,8 @@ function notesView(v) {
               <div class="min-w-0 flex-1">
                 <p class="truncate text-sm font-600">${esc(ll)}</p>
                 <p class="mt-0.5 line-clamp-2 text-sm text-ink-700">${esc(n.text)}</p>
-                <p class="mt-1 text-[11px] text-muted">${fmtDT(n.timestamp)} · ${esc(n.author)}${
-                  n.tags ? ` · <span class="text-brand-700">${esc(n.tags)}</span>` : ''
-                }${n.appt_id ? ' · visit' : ''}</p>
+                <p class="mt-1 text-[11px] text-muted">${fmtDT(n.timestamp)} · ${esc(n.author)}${n.appt_id ? ' · visit' : ''}</p>
+                ${n.tags ? `<div class="mt-1 flex flex-wrap gap-1">${tagPills(n.tags)}</div>` : ''}
               </div>
               <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="mt-1 shrink-0 text-muted"><path d="M9 18l6-6-6-6"/></svg>
             </button>`
@@ -1663,6 +2222,86 @@ function notesView(v) {
   $('nRows')
     .querySelectorAll('[data-note]')
     .forEach((b) => b.addEventListener('click', () => openEditNote(+b.dataset.note)))
+}
+
+/* ---------- Settings page (tag colours) ---------- */
+function settingsView(v) {
+  const tags = allKnownTags()
+  const suggestion = (i) => TAG_PALETTE[i % TAG_PALETTE.length]
+  v.innerHTML = `
+    <div class="mx-auto max-w-2xl space-y-6">
+      <section class="card p-6">
+        <h2 class="text-lg font-700">Tags &amp; colours</h2>
+        <p class="mt-1 text-sm text-muted">Pick a colour for each tag. Tags appear as coloured pills across leads, notes and the board.</p>
+        <div class="mt-5 space-y-2" id="tagList">
+          ${
+            tags
+              .map((t, i) => {
+                const c = tagColor(t) || suggestion(i)
+                const has = !!tagColor(t)
+                return `<div class="flex items-center gap-3 rounded-lg border border-line p-2.5" data-row="${esc(t)}">
+                  <span class="inline-block rounded-full px-2.5 py-1 text-xs font-600" ${pillStyle(tagColor(t))}>${esc(t)}</span>
+                  <span class="flex-1"></span>
+                  ${has ? '' : '<span class="text-[11px] text-muted">no colour</span>'}
+                  <input type="color" data-color="${esc(t)}" value="${c}" class="h-8 w-10 cursor-pointer rounded border border-line bg-surface p-0.5"/>
+                  <button data-del="${esc(t)}" class="btn-danger !px-2 text-xs">Delete</button>
+                </div>`
+              })
+              .join('') || '<p class="text-sm text-muted">No tags yet. Add one below.</p>'
+          }
+        </div>
+      </section>
+      <section class="card p-6">
+        <h2 class="text-lg font-700">Add a tag</h2>
+        <div class="mt-4 flex flex-wrap items-end gap-3">
+          <label class="text-sm font-600">Name<input id="ntName" class="field mt-1 !w-56" placeholder="e.g. priority"/></label>
+          <label class="text-sm font-600">Colour<input id="ntColor" type="color" value="${TAG_PALETTE[0]}" class="mt-1 block h-10 w-14 cursor-pointer rounded border border-line bg-surface p-0.5"/></label>
+          <button id="ntAdd" class="btn-primary">Add tag</button>
+        </div>
+      </section>
+    </div>`
+
+  v.querySelectorAll('[data-color]').forEach((inp) =>
+    inp.addEventListener('change', async () => {
+      const t = inp.dataset.color
+      state.tagColors[t.trim().toLowerCase()] = inp.value
+      try {
+        await upsertTag(t, inp.value)
+        toast('Colour saved')
+        settingsView(v)
+      } catch (e) {
+        toast('Failed: ' + e.message)
+      }
+    })
+  )
+  v.querySelectorAll('[data-del]').forEach((b) =>
+    b.addEventListener('click', async () => {
+      const t = b.dataset.del
+      if (!confirm(`Delete the colour for "${t}"? (the tag stays on leads/notes)`)) return
+      try {
+        await withSaving(b, async () => {
+          await deleteTag(t)
+          await reload(false)
+        }, 'Deleted')
+        render()
+      } catch {
+        /* handled */
+      }
+    })
+  )
+  $('ntAdd').addEventListener('click', async () => {
+    const name = $('ntName').value.trim()
+    if (!name) return toast('Enter a tag name')
+    try {
+      await withSaving($('ntAdd'), async () => {
+        await upsertTag(name, $('ntColor').value)
+        await reload(false)
+      })
+      render()
+    } catch {
+      /* handled */
+    }
+  })
 }
 
 start()
