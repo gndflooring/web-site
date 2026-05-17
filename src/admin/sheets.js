@@ -98,10 +98,10 @@ export async function loadAll() {
     `${TABS.LEADS}!A:I`,
     `${TABS.TRACKING}!A:H`,
     `${TABS.ACTIVITY}!A:G`,
-    `${TABS.SCHEDULE}!A:H`,
+    `${TABS.SCHEDULE}!A:I`,
     `${TABS.TASKS}!A:H`,
     `${TABS.SNOOZES}!A:E`,
-    `${TABS.NOTES}!A:E`,
+    `${TABS.NOTES}!A:G`,
     `${TABS.ADDRESSES}!A:F`,
   ]
   const q = ranges.map((r) => `ranges=${a1(r)}`).join('&')
@@ -130,7 +130,11 @@ export async function loadAll() {
   const addrMap = {}
   addresses.forEach((a) => (addrMap[a.address_id] = a))
   const notesByLead = {}
-  notes.forEach((n) => (notesByLead[n.lead_id] ||= []).push(n))
+  const notesByAppt = {}
+  notes.forEach((n) => {
+    ;(notesByLead[n.lead_id] ||= []).push(n)
+    if (n.appt_id) (notesByAppt[n.appt_id] ||= []).push(n)
+  })
 
   const records = leads
     .filter((l) => l.id) // ignore any not-yet-backfilled rows
@@ -148,6 +152,7 @@ export async function loadAll() {
     trackMap,
     addrMap,
     notesByLead,
+    notesByAppt,
     records,
   }
 }
@@ -218,11 +223,46 @@ export async function saveTracking(id, patch, actor, prevTrack) {
   return next
 }
 
-export async function addNote(lead_id, text, author) {
+const rowFor = (tab, obj) => HEADERS[tab].map((h) => obj[h] ?? '')
+
+export async function addNote(lead_id, text, author, opts = {}) {
   const note_id = crypto.randomUUID()
-  await appendRow(TABS.NOTES, [note_id, lead_id, nowIso(), author, text])
+  await appendRow(
+    TABS.NOTES,
+    rowFor(TABS.NOTES, {
+      note_id,
+      lead_id,
+      timestamp: nowIso(),
+      author,
+      text,
+      appt_id: opts.appt_id || '',
+      tags: opts.tags || '',
+    })
+  )
   await appendActivity(lead_id, author, 'note added', '', text.slice(0, 80))
   return note_id
+}
+
+export async function updateNote(noteRow, fields, actor, prev = {}) {
+  await updateRow(
+    TABS.NOTES,
+    noteRow,
+    rowFor(TABS.NOTES, {
+      note_id: prev.note_id,
+      lead_id: prev.lead_id,
+      timestamp: prev.timestamp,
+      author: prev.author,
+      text: fields.text ?? prev.text ?? '',
+      appt_id: prev.appt_id || '',
+      tags: fields.tags ?? prev.tags ?? '',
+    })
+  )
+  if (prev.lead_id) await appendActivity(prev.lead_id, actor, 'note edited', '', String(fields.text || '').slice(0, 80))
+}
+
+export async function deleteNote(noteRow, leadId, actor) {
+  await deleteRow(TABS.NOTES, noteRow)
+  if (leadId) await appendActivity(leadId, actor, 'note deleted', '', '')
 }
 
 export async function addAddress(addr, actor) {
@@ -238,22 +278,54 @@ export async function addAddress(addr, actor) {
   return address_id
 }
 
+const endFrom = (start, durationMin) =>
+  start && durationMin
+    ? new Date(new Date(start).getTime() + Number(durationMin) * 60000).toISOString()
+    : ''
+
 export async function addAppointment(appt, actor) {
   const appt_id = crypto.randomUUID()
-  await appendRow(TABS.SCHEDULE, [
-    appt_id,
-    appt.lead_id || '',
-    appt.type || 'Other',
-    appt.start,
-    appt.end || '',
-    appt.notes || '',
-    actor,
-    nowIso(),
-  ])
+  const duration_min = Number(appt.duration_min) || 60
+  await appendRow(
+    TABS.SCHEDULE,
+    rowFor(TABS.SCHEDULE, {
+      appt_id,
+      lead_id: appt.lead_id || '',
+      type: appt.type || 'Other',
+      start: appt.start,
+      end: endFrom(appt.start, duration_min),
+      notes: appt.notes || '',
+      created_by: actor,
+      created_at: nowIso(),
+      duration_min,
+    })
+  )
   if (appt.lead_id) {
     await appendActivity(appt.lead_id, actor, 'appointment added', '', `${appt.type} @ ${appt.start}`)
   }
   return appt_id
+}
+
+export async function updateAppointment(apptRow, fields, actor, prev = {}) {
+  const duration_min = Number(fields.duration_min ?? prev.duration_min) || 60
+  const start = fields.start ?? prev.start
+  await updateRow(
+    TABS.SCHEDULE,
+    apptRow,
+    rowFor(TABS.SCHEDULE, {
+      appt_id: prev.appt_id,
+      lead_id: fields.lead_id ?? prev.lead_id ?? '',
+      type: fields.type ?? prev.type ?? 'Other',
+      start,
+      end: endFrom(start, duration_min),
+      notes: prev.notes || '',
+      created_by: prev.created_by || actor,
+      created_at: prev.created_at || nowIso(),
+      duration_min,
+    })
+  )
+  const lid = fields.lead_id ?? prev.lead_id
+  if (lid) await appendActivity(lid, actor, 'appointment updated', '', `${fields.type ?? prev.type} @ ${start}`)
 }
 
 export async function deleteAppointment(apptRow, leadId, actor, label) {

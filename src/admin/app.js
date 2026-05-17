@@ -6,11 +6,14 @@ import {
   loadAll,
   saveTracking,
   addAppointment,
+  updateAppointment,
   deleteAppointment,
   addTask,
   setTaskDone,
   addSnooze,
   addNote,
+  updateNote,
+  deleteNote,
   addAddress,
 } from './sheets.js'
 import { computeNeedsAction, severityByLead } from './heuristics.js'
@@ -28,7 +31,7 @@ const fmtD = (v) => {
   return isNaN(d) ? esc(v || '—') : d.toLocaleDateString([], { dateStyle: 'medium' })
 }
 const badge = (s) => `<span class="badge ${stCls(s)}"><span class="dot"></span>${esc(s || 'New')}</span>`
-const TITLES = { dashboard: 'Dashboard', board: 'Pipeline Board', leads: 'Leads', calendar: 'Calendar', todo: 'To-Do' }
+const TITLES = { dashboard: 'Dashboard', board: 'Pipeline Board', leads: 'Leads', calendar: 'Calendar', todo: 'To-Do', notes: 'Notes' }
 
 let state = null
 let items = []
@@ -102,7 +105,13 @@ function wireOnce() {
   })
   $('search').addEventListener('input', applySearch)
   $('drawerBackdrop').addEventListener('click', closeDrawer)
-  document.addEventListener('keydown', (e) => e.key === 'Escape' && closeDrawer())
+  document.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape' && drawerStack.length) popPanel()
+  })
+  $('drawerBody').addEventListener('click', (e) => {
+    if (e.target.closest('[data-drawer-back]')) popPanel()
+    else if (e.target.closest('[data-drawer-close]')) closeDrawer()
+  })
 }
 
 async function enterApp() {
@@ -133,15 +142,66 @@ const skeleton = () =>
     4
   )}</div><div class="card mt-4 h-72 animate-pulse"></div>`
 
-/* ---------- Drawer ---------- */
-function openDrawer(html) {
-  $('drawerBody').innerHTML = html
+/* ---------- Drawer: generic back-stack ---------- */
+let drawerStack = []
+function renderDrawer() {
+  if (!drawerStack.length) {
+    $('drawer').classList.remove('open')
+    $('drawerBackdrop').classList.remove('open')
+    return
+  }
   $('drawer').classList.add('open')
   $('drawerBackdrop').classList.add('open')
+  drawerStack[drawerStack.length - 1]()
+}
+function pushPanel(fn) {
+  drawerStack.push(fn)
+  renderDrawer()
+}
+function popPanel() {
+  drawerStack.pop()
+  renderDrawer()
+}
+function refreshDrawer() {
+  if (drawerStack.length) renderDrawer()
 }
 function closeDrawer() {
+  drawerStack = []
   $('drawer').classList.remove('open')
   $('drawerBackdrop').classList.remove('open')
+}
+const setDrawerBody = (html) => ($('drawerBody').innerHTML = html)
+
+// Standard panel header with ‹ Back (when deeper than 1) and ✕ (close all).
+function drawerHeader(titleHtml, subHtml) {
+  const back =
+    drawerStack.length > 1
+      ? `<button data-drawer-back class="btn-ghost !px-2" aria-label="Back"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 18l-6-6 6-6"/></svg></button>`
+      : ''
+  return `<header class="flex items-start gap-3 border-b border-line p-5">
+    ${back}
+    <div class="min-w-0 flex-1">${titleHtml}${subHtml ? `<p class="text-sm text-muted">${subHtml}</p>` : ''}</div>
+    <button data-drawer-close class="btn-ghost !px-2" aria-label="Close"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M18 6 6 18M6 6l12 12"/></svg></button>
+  </header>`
+}
+
+// Button "Saving…" → "Saved ✓" feedback; disables to block double-submit.
+async function withSaving(btn, fn, savedLabel = 'Saved ✓') {
+  if (!btn) return fn()
+  const orig = btn.textContent
+  btn.disabled = true
+  btn.textContent = 'Saving…'
+  try {
+    const r = await fn()
+    btn.textContent = savedLabel
+    await new Promise((res) => setTimeout(res, 450))
+    return r
+  } catch (e) {
+    btn.disabled = false
+    btn.textContent = orig
+    toast(e?.message ? `Failed: ${e.message}` : 'Save failed')
+    throw e
+  }
 }
 
 /* ---------- Router ---------- */
@@ -165,6 +225,7 @@ function render() {
   else if (view === 'leads') leads(v)
   else if (view === 'calendar') calendar(v)
   else if (view === 'todo') todo(v)
+  else if (view === 'notes') notesView(v)
 }
 
 const sevColor = { urgent: 'bg-rose-500', due: 'bg-amber-500', normal: 'bg-slate-300' }
@@ -518,16 +579,18 @@ function leads(v) {
 
 /* ---------- Visits PDF ---------- */
 function openVisitsDialog(recs) {
+  pushPanel(() => visitsPdfPanel(recs))
+}
+function visitsPdfPanel(recs) {
   const opt = (idv, label, def) =>
     `<label class="flex items-center gap-2.5 text-sm"><input type="checkbox" id="${idv}" class="h-4 w-4 accent-brand-600" ${
       def ? 'checked' : ''
     }/> ${label}</label>`
-  openDrawer(`
-    <header class="flex items-start justify-between border-b border-line p-5">
-      <div><h2 class="text-xl font-700">Visits PDF</h2>
-        <p class="text-sm text-muted">${recs.length} stop${recs.length === 1 ? '' : 's'} selected</p></div>
-      <button id="dwClose" class="btn-ghost !px-2"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M18 6 6 18M6 6l12 12"/></svg></button>
-    </header>
+  setDrawerBody(`
+    ${drawerHeader(
+      '<h2 class="text-xl font-700">Visits PDF</h2>',
+      `${recs.length} stop${recs.length === 1 ? '' : 's'} selected`
+    )}
     <div class="flex-1 space-y-5 overflow-y-auto p-5">
       <div>
         <p class="text-xs font-700 uppercase tracking-wider text-muted">Include on each stop</p>
@@ -546,24 +609,23 @@ function openVisitsDialog(recs) {
       </div>
       <button id="genPdf" class="btn-primary w-full">Generate PDF</button>
     </div>`)
-  $('dwClose').onclick = closeDrawer
   $('genPdf').onclick = async () => {
-    const btn = $('genPdf')
-    btn.disabled = true
-    btn.textContent = 'Generating…'
     try {
-      await generateVisitsPdf(recs, {
-        address: $('optAddress').checked,
-        phones: $('optPhones').checked,
-        notes: $('optNotes').checked,
-        space: $('optSpace').checked,
-      })
+      await withSaving(
+        $('genPdf'),
+        () =>
+          generateVisitsPdf(recs, {
+            address: $('optAddress').checked,
+            phones: $('optPhones').checked,
+            notes: $('optNotes').checked,
+            space: $('optSpace').checked,
+          }),
+        'Done ✓'
+      )
       toast('PDF generated')
       closeDrawer()
-    } catch (e) {
-      toast('PDF failed: ' + e.message)
-      btn.disabled = false
-      btn.textContent = 'Generate PDF'
+    } catch {
+      /* withSaving handled */
     }
   }
 }
@@ -705,10 +767,13 @@ async function generateVisitsPdf(recs, opts) {
   doc.save(`gnd-visits-${new Date().toISOString().slice(0, 10)}.pdf`)
 }
 
-/* ---------- Lead detail + history drawer ---------- */
+/* ---------- Lead panel ---------- */
 function openLead(id) {
+  pushPanel(() => leadPanel(id))
+}
+function leadPanel(id) {
   const rec = state.records.find((r) => r.lead.id === id)
-  if (!rec) return
+  if (!rec) return popPanel()
   const { lead, track } = rec
   const title = leadTitle(lead, track)
   const hist = state.activity
@@ -718,30 +783,24 @@ function openLead(id) {
     .filter((a) => a.lead_id === id)
     .sort((a, b) => new Date(a.start) - new Date(b.start))
   const pool = tagPool()
-
   const notes = (state.notesByLead[id] || [])
     .slice()
     .sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp))
   const linked = track?.address_id ? state.addrMap[track.address_id] : null
   const addrDisplay = (a) => `${a.label ? a.label + ' — ' : ''}${a.address}`
 
-  openDrawer(`
-    <header class="flex items-start gap-3 border-b border-line p-5">
-      <div class="min-w-0 flex-1">
-        <div class="flex items-center gap-2">${badge(track?.status || 'New')}</div>
-        <h2 class="mt-2 truncate text-xl font-700">${esc(title)}</h2>
-        <p class="text-sm text-muted">${esc(lead.name || '')} · ${fmtDT(lead.submittedAt || lead.timestamp)}</p>
-      </div>
-      <button id="dwClose" class="btn-ghost !px-2" aria-label="Close">
-        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M18 6 6 18M6 6l12 12"/></svg>
-      </button>
-    </header>
+  setDrawerBody(`
+    ${drawerHeader(
+      `<div class="flex items-center gap-2">${badge(track?.status || 'New')}</div>
+       <h2 class="mt-2 truncate text-xl font-700">${esc(title)}</h2>`,
+      `${esc(lead.name || '')} · ${fmtDT(lead.submittedAt || lead.timestamp)}`
+    )}
     <div class="flex-1 space-y-6 overflow-y-auto p-5">
       <section class="grid grid-cols-2 gap-3 text-sm">
         ${field('Email', `<a class="text-brand-700 hover:underline" href="mailto:${esc(lead.email)}">${esc(lead.email || '—')}</a>`)}
         ${field('Phone', `<a class="text-brand-700 hover:underline" href="tel:${esc(lead.phone)}">${esc(lead.phone || '—')}</a>`)}
         ${field('Source', esc(lead.source || '—'))}
-        ${field('Lead ID', `<span class="font-mono text-xs">${esc(lead.id)}</span>`)}
+        ${field('Service', esc(lead.service || '—'))}
       </section>
       <section>
         <p class="text-xs font-700 uppercase tracking-wider text-muted">Message</p>
@@ -800,26 +859,6 @@ function openLead(id) {
       </section>
 
       <section class="rounded-xl border border-line p-4">
-        <p class="text-xs font-700 uppercase tracking-wider text-muted">Notes</p>
-        <div class="mt-3 flex gap-2">
-          <textarea id="dwNote" rows="2" class="field" placeholder="Add a note…"></textarea>
-          <button id="dwNoteAdd" class="btn-primary shrink-0 self-start">Add</button>
-        </div>
-        <ul class="mt-3 space-y-2">
-          ${
-            notes
-              .map(
-                (n) => `<li class="rounded-lg bg-app p-3 text-sm">
-              <p class="whitespace-pre-wrap">${esc(n.text)}</p>
-              <p class="mt-1 text-[11px] text-muted">${fmtDT(n.timestamp)} · ${esc(n.author)}</p>
-            </li>`
-              )
-              .join('') || '<li class="text-sm text-muted">No notes yet</li>'
-          }
-        </ul>
-      </section>
-
-      <section>
         <div class="flex items-center justify-between">
           <p class="text-xs font-700 uppercase tracking-wider text-muted">Appointments</p>
           <button id="dwAddAppt" class="text-xs font-600 text-brand-700">+ Add</button>
@@ -829,19 +868,37 @@ function openLead(id) {
             appts
               .map(
                 (a) =>
-                  `<li class="flex items-center justify-between rounded-lg bg-app px-3 py-2"><span>${esc(
+                  `<li data-appt="${a._row}" class="flex cursor-pointer items-center justify-between rounded-lg bg-app px-3 py-2 hover:bg-brand-50"><span>${esc(
                     a.type
-                  )} · ${fmtDT(a.start)}</span><button data-del-appt="${a._row}" data-label="${esc(
-                    a.type
-                  )}" class="text-xs text-rose-600">remove</button></li>`
+                  )} · ${fmtDT(a.start)}</span><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="text-muted"><path d="M9 18l6-6-6-6"/></svg></li>`
               )
               .join('') || '<li class="text-sm text-muted">None scheduled</li>'
           }
         </ul>
       </section>
 
-      <section>
-        <p class="text-xs font-700 uppercase tracking-wider text-muted">History</p>
+      <section class="rounded-xl border border-line p-4">
+        <p class="text-xs font-700 uppercase tracking-wider text-muted">Notes</p>
+        <div class="mt-3 flex gap-2">
+          <textarea id="dwNote" rows="2" class="field" placeholder="Add a note…"></textarea>
+          <button id="dwNoteAdd" class="btn-primary shrink-0 self-start">Add</button>
+        </div>
+        <ul class="mt-3 space-y-2">
+          ${
+            notes
+              .map(
+                (n) => `<li data-note="${n._row}" class="cursor-pointer rounded-lg bg-app p-3 text-sm hover:bg-brand-50">
+              <p class="whitespace-pre-wrap">${esc(n.text)}</p>
+              <p class="mt-1 text-[11px] text-muted">${fmtDT(n.timestamp)} · ${esc(n.author)}${n.tags ? ` · ${esc(n.tags)}` : ''}</p>
+            </li>`
+              )
+              .join('') || '<li class="text-sm text-muted">No notes yet</li>'
+          }
+        </ul>
+      </section>
+
+      <details class="rounded-xl border border-line p-4">
+        <summary class="cursor-pointer select-none text-xs font-700 uppercase tracking-wider text-muted">History (${hist.length})</summary>
         <ol class="mt-3 space-y-3 border-l-2 border-line pl-4">
           ${
             hist
@@ -862,41 +919,36 @@ function openLead(id) {
               .join('') || '<li class="text-sm text-muted">No history yet</li>'
           }
         </ol>
-      </section>
+      </details>
     </div>`)
 
-  $('dwClose').addEventListener('click', closeDrawer)
   $('dwSave').addEventListener('click', async () => {
-    const btn = $('dwSave')
-    btn.disabled = true
     try {
-      await saveTracking(
-        id,
-        {
-          status: $('dwStatus').value,
-          tags: $('dwTags').value.trim(),
-          title: $('dwTitle').value.trim(),
-        },
-        getEmail(),
-        track
-      )
-      toast('Saved')
-      await reload(false)
-      openLead(id)
-    } catch (e) {
-      toast('Save failed: ' + e.message)
-      btn.disabled = false
+      await withSaving($('dwSave'), async () => {
+        await saveTracking(
+          id,
+          { status: $('dwStatus').value, tags: $('dwTags').value.trim(), title: $('dwTitle').value.trim() },
+          getEmail(),
+          track
+        )
+        await reload(false)
+      })
+      refreshDrawer()
+    } catch {
+      /* withSaving toasted + restored */
     }
   })
 
-  const relinkAddress = async (addressId) => {
+  const relinkAddress = async (addressId, btn) => {
     try {
-      await saveTracking(id, { address_id: addressId }, getEmail(), track)
+      await withSaving(btn, async () => {
+        await saveTracking(id, { address_id: addressId }, getEmail(), track)
+        await reload(false)
+      })
       toast(addressId ? 'Address linked' : 'Address unlinked')
-      await reload(false)
-      openLead(id)
-    } catch (e) {
-      toast('Failed: ' + e.message)
+      refreshDrawer()
+    } catch {
+      /* handled */
     }
   }
   const addrByDisplay = {}
@@ -906,9 +958,9 @@ function openLead(id) {
   $('dwAddrLink').addEventListener('click', () => {
     const aid = addrByDisplay[$('dwAddrSearch').value.trim()]
     if (!aid) return toast('Pick an address from the list')
-    relinkAddress(aid)
+    relinkAddress(aid, $('dwAddrLink'))
   })
-  if ($('dwUnlink')) $('dwUnlink').addEventListener('click', () => relinkAddress(''))
+  if ($('dwUnlink')) $('dwUnlink').addEventListener('click', () => relinkAddress('', $('dwUnlink')))
   $('dwAddrNewToggle').addEventListener('click', () => {
     const el = $('dwAddrNew')
     el.hidden = !el.hidden
@@ -917,50 +969,305 @@ function openLead(id) {
     const label = $('naLabel').value.trim()
     const address = $('naAddr').value.trim()
     if (!label && !address) return toast('Enter an address')
-    const btn = $('naSave')
-    btn.disabled = true
     try {
-      const aid = await addAddress(
-        { label, address, notes: $('naNotes').value.trim() },
-        getEmail()
-      )
-      await relinkAddress(aid)
-    } catch (e) {
-      toast('Failed: ' + e.message)
-      btn.disabled = false
+      await withSaving($('naSave'), async () => {
+        const aid = await addAddress({ label, address, notes: $('naNotes').value.trim() }, getEmail())
+        await saveTracking(id, { address_id: aid }, getEmail(), track)
+        await reload(false)
+      })
+      toast('Address linked')
+      refreshDrawer()
+    } catch {
+      /* handled */
     }
   })
   $('dwNoteAdd').addEventListener('click', async () => {
     const text = $('dwNote').value.trim()
     if (!text) return
-    const btn = $('dwNoteAdd')
-    btn.disabled = true
     try {
-      await addNote(id, text, getEmail())
-      toast('Note added')
-      await reload(false)
-      openLead(id)
-    } catch (e) {
-      toast('Failed: ' + e.message)
-      btn.disabled = false
+      await withSaving($('dwNoteAdd'), async () => {
+        await addNote(id, text, getEmail())
+        await reload(false)
+      })
+      refreshDrawer()
+    } catch {
+      /* handled */
     }
   })
-
-  $('dwAddAppt').addEventListener('click', () => openApptForm(new Date(), id))
+  $('dwAddAppt').addEventListener('click', () => openNewAppt({ leadId: id }))
   $('drawerBody')
-    .querySelectorAll('[data-del-appt]')
-    .forEach((b) =>
-      b.addEventListener('click', async () => {
-        try {
-          await deleteAppointment(+b.dataset.delAppt, id, getEmail(), b.dataset.label)
-          toast('Removed')
+    .querySelectorAll('[data-appt]')
+    .forEach((el) => el.addEventListener('click', () => openVisit(+el.dataset.appt)))
+  $('drawerBody')
+    .querySelectorAll('[data-note]')
+    .forEach((el) => el.addEventListener('click', () => openEditNote(+el.dataset.note)))
+}
+
+/* ---------- Visit panel (view / edit) ---------- */
+let visitEditing = false
+function openVisit(apptRow) {
+  visitEditing = false
+  pushPanel(() => visitPanel(apptRow))
+}
+function visitPanel(apptRow) {
+  const a = state.schedule.find((x) => x._row === apptRow)
+  if (!a) return popPanel()
+  const rec = state.records.find((r) => r.lead.id === a.lead_id)
+  const lt = rec ? leadTitle(rec.lead, rec.track) : a.lead_id ? '(unknown lead)' : '(no lead)'
+  const start = new Date(a.start)
+  const dur =
+    Number(a.duration_min) ||
+    (a.end && !isNaN(new Date(a.end)) ? Math.max(15, Math.round((new Date(a.end) - start) / 60000)) : 60)
+  const vnotes = (state.notesByAppt[a.appt_id] || [])
+    .slice()
+    .sort((x, y) => new Date(y.timestamp) - new Date(x.timestamp))
+  const head = drawerHeader(
+    `<span class="text-xs font-700 uppercase tracking-wider text-muted">Visit</span>
+     <h2 class="mt-1 truncate text-xl font-700">${esc(a.type)}</h2>`,
+    esc(start.toLocaleString([], { dateStyle: 'full', timeStyle: 'short' }))
+  )
+
+  if (visitEditing) {
+    const dVal = `${start.getFullYear()}-${String(start.getMonth() + 1).padStart(2, '0')}-${String(start.getDate()).padStart(2, '0')}`
+    const tVal = `${String(start.getHours()).padStart(2, '0')}:${String(start.getMinutes()).padStart(2, '0')}`
+    const leadOpt = (r) => [leadTitle(r.lead, r.track), r.lead.name, r.lead.email].filter(Boolean).join(' · ')
+    const optMap = {}
+    state.records.forEach((r) => (optMap[leadOpt(r)] = r.lead.id))
+    setDrawerBody(`${head}
+      <div class="flex-1 space-y-4 overflow-y-auto p-5">
+        <label class="block text-sm font-600">Lead
+          <input id="vLead" class="field mt-1" list="vLeadPool" value="${rec ? esc(leadOpt(rec)) : ''}" placeholder="search title, name or email"/>
+          <datalist id="vLeadPool">${state.records.map((r) => `<option value="${esc(leadOpt(r))}">`).join('')}</datalist>
+        </label>
+        <div class="grid grid-cols-2 gap-3">
+          <label class="block text-sm font-600">Date<input id="vDate" type="date" class="field mt-1" value="${dVal}"/></label>
+          <label class="block text-sm font-600">Start<input id="vTime" type="time" class="field mt-1" value="${tVal}"/></label>
+          <label class="block text-sm font-600">Duration (min)<input id="vDur" type="number" min="15" step="15" class="field mt-1" value="${dur}"/></label>
+          <label class="block text-sm font-600">Type<select id="vType" class="field mt-1">${APPT_TYPES.map((t) => `<option ${a.type === t ? 'selected' : ''}>${esc(t)}</option>`).join('')}</select></label>
+        </div>
+        <div class="flex gap-2">
+          <button id="vSave" class="btn-primary flex-1">Save changes</button>
+          <button id="vCancel" class="btn-ghost">Cancel</button>
+        </div>
+      </div>`)
+    $('vCancel').addEventListener('click', () => {
+      visitEditing = false
+      refreshDrawer()
+    })
+    $('vSave').addEventListener('click', async () => {
+      const lid = optMap[$('vLead').value.trim()] || (rec ? rec.lead.id : '')
+      const startIso = new Date(`${$('vDate').value}T${$('vTime').value || '09:00'}`).toISOString()
+      try {
+        await withSaving($('vSave'), async () => {
+          await updateAppointment(
+            a._row,
+            { lead_id: lid, type: $('vType').value, start: startIso, duration_min: Number($('vDur').value) || 60 },
+            getEmail(),
+            a
+          )
           await reload(false)
-          openLead(id)
-        } catch (e) {
-          toast('Failed: ' + e.message)
-        }
+        })
+        visitEditing = false
+        refreshDrawer()
+      } catch {
+        /* handled */
+      }
+    })
+    return
+  }
+
+  setDrawerBody(`${head}
+    <div class="flex-1 space-y-5 overflow-y-auto p-5">
+      <button id="vLeadOpen" class="flex w-full items-center justify-between rounded-xl border border-line p-3 text-left hover:bg-app ${rec ? '' : 'pointer-events-none opacity-60'}">
+        <div><p class="text-xs font-700 uppercase tracking-wide text-muted">Lead</p><p class="mt-0.5 font-600">${esc(lt)}</p></div>
+        ${rec ? '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="text-muted"><path d="M9 18l6-6-6-6"/></svg>' : ''}
+      </button>
+      <div class="grid grid-cols-2 gap-3 text-sm">
+        ${field('Date', esc(start.toLocaleDateString([], { dateStyle: 'medium' })))}
+        ${field('Start', esc(start.toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' })))}
+        ${field('Duration', `${dur} min`)}
+        ${field('Type', esc(a.type))}
+      </div>
+      <section class="rounded-xl border border-line p-4">
+        <p class="text-xs font-700 uppercase tracking-wider text-muted">Visit notes</p>
+        <div class="mt-3 flex gap-2">
+          <textarea id="vNote" rows="2" class="field" placeholder="Add a visit note…"></textarea>
+          <button id="vNoteAdd" class="btn-primary shrink-0 self-start">Add</button>
+        </div>
+        <ul class="mt-3 space-y-2">
+          ${
+            vnotes
+              .map(
+                (n) => `<li data-note="${n._row}" class="cursor-pointer rounded-lg bg-app p-3 text-sm hover:bg-brand-50">
+              <p class="whitespace-pre-wrap">${esc(n.text)}</p>
+              <p class="mt-1 text-[11px] text-muted">${fmtDT(n.timestamp)} · ${esc(n.author)}</p>
+            </li>`
+              )
+              .join('') || '<li class="text-sm text-muted">No visit notes</li>'
+          }
+        </ul>
+      </section>
+      <div class="flex gap-2">
+        <button id="vEdit" class="btn-primary flex-1">Edit</button>
+        <button id="vDelete" class="btn-danger">Delete</button>
+      </div>
+    </div>`)
+  if (rec) $('vLeadOpen').addEventListener('click', () => openLead(a.lead_id))
+  $('vEdit').addEventListener('click', () => {
+    visitEditing = true
+    refreshDrawer()
+  })
+  $('vDelete').addEventListener('click', async () => {
+    if (!confirm('Delete this appointment?')) return
+    try {
+      await withSaving(
+        $('vDelete'),
+        async () => {
+          await deleteAppointment(a._row, a.lead_id, getEmail(), a.type)
+          await reload(false)
+        },
+        'Deleted'
+      )
+      popPanel()
+    } catch {
+      /* handled */
+    }
+  })
+  $('vNoteAdd').addEventListener('click', async () => {
+    const text = $('vNote').value.trim()
+    if (!text) return
+    try {
+      await withSaving($('vNoteAdd'), async () => {
+        await addNote(a.lead_id, text, getEmail(), { appt_id: a.appt_id, tags: 'visit' })
+        await reload(false)
       })
-    )
+      refreshDrawer()
+    } catch {
+      /* handled */
+    }
+  })
+  $('drawerBody')
+    .querySelectorAll('[data-note]')
+    .forEach((el) => el.addEventListener('click', () => openEditNote(+el.dataset.note)))
+}
+
+/* ---------- New appointment panel ---------- */
+function openNewAppt(opts = {}) {
+  pushPanel(() => newApptPanel(opts))
+}
+function newApptPanel({ date, leadId } = {}) {
+  const base = date ? new Date(date) : new Date()
+  const dVal = `${base.getFullYear()}-${String(base.getMonth() + 1).padStart(2, '0')}-${String(base.getDate()).padStart(2, '0')}`
+  const presetRec = leadId ? state.records.find((r) => r.lead.id === leadId) : null
+  const leadOpt = (r) => [leadTitle(r.lead, r.track), r.lead.name, r.lead.email].filter(Boolean).join(' · ')
+  const optMap = {}
+  state.records.forEach((r) => (optMap[leadOpt(r)] = r.lead.id))
+  setDrawerBody(`${drawerHeader('<h2 class="text-xl font-700">New appointment</h2>', '')}
+    <div class="flex-1 space-y-4 overflow-y-auto p-5">
+      <label class="block text-sm font-600">Lead
+        <input id="vLead" class="field mt-1" list="vLeadPool" value="${presetRec ? esc(leadOpt(presetRec)) : ''}" placeholder="search title, name or email"/>
+        <datalist id="vLeadPool">${state.records.map((r) => `<option value="${esc(leadOpt(r))}">`).join('')}</datalist>
+      </label>
+      <div class="grid grid-cols-2 gap-3">
+        <label class="block text-sm font-600">Date<input id="vDate" type="date" class="field mt-1" value="${dVal}"/></label>
+        <label class="block text-sm font-600">Start<input id="vTime" type="time" class="field mt-1" value="09:00"/></label>
+        <label class="block text-sm font-600">Duration (min)<input id="vDur" type="number" min="15" step="15" class="field mt-1" value="60"/></label>
+        <label class="block text-sm font-600">Type<select id="vType" class="field mt-1">${APPT_TYPES.map((t) => `<option>${esc(t)}</option>`).join('')}</select></label>
+      </div>
+      <button id="vCreate" class="btn-primary w-full">Create appointment</button>
+    </div>`)
+  $('vCreate').addEventListener('click', async () => {
+    const lid = optMap[$('vLead').value.trim()] || (presetRec ? presetRec.lead.id : '')
+    const startIso = new Date(`${$('vDate').value}T${$('vTime').value || '09:00'}`).toISOString()
+    try {
+      let newId
+      await withSaving(
+        $('vCreate'),
+        async () => {
+          newId = await addAppointment(
+            { lead_id: lid, type: $('vType').value, start: startIso, duration_min: Number($('vDur').value) || 60 },
+            getEmail()
+          )
+          await reload(false)
+        },
+        'Created ✓'
+      )
+      const created = state.schedule.find((s) => s.appt_id === newId)
+      drawerStack.pop()
+      if (created) openVisit(created._row)
+      else renderDrawer()
+    } catch {
+      /* handled */
+    }
+  })
+}
+
+/* ---------- Edit-note panel ---------- */
+function openEditNote(noteRow) {
+  pushPanel(() => editNotePanel(noteRow))
+}
+function editNotePanel(noteRow) {
+  const n = state.notes.find((x) => x._row === noteRow)
+  if (!n) return popPanel()
+  const rec = state.records.find((r) => r.lead.id === n.lead_id)
+  const lt = rec ? leadTitle(rec.lead, rec.track) : n.lead_id || '(no lead)'
+  const allTags = [
+    ...new Set(
+      state.notes.flatMap((x) =>
+        String(x.tags || '')
+          .split(',')
+          .map((s) => s.trim())
+          .filter(Boolean)
+      )
+    ),
+  ]
+  setDrawerBody(`${drawerHeader('<h2 class="text-xl font-700">Edit note</h2>', esc(lt))}
+    <div class="flex-1 space-y-4 overflow-y-auto p-5">
+      <button id="enLead" class="flex w-full items-center justify-between rounded-xl border border-line p-3 text-left hover:bg-app ${rec ? '' : 'pointer-events-none opacity-60'}">
+        <div><p class="text-xs font-700 uppercase tracking-wide text-muted">Lead</p><p class="mt-0.5 font-600">${esc(lt)}</p></div>
+        ${rec ? '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="text-muted"><path d="M9 18l6-6-6-6"/></svg>' : ''}
+      </button>
+      <label class="block text-sm font-600">Note
+        <textarea id="enText" rows="6" class="field mt-1">${esc(n.text)}</textarea>
+      </label>
+      <label class="block text-sm font-600">Tags
+        <input id="enTags" class="field mt-1" list="enTagPool" value="${esc(n.tags || '')}" placeholder="visit, follow-up"/>
+        <datalist id="enTagPool">${allTags.map((t) => `<option value="${esc(t)}">`).join('')}</datalist>
+      </label>
+      <p class="text-[11px] text-muted">${fmtDT(n.timestamp)} · ${esc(n.author)}${n.appt_id ? ' · visit note' : ''}</p>
+      <div class="flex gap-2">
+        <button id="enSave" class="btn-primary flex-1">Save</button>
+        <button id="enDelete" class="btn-danger">Delete</button>
+      </div>
+    </div>`)
+  if (rec) $('enLead').addEventListener('click', () => openLead(n.lead_id))
+  $('enSave').addEventListener('click', async () => {
+    try {
+      await withSaving($('enSave'), async () => {
+        await updateNote(n._row, { text: $('enText').value.trim(), tags: $('enTags').value.trim() }, getEmail(), n)
+        await reload(false)
+      })
+      refreshDrawer()
+    } catch {
+      /* handled */
+    }
+  })
+  $('enDelete').addEventListener('click', async () => {
+    if (!confirm('Delete this note?')) return
+    try {
+      await withSaving(
+        $('enDelete'),
+        async () => {
+          await deleteNote(n._row, n.lead_id, getEmail())
+          await reload(false)
+        },
+        'Deleted'
+      )
+      popPanel()
+    } catch {
+      /* handled */
+    }
+  })
 }
 const field = (label, val) =>
   `<div><p class="text-xs font-700 uppercase tracking-wide text-muted">${label}</p><p class="mt-0.5">${val}</p></div>`
@@ -1018,11 +1325,9 @@ function calendar(v) {
       ? `<div class="truncate rounded bg-amber-100 px-1.5 py-0.5 text-[11px] text-amber-800" title="${esc(
           x.t.title
         )}">📋 ${esc(x.t.title)}</div>`
-      : `<div class="truncate rounded bg-brand-100 px-1.5 py-0.5 text-[11px] text-brand-800 ${
-          x.a.lead_id ? 'cursor-pointer' : ''
-        }" ${x.a.lead_id ? `data-lead="${esc(x.a.lead_id)}"` : ''} title="${esc(
-          x.a.type
-        )} ${esc(leadName(x.a.lead_id) || x.a.notes || '')}">${
+      : `<div class="truncate rounded bg-brand-100 px-1.5 py-0.5 text-[11px] text-brand-800 cursor-pointer" data-appt="${
+          x.a._row
+        }" title="${esc(x.a.type)} ${esc(leadName(x.a.lead_id) || x.a.notes || '')}">${
           withTime ? esc(tnow(x.when)) + ' ' : ''
         }${esc(x.a.type)} ${esc(leadName(x.a.lead_id) || '')}</div>`
 
@@ -1033,9 +1338,7 @@ function calendar(v) {
         <span class="badge bg-amber-100 text-amber-800">Task</span>
         <span class="text-sm">${esc(x.t.title)}</span>
         <span class="ml-auto text-xs text-muted">${meta}</span></div>`
-    return `<div class="flex items-center gap-3 px-4 py-3 ${
-      x.a.lead_id ? 'cursor-pointer hover:bg-app' : ''
-    }" ${x.a.lead_id ? `data-lead="${esc(x.a.lead_id)}"` : ''}>
+    return `<div class="flex cursor-pointer items-center gap-3 px-4 py-3 hover:bg-app" data-appt="${x.a._row}">
       <span class="badge bg-brand-100 text-brand-800">${esc(x.a.type)}</span>
       <span class="text-sm">${esc(leadName(x.a.lead_id) || x.a.notes || '—')}</span>
       <span class="ml-auto text-xs text-muted">${meta}</span></div>`
@@ -1177,122 +1480,19 @@ function calendar(v) {
     }
   }
   $('addAppt').onclick = () =>
-    openApptForm(calMode === 'day' ? new Date(calCursor) : new Date())
+    openNewAppt({ date: calMode === 'day' ? new Date(calCursor) : new Date() })
   v.querySelectorAll('[data-date]').forEach((el) =>
     el.addEventListener('click', (e) => {
-      if (e.target.closest('[data-lead]')) return
-      openApptForm(new Date(+el.dataset.date))
+      if (e.target.closest('[data-appt]')) return
+      openNewAppt({ date: new Date(+el.dataset.date) })
     })
   )
-  v.querySelectorAll('[data-lead]').forEach((el) =>
+  v.querySelectorAll('[data-appt]').forEach((el) =>
     el.addEventListener('click', (e) => {
       e.stopPropagation()
-      openLead(el.dataset.lead)
+      openVisit(+el.dataset.appt)
     })
   )
-}
-
-function openApptForm(date, presetLead) {
-  const dayAppts = state.schedule
-    .filter((a) => {
-      const d = new Date(a.start)
-      return !isNaN(d) && d.toDateString() === date.toDateString()
-    })
-    .sort((a, b) => new Date(a.start) - new Date(b.start))
-  const iso = new Date(date.getTime() - date.getTimezoneOffset() * 60000).toISOString().slice(0, 16)
-  const preset = presetLead ? state.records.find((r) => r.lead.id === presetLead) : null
-  const leadOpt = (r) =>
-    [leadTitle(r.lead, r.track), r.lead.name, r.lead.email].filter(Boolean).join(' · ')
-  const optMap = {}
-  state.records.forEach((r) => (optMap[leadOpt(r)] = r.lead.id))
-  openDrawer(`
-    <header class="flex items-start justify-between border-b border-line p-5">
-      <div>
-        <h2 class="text-xl font-700">Appointments</h2>
-        <p class="text-sm text-muted">${date.toLocaleDateString([], { dateStyle: 'full' })}</p>
-      </div>
-      <button id="dwClose" class="btn-ghost !px-2"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M18 6 6 18M6 6l12 12"/></svg></button>
-    </header>
-    <div class="flex-1 space-y-5 overflow-y-auto p-5">
-      <ul class="space-y-1.5 text-sm">
-        ${
-          dayAppts
-            .map(
-              (a) =>
-                `<li class="flex items-center justify-between rounded-lg bg-app px-3 py-2"><span>${esc(
-                  a.type
-                )} · ${fmtDT(a.start)} · ${esc(leadName(a.lead_id) || a.notes || '')}</span><button data-del="${
-                  a._row
-                }" data-lead="${esc(a.lead_id)}" data-label="${esc(a.type)}" class="text-xs text-rose-600">remove</button></li>`
-            )
-            .join('') || '<li class="text-muted">No appointments this day.</li>'
-        }
-      </ul>
-      <div class="rounded-xl border border-line p-4">
-        <p class="text-xs font-700 uppercase tracking-wider text-muted">New appointment</p>
-        <div class="mt-3 grid gap-3">
-          <label class="text-sm font-600">Type<select id="aType" class="field mt-1">${APPT_TYPES.map(
-            (t) => `<option>${esc(t)}</option>`
-          ).join('')}</select></label>
-          <label class="text-sm font-600">Start<input id="aStart" type="datetime-local" value="${iso}" class="field mt-1"/></label>
-          <label class="text-sm font-600">Lead${
-            preset
-              ? ` <span class="font-400 text-muted">— ${esc(preset.lead.name)}</span>`
-              : ''
-          }<input id="aLead" list="leadPool" class="field mt-1" placeholder="search title, name or email" value="${
-            preset ? esc(leadOpt(preset)) : ''
-          }"/>
-            <datalist id="leadPool">${state.records
-              .map((r) => `<option value="${esc(leadOpt(r))}">`)
-              .join('')}</datalist></label>
-          <label class="text-sm font-600">Notes<input id="aNotes" class="field mt-1"/></label>
-          <button id="aSave" class="btn-primary">Save appointment</button>
-        </div>
-      </div>
-    </div>`)
-  $('dwClose').addEventListener('click', closeDrawer)
-  $('drawerBody')
-    .querySelectorAll('[data-del]')
-    .forEach((b) =>
-      b.addEventListener('click', async () => {
-        try {
-          await deleteAppointment(+b.dataset.del, b.dataset.lead, getEmail(), b.dataset.label)
-          toast('Removed')
-          await reload(false)
-          openApptForm(date, presetLead)
-        } catch (e) {
-          toast('Failed: ' + e.message)
-        }
-      })
-    )
-  $('aSave').onclick = async () => {
-    const val = $('aLead').value.trim()
-    let leadId = optMap[val]
-    if (!leadId && val) {
-      const m = state.records.find((r) =>
-        [leadTitle(r.lead, r.track), r.lead.name, r.lead.email].some(
-          (s) => (s || '').toLowerCase() === val.toLowerCase()
-        )
-      )
-      leadId = m?.lead.id
-    }
-    try {
-      await addAppointment(
-        {
-          lead_id: leadId || (preset ? preset.lead.id : ''),
-          type: $('aType').value,
-          start: new Date($('aStart').value).toISOString(),
-          notes: $('aNotes').value.trim(),
-        },
-        getEmail()
-      )
-      toast('Appointment saved')
-      await reload(false)
-      openApptForm(date, presetLead)
-    } catch (e) {
-      toast('Failed: ' + e.message)
-    }
-  }
 }
 
 /* ---------- To-Do ---------- */
@@ -1390,6 +1590,79 @@ function todo(v) {
       }
     })
   )
+}
+
+/* ---------- Notes page ---------- */
+function notesView(v) {
+  const rows = [...state.notes].sort(
+    (a, b) => new Date(b.timestamp) - new Date(a.timestamp)
+  )
+  const allTags = [
+    ...new Set(
+      state.notes.flatMap((n) =>
+        String(n.tags || '')
+          .split(',')
+          .map((s) => s.trim())
+          .filter(Boolean)
+      )
+    ),
+  ].sort()
+  const leadLabel = (lid) => {
+    const r = state.records.find((x) => x.lead.id === lid)
+    return r ? leadTitle(r.lead, r.track) : lid || '(no lead)'
+  }
+  v.innerHTML = `
+    <div class="mb-4 flex flex-wrap items-center gap-3">
+      <span class="text-sm text-muted">${rows.length} note${rows.length === 1 ? '' : 's'}</span>
+      <input id="nQ" placeholder="Search by lead…" class="field !w-64" />
+      <select id="nTag" class="field !w-auto">
+        <option value="">All tags</option>
+        ${allTags.map((t) => `<option>${esc(t)}</option>`).join('')}
+      </select>
+    </div>
+    <div class="card divide-y divide-line">
+      <div id="nRows">
+        ${
+          rows
+            .map((n) => {
+              const ll = leadLabel(n.lead_id)
+              const s = `${ll} ${n.text} ${n.tags}`.toLowerCase()
+              return `<button data-note="${n._row}" data-s="${esc(s)}" data-tags="${esc(n.tags || '')}" class="flex w-full items-start gap-3 p-4 text-left hover:bg-app">
+              <div class="min-w-0 flex-1">
+                <p class="truncate text-sm font-600">${esc(ll)}</p>
+                <p class="mt-0.5 line-clamp-2 text-sm text-ink-700">${esc(n.text)}</p>
+                <p class="mt-1 text-[11px] text-muted">${fmtDT(n.timestamp)} · ${esc(n.author)}${
+                  n.tags ? ` · <span class="text-brand-700">${esc(n.tags)}</span>` : ''
+                }${n.appt_id ? ' · visit' : ''}</p>
+              </div>
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="mt-1 shrink-0 text-muted"><path d="M9 18l6-6-6-6"/></svg>
+            </button>`
+            })
+            .join('') ||
+          '<p class="p-10 text-center text-sm text-muted">No notes yet</p>'
+        }
+      </div>
+    </div>`
+  const apply = () => {
+    const term = $('nQ').value.toLowerCase()
+    const tag = $('nTag').value
+    for (const b of $('nRows').children) {
+      if (!b.dataset) continue
+      const okText = !term || (b.dataset.s || '').includes(term)
+      const okTag =
+        !tag ||
+        String(b.dataset.tags || '')
+          .split(',')
+          .map((s) => s.trim())
+          .includes(tag)
+      b.hidden = !(okText && okTag)
+    }
+  }
+  $('nQ').addEventListener('input', apply)
+  $('nTag').addEventListener('change', apply)
+  $('nRows')
+    .querySelectorAll('[data-note]')
+    .forEach((b) => b.addEventListener('click', () => openEditNote(+b.dataset.note)))
 }
 
 start()
