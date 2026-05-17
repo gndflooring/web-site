@@ -41,6 +41,9 @@ jobs:
         env:
           SHEETS_URL: ${{ vars.SHEETS_URL }}
           RECAPTCHA_SITE_KEY: ${{ vars.RECAPTCHA_SITE_KEY }}
+          GOOGLE_OAUTH_CLIENT_ID: ${{ vars.GOOGLE_OAUTH_CLIENT_ID }}
+          SHEETS_SPREADSHEET_ID: ${{ vars.SHEETS_SPREADSHEET_ID }}
+          ADMIN_ALLOWED_EMAILS: ${{ vars.ADMIN_ALLOWED_EMAILS }}
 
       - name: Setup Pages
         uses: actions/configure-pages@v5
