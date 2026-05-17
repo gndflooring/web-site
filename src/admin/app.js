@@ -34,6 +34,7 @@ let state = null
 let items = []
 let view = 'dashboard'
 let calCursor = new Date()
+let calMode = 'month' // 'day' | 'week' | 'month' | 'list'
 let wired = false
 const collapsedCols = new Set()
 const savingLeads = new Set()
@@ -992,74 +993,202 @@ function exportCsv(rows) {
   URL.revokeObjectURL(a.href)
 }
 
-/* ---------- Calendar ---------- */
+/* ---------- Calendar (Day / Week / Month / List) ---------- */
 function calendar(v) {
-  const y = calCursor.getFullYear()
-  const m = calCursor.getMonth()
-  const startDow = new Date(y, m, 1).getDay()
-  const days = new Date(y, m + 1, 0).getDate()
-  const byDay = {}
-  state.schedule.forEach((a) => {
-    const d = new Date(a.start)
-    if (!isNaN(d) && d.getFullYear() === y && d.getMonth() === m)
-      (byDay[d.getDate()] ||= []).push(a)
-  })
-  state.tasks.forEach((t) => {
-    if (!t.due_date) return
-    const d = new Date(t.due_date)
-    if (!isNaN(d) && d.getFullYear() === y && d.getMonth() === m)
-      (byDay[d.getDate()] ||= []).push({ _task: true, ...t })
-  })
-  const todayKey = new Date().toDateString()
-  let cells = ''
-  for (let i = 0; i < startDow; i++) cells += '<div></div>'
-  for (let d = 1; d <= days; d++) {
-    const isToday = new Date(y, m, d).toDateString() === todayKey
-    cells += `<button class="min-h-28 rounded-xl border bg-surface p-2 text-left transition hover:border-brand-400 ${
-      isToday ? 'border-brand-400 ring-1 ring-brand-200' : 'border-line'
-    }" data-day="${d}">
-      <span class="text-xs font-700 ${isToday ? 'text-brand-700' : 'text-muted'}">${d}</span>
-      ${(byDay[d] || [])
-        .slice(0, 4)
-        .map((x) =>
-          x._task
-            ? `<div class="mt-1 truncate rounded bg-amber-100 px-1.5 py-0.5 text-[11px] text-amber-800">📋 ${esc(x.title)}</div>`
-            : `<div class="mt-1 truncate rounded bg-brand-100 px-1.5 py-0.5 text-[11px] text-brand-800">${esc(
-                x.type
-              )} ${esc(leadName(x.lead_id) || '')}</div>`
-        )
-        .join('')}
-    </button>`
+  const today = new Date()
+  const sameDay = (a, b) => a.toDateString() === b.toDateString()
+  const WD = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat']
+
+  const events = [
+    ...state.schedule
+      .map((a) => ({ when: new Date(a.start), kind: 'appt', a }))
+      .filter((x) => !isNaN(x.when)),
+    ...state.tasks
+      .filter((t) => t.due_date)
+      .map((t) => ({ when: new Date(t.due_date), kind: 'task', t }))
+      .filter((x) => !isNaN(x.when)),
+  ]
+  const itemsOn = (d) =>
+    events.filter((x) => sameDay(x.when, d)).sort((a, b) => a.when - b.when)
+  const tnow = (d) =>
+    d.toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' })
+
+  const chip = (x, withTime) =>
+    x.kind === 'task'
+      ? `<div class="truncate rounded bg-amber-100 px-1.5 py-0.5 text-[11px] text-amber-800" title="${esc(
+          x.t.title
+        )}">📋 ${esc(x.t.title)}</div>`
+      : `<div class="truncate rounded bg-brand-100 px-1.5 py-0.5 text-[11px] text-brand-800 ${
+          x.a.lead_id ? 'cursor-pointer' : ''
+        }" ${x.a.lead_id ? `data-lead="${esc(x.a.lead_id)}"` : ''} title="${esc(
+          x.a.type
+        )} ${esc(leadName(x.a.lead_id) || x.a.notes || '')}">${
+          withTime ? esc(tnow(x.when)) + ' ' : ''
+        }${esc(x.a.type)} ${esc(leadName(x.a.lead_id) || '')}</div>`
+
+  const eventRow = (x, showDate) => {
+    const meta = `${showDate ? esc(x.when.toLocaleDateString([], { month: 'short', day: 'numeric' })) + ' · ' : ''}${esc(tnow(x.when))}`
+    if (x.kind === 'task')
+      return `<div class="flex items-center gap-3 px-4 py-3">
+        <span class="badge bg-amber-100 text-amber-800">Task</span>
+        <span class="text-sm">${esc(x.t.title)}</span>
+        <span class="ml-auto text-xs text-muted">${meta}</span></div>`
+    return `<div class="flex items-center gap-3 px-4 py-3 ${
+      x.a.lead_id ? 'cursor-pointer hover:bg-app' : ''
+    }" ${x.a.lead_id ? `data-lead="${esc(x.a.lead_id)}"` : ''}>
+      <span class="badge bg-brand-100 text-brand-800">${esc(x.a.type)}</span>
+      <span class="text-sm">${esc(leadName(x.a.lead_id) || x.a.notes || '—')}</span>
+      <span class="ml-auto text-xs text-muted">${meta}</span></div>`
   }
+
+  let title = ''
+  let body = ''
+
+  if (calMode === 'month') {
+    const y = calCursor.getFullYear()
+    const m = calCursor.getMonth()
+    const startDow = new Date(y, m, 1).getDay()
+    const days = new Date(y, m + 1, 0).getDate()
+    title = calCursor.toLocaleString([], { month: 'long', year: 'numeric' })
+    let cells = ''
+    for (let i = 0; i < startDow; i++) cells += '<div></div>'
+    for (let d = 1; d <= days; d++) {
+      const dt = new Date(y, m, d)
+      const its = itemsOn(dt)
+      const isToday = sameDay(dt, today)
+      cells += `<div data-date="${dt.getTime()}" class="min-h-28 cursor-pointer rounded-xl border bg-surface p-2 transition hover:border-brand-400 ${
+        isToday ? 'border-brand-400 ring-1 ring-brand-200' : 'border-line'
+      }">
+        <span class="text-xs font-700 ${isToday ? 'text-brand-700' : 'text-muted'}">${d}</span>
+        <div class="mt-1 space-y-1">${its.slice(0, 4).map((x) => chip(x, false)).join('')}</div>
+        ${its.length > 4 ? `<p class="mt-1 text-[11px] text-muted">+${its.length - 4} more</p>` : ''}
+      </div>`
+    }
+    body = `<div class="grid grid-cols-7 gap-1.5 text-center text-xs font-700 text-muted">
+        ${WD.map((d) => `<div>${d}</div>`).join('')}
+      </div>
+      <div class="mt-1.5 grid grid-cols-7 gap-1.5">${cells}</div>`
+  } else if (calMode === 'week') {
+    const ws = new Date(calCursor)
+    ws.setDate(ws.getDate() - ws.getDay())
+    ws.setHours(0, 0, 0, 0)
+    const wdays = [...Array(7)].map((_, i) => {
+      const d = new Date(ws)
+      d.setDate(ws.getDate() + i)
+      return d
+    })
+    title = `${wdays[0].toLocaleDateString([], { month: 'short', day: 'numeric' })} – ${wdays[6].toLocaleDateString([], { month: 'short', day: 'numeric', year: 'numeric' })}`
+    body = `<div class="grid grid-cols-1 gap-1.5 sm:grid-cols-7">${wdays
+      .map((d) => {
+        const its = itemsOn(d)
+        const isToday = sameDay(d, today)
+        return `<div data-date="${d.getTime()}" class="min-h-48 cursor-pointer rounded-xl border bg-surface p-2 ${
+          isToday ? 'border-brand-400 ring-1 ring-brand-200' : 'border-line'
+        }">
+          <p class="text-xs font-700 ${isToday ? 'text-brand-700' : 'text-muted'}">${d.toLocaleDateString([], { weekday: 'short', day: 'numeric' })}</p>
+          <div class="mt-1.5 space-y-1">${its.map((x) => chip(x, true)).join('') || '<p class="text-[11px] text-muted">—</p>'}</div>
+        </div>`
+      })
+      .join('')}</div>`
+  } else if (calMode === 'day') {
+    title = calCursor.toLocaleDateString([], { dateStyle: 'full' })
+    const dt = new Date(
+      calCursor.getFullYear(),
+      calCursor.getMonth(),
+      calCursor.getDate()
+    )
+    const its = itemsOn(calCursor)
+    body = `<div data-date="${dt.getTime()}" class="card cursor-pointer divide-y divide-line">
+      ${its.map((x) => eventRow(x, false)).join('') || '<p class="p-10 text-center text-sm text-muted">No appointments. Click to add one.</p>'}
+    </div>`
+  } else {
+    title = 'Agenda'
+    const sorted = [...events].sort((a, b) => a.when - b.when)
+    const groups = []
+    let cur = null
+    for (const x of sorted) {
+      const key = x.when.toDateString()
+      if (!cur || cur.key !== key) {
+        cur = {
+          key,
+          label:
+            (sameDay(x.when, today) ? 'Today · ' : '') +
+            x.when.toLocaleDateString([], { weekday: 'long', month: 'long', day: 'numeric', year: 'numeric' }),
+          items: [],
+        }
+        groups.push(cur)
+      }
+      cur.items.push(x)
+    }
+    body = groups.length
+      ? groups
+          .map(
+            (g) => `<div class="mb-5">
+        <p class="mb-2 text-xs font-700 uppercase tracking-wider text-muted">${esc(g.label)}</p>
+        <div class="card divide-y divide-line">${g.items.map((x) => eventRow(x, false)).join('')}</div>
+      </div>`
+          )
+          .join('')
+      : '<div class="card p-10 text-center text-muted">Nothing scheduled</div>'
+  }
+
+  const seg = (mode, label) =>
+    `<button data-mode="${mode}" class="px-3 py-1.5 text-sm font-600 ${
+      calMode === mode ? 'bg-brand-600 text-white' : 'text-ink-700 hover:bg-app'
+    }">${label}</button>`
+
   v.innerHTML = `
-    <div class="mb-4 flex items-center gap-2">
-      <button id="pm" class="btn-ghost !px-2.5">‹</button>
-      <h2 class="min-w-44 text-center text-lg font-700">${esc(
-        calCursor.toLocaleString([], { month: 'long', year: 'numeric' })
-      )}</h2>
-      <button id="nm" class="btn-ghost !px-2.5">›</button>
-      <button id="tm" class="btn-ghost">Today</button>
+    <div class="mb-4 flex flex-wrap items-center gap-2">
+      <div class="inline-flex divide-x divide-line overflow-hidden rounded-lg border border-line bg-surface">
+        ${seg('day', 'Day')}${seg('week', 'Week')}${seg('month', 'Month')}${seg('list', 'List')}
+      </div>
+      ${
+        calMode !== 'list'
+          ? `<button id="pm" class="btn-ghost !px-2.5">‹</button>
+             <button id="tm" class="btn-ghost">Today</button>
+             <button id="nm" class="btn-ghost !px-2.5">›</button>`
+          : ''
+      }
+      <h2 class="text-lg font-700">${esc(title)}</h2>
       <button id="addAppt" class="btn-primary ml-auto">+ Appointment</button>
     </div>
-    <div class="grid grid-cols-7 gap-1.5 text-center text-xs font-700 text-muted">
-      ${['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'].map((d) => `<div>${d}</div>`).join('')}
-    </div>
-    <div class="mt-1.5 grid grid-cols-7 gap-1.5">${cells}</div>`
-  $('pm').onclick = () => {
-    calCursor = new Date(y, m - 1, 1)
-    render()
+    ${body}`
+
+  v.querySelectorAll('[data-mode]').forEach((b) =>
+    b.addEventListener('click', () => {
+      calMode = b.dataset.mode
+      calendar(v)
+    })
+  )
+  if (calMode !== 'list') {
+    const shift = (dir) => {
+      const d = new Date(calCursor)
+      if (calMode === 'month') d.setMonth(d.getMonth() + dir)
+      else if (calMode === 'week') d.setDate(d.getDate() + 7 * dir)
+      else d.setDate(d.getDate() + dir)
+      calCursor = d
+      calendar(v)
+    }
+    $('pm').onclick = () => shift(-1)
+    $('nm').onclick = () => shift(1)
+    $('tm').onclick = () => {
+      calCursor = new Date()
+      calendar(v)
+    }
   }
-  $('nm').onclick = () => {
-    calCursor = new Date(y, m + 1, 1)
-    render()
-  }
-  $('tm').onclick = () => {
-    calCursor = new Date()
-    render()
-  }
-  $('addAppt').onclick = () => openApptForm(new Date())
-  v.querySelectorAll('[data-day]').forEach((b) =>
-    b.addEventListener('click', () => openApptForm(new Date(y, m, +b.dataset.day)))
+  $('addAppt').onclick = () =>
+    openApptForm(calMode === 'day' ? new Date(calCursor) : new Date())
+  v.querySelectorAll('[data-date]').forEach((el) =>
+    el.addEventListener('click', (e) => {
+      if (e.target.closest('[data-lead]')) return
+      openApptForm(new Date(+el.dataset.date))
+    })
+  )
+  v.querySelectorAll('[data-lead]').forEach((el) =>
+    el.addEventListener('click', (e) => {
+      e.stopPropagation()
+      openLead(el.dataset.lead)
+    })
   )
 }
 
@@ -1072,6 +1201,10 @@ function openApptForm(date, presetLead) {
     .sort((a, b) => new Date(a.start) - new Date(b.start))
   const iso = new Date(date.getTime() - date.getTimezoneOffset() * 60000).toISOString().slice(0, 16)
   const preset = presetLead ? state.records.find((r) => r.lead.id === presetLead) : null
+  const leadOpt = (r) =>
+    [leadTitle(r.lead, r.track), r.lead.name, r.lead.email].filter(Boolean).join(' · ')
+  const optMap = {}
+  state.records.forEach((r) => (optMap[leadOpt(r)] = r.lead.id))
   openDrawer(`
     <header class="flex items-start justify-between border-b border-line p-5">
       <div>
@@ -1106,11 +1239,11 @@ function openApptForm(date, presetLead) {
             preset
               ? ` <span class="font-400 text-muted">— ${esc(preset.lead.name)}</span>`
               : ''
-          }<input id="aLead" list="leadPool" class="field mt-1" placeholder="search name / email" value="${
-            preset ? esc(preset.lead.name + ' — ' + preset.lead.email) : ''
+          }<input id="aLead" list="leadPool" class="field mt-1" placeholder="search title, name or email" value="${
+            preset ? esc(leadOpt(preset)) : ''
           }"/>
             <datalist id="leadPool">${state.records
-              .map((r) => `<option value="${esc(r.lead.name)} — ${esc(r.lead.email)}">`)
+              .map((r) => `<option value="${esc(leadOpt(r))}">`)
               .join('')}</datalist></label>
           <label class="text-sm font-600">Notes<input id="aNotes" class="field mt-1"/></label>
           <button id="aSave" class="btn-primary">Save appointment</button>
@@ -1133,13 +1266,20 @@ function openApptForm(date, presetLead) {
       })
     )
   $('aSave').onclick = async () => {
-    const match = state.records.find(
-      (r) => `${r.lead.name} — ${r.lead.email}` === $('aLead').value
-    )
+    const val = $('aLead').value.trim()
+    let leadId = optMap[val]
+    if (!leadId && val) {
+      const m = state.records.find((r) =>
+        [leadTitle(r.lead, r.track), r.lead.name, r.lead.email].some(
+          (s) => (s || '').toLowerCase() === val.toLowerCase()
+        )
+      )
+      leadId = m?.lead.id
+    }
     try {
       await addAppointment(
         {
-          lead_id: match?.lead.id || (preset ? preset.lead.id : ''),
+          lead_id: leadId || (preset ? preset.lead.id : ''),
           type: $('aType').value,
           start: new Date($('aStart').value).toISOString(),
           notes: $('aNotes').value.trim(),
