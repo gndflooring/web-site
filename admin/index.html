@@ -4,7 +4,7 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <meta name="robots" content="noindex, nofollow" />
-    <meta name="theme-color" content="#15212b" />
+    <meta name="theme-color" content="#16222e" />
     <title>G&amp;D Flooring — Admin</title>
     <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
     <link rel="preconnect" href="https://fonts.googleapis.com" />
@@ -16,17 +16,13 @@
     <script src="https://accounts.google.com/gsi/client" async defer></script>
   </head>
   <body>
-    <!-- ===== Sign-in screen ===== -->
+    <!-- ===== Sign-in ===== -->
     <section id="signin" class="grid min-h-screen place-items-center px-6">
-      <div class="card w-full max-w-md p-10 text-center">
-        <div class="mx-auto grid h-14 w-14 place-items-center rounded-2xl bg-brand-600 font-display text-xl font-700 text-white">
-          G&amp;D
-        </div>
-        <h1 class="mt-6 text-2xl font-600">Admin Console</h1>
-        <p class="mt-2 text-sm text-muted">
-          Lead tracking &amp; scheduling. Authorised Google accounts only.
-        </p>
-        <button id="signInBtn" class="btn-primary mt-8 w-full">
+      <div class="card w-full max-w-sm p-9 text-center">
+        <div class="mx-auto grid h-14 w-14 place-items-center rounded-2xl bg-brand-600 font-display text-xl font-700 text-white">G&amp;D</div>
+        <h1 class="mt-6 text-2xl font-700">Admin Console</h1>
+        <p class="mt-2 text-sm text-muted">Lead tracking &amp; scheduling.<br />Authorised Google accounts only.</p>
+        <button id="signInBtn" class="btn-primary mt-7 w-full">
           <svg width="18" height="18" viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M21.35 11.1H12v2.9h5.35c-.25 1.4-1.7 4.1-5.35 4.1-3.2 0-5.85-2.65-5.85-5.95S8.8 6.2 12 6.2c1.85 0 3.05.78 3.75 1.45l2.55-2.45C16.7 3.7 14.55 2.8 12 2.8 6.95 2.8 2.85 6.9 2.85 12S6.95 21.2 12 21.2c5.3 0 8.8-3.7 8.8-8.95 0-.6-.06-1.05-.15-1.5z"/></svg>
           Sign in with Google
         </button>
@@ -35,35 +31,58 @@
       </div>
     </section>
 
-    <!-- ===== App ===== -->
-    <div id="app" hidden>
-      <header class="sticky top-0 z-30 border-b border-ink/10 bg-cream/90 backdrop-blur">
-        <div class="mx-auto flex max-w-7xl flex-wrap items-center gap-4 px-5 py-3">
-          <div class="flex items-center gap-2.5">
-            <span class="grid h-9 w-9 place-items-center rounded-lg bg-brand-600 font-display text-sm font-700 text-white">G&amp;D</span>
-            <span class="font-display text-lg font-600">Admin</span>
-          </div>
-          <nav id="tabs" class="flex flex-wrap gap-1 text-sm font-500" aria-label="Views">
-            <button data-view="dashboard" class="rounded-lg px-3 py-1.5">Dashboard</button>
-            <button data-view="board" class="rounded-lg px-3 py-1.5">Board</button>
-            <button data-view="leads" class="rounded-lg px-3 py-1.5">Leads</button>
-            <button data-view="calendar" class="rounded-lg px-3 py-1.5">Calendar</button>
-            <button data-view="todo" class="rounded-lg px-3 py-1.5">To-Do</button>
-          </nav>
-          <div class="ml-auto flex items-center gap-3 text-sm">
+    <!-- ===== App shell ===== -->
+    <div id="app" hidden class="flex min-h-screen">
+      <!-- Sidebar -->
+      <aside
+        id="sidebar"
+        class="fixed inset-y-0 left-0 z-40 flex w-60 -translate-x-full flex-col bg-sidebar px-4 py-5 text-white transition-transform lg:translate-x-0"
+      >
+        <div class="flex items-center gap-2.5 px-2">
+          <span class="grid h-9 w-9 place-items-center rounded-lg bg-brand-600 font-display text-sm font-700">G&amp;D</span>
+          <span class="font-display text-lg font-600">Admin</span>
+        </div>
+        <nav id="nav" class="mt-8 flex flex-1 flex-col gap-1" aria-label="Views">
+          <a class="side-link" data-view="dashboard"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="9"/><rect x="14" y="3" width="7" height="5"/><rect x="14" y="12" width="7" height="9"/><rect x="3" y="16" width="7" height="5"/></svg> Dashboard</a>
+          <a class="side-link" data-view="board"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="6" height="18"/><rect x="9.5" y="3" width="6" height="12"/><rect x="16" y="3" width="5" height="8"/></svg> Board</a>
+          <a class="side-link" data-view="leads"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18M3 12h18M3 18h18"/></svg> Leads</a>
+          <a class="side-link" data-view="calendar"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="17" rx="2"/><path d="M3 9h18M8 2v4M16 2v4"/></svg> Calendar</a>
+          <a class="side-link" data-view="todo"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 11l3 3 8-8"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg> To-Do</a>
+        </nav>
+        <div class="mt-4 border-t border-white/10 pt-4">
+          <p id="userEmail" class="truncate px-2 text-xs text-white/50"></p>
+          <button id="signOutBtn" class="side-link mt-1 w-full">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4M16 17l5-5-5-5M21 12H9"/></svg>
+            Sign out
+          </button>
+        </div>
+      </aside>
+
+      <!-- Content -->
+      <div class="flex min-h-screen w-full flex-col lg:pl-60">
+        <header class="sticky top-0 z-30 flex items-center gap-4 border-b border-line bg-app/85 px-5 py-3 backdrop-blur sm:px-7">
+          <button id="menuBtn" class="btn-ghost !px-2 lg:hidden" aria-label="Menu">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M3 6h18M3 12h18M3 18h18"/></svg>
+          </button>
+          <h1 id="pageTitle" class="text-xl font-700">Dashboard</h1>
+          <div class="ml-auto flex items-center gap-2.5">
+            <input id="search" type="search" placeholder="Search leads…" class="field hidden w-56 sm:block" />
             <button id="refreshBtn" class="btn-ghost" title="Reload from the Sheet">
               <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12a9 9 0 0 1 15-6.7L21 8"/><path d="M21 3v5h-5"/><path d="M21 12a9 9 0 0 1-15 6.7L3 16"/><path d="M3 21v-5h5"/></svg>
-              Refresh
+              <span class="hidden sm:inline">Refresh</span>
             </button>
-            <span id="userEmail" class="hidden text-muted sm:inline"></span>
-            <button id="signOutBtn" class="btn-ghost">Sign out</button>
           </div>
-        </div>
-      </header>
+        </header>
+        <main id="view" class="flex-1 p-5 sm:p-7"></main>
+      </div>
 
-      <main id="view" class="mx-auto max-w-7xl px-5 py-7"></main>
+      <!-- Slide-over drawer -->
+      <div id="drawerBackdrop" class="fixed inset-0 z-40 bg-ink/40"></div>
+      <aside id="drawer" class="fixed inset-y-0 right-0 z-50 flex w-full max-w-xl flex-col bg-surface shadow-2xl">
+        <div id="drawerBody" class="flex h-full flex-col overflow-hidden"></div>
+      </aside>
 
-      <div id="toast" class="pointer-events-none fixed bottom-6 left-1/2 z-50 -translate-x-1/2 rounded-full bg-ink px-5 py-2.5 text-sm font-500 text-white opacity-0 transition-opacity duration-300"></div>
+      <div id="toast" class="pointer-events-none fixed bottom-6 left-1/2 z-[60] -translate-x-1/2 rounded-full bg-ink px-5 py-2.5 text-sm font-500 text-white opacity-0 transition-opacity duration-300"></div>
     </div>
 
     <script type="module" src="/src/admin/app.js"></script>
