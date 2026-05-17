@@ -33,6 +33,8 @@ let items = []
 let view = 'dashboard'
 let calCursor = new Date()
 let wired = false
+const collapsedCols = new Set()
+const savingLeads = new Set()
 
 function toast(msg) {
   const t = $('toast')
@@ -105,7 +107,7 @@ async function enterApp() {
 }
 
 async function reload(notify) {
-  $('view').innerHTML = skeleton()
+  if (!state) $('view').innerHTML = skeleton() // skeleton only on first load, no flash on refresh
   try {
     await ensureTabs()
     state = await loadAll()
@@ -265,6 +267,16 @@ function dashboard(v) {
 }
 
 /* ---------- Board ---------- */
+function cardHtml(r, sev) {
+  return `<div class="card cursor-grab p-3 sla-${sev[r.lead.id] || 'normal'}" draggable="true" data-id="${esc(
+    r.lead.id
+  )}">
+    <p class="text-sm font-700">${esc(r.lead.name || 'Lead')}</p>
+    <p class="truncate text-xs text-muted">${esc(r.lead.service || '')}</p>
+    ${r.track?.tags ? `<p class="mt-1.5 truncate text-[11px] text-brand-700">${esc(r.track.tags)}</p>` : ''}
+  </div>`
+}
+
 function board(v) {
   const sev = severityByLead(items)
   const cols = {}
@@ -273,31 +285,59 @@ function board(v) {
     const s = r.track?.status && PIPELINE.includes(r.track.status) ? r.track.status : 'New'
     cols[s].push(r)
   })
-  v.innerHTML = `
-    <p class="mb-4 text-sm text-muted">Drag a card between columns to change status. Click a card for details.</p>
-    <div class="flex gap-4 overflow-x-auto pb-4">
-      ${PIPELINE.map(
-        (s) => `<div class="kanban-col">
-        <div class="mb-2 flex items-center justify-between px-1">
-          <span class="badge ${stCls(s)}">${esc(s)}</span>
-          <span class="text-xs font-600 text-muted">${cols[s].length}</span>
-        </div>
-        <div class="col-drop space-y-2 rounded-xl bg-black/[0.025] p-2" data-col="${esc(s)}" style="min-height:140px">
-          ${cols[s]
-            .map(
-              (r) => `<div class="card cursor-grab p-3 sla-${sev[r.lead.id] || 'normal'}" draggable="true" data-id="${esc(
-                r.lead.id
-              )}">
-            <p class="text-sm font-700">${esc(r.lead.name || 'Lead')}</p>
-            <p class="truncate text-xs text-muted">${esc(r.lead.service || '')}</p>
-            ${r.track?.tags ? `<p class="mt-1.5 truncate text-[11px] text-brand-700">${esc(r.track.tags)}</p>` : ''}
-          </div>`
-            )
-            .join('')}
-        </div>
+
+  const column = (s) => {
+    const n = cols[s].length
+    if (collapsedCols.has(s)) {
+      return `<div class="js-drop flex w-12 shrink-0 cursor-pointer flex-col items-center gap-3 rounded-xl bg-black/[0.03] py-3" data-col="${esc(
+        s
+      )}" data-collapsed="1" title="Expand ${esc(s)}">
+        <span class="text-muted"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18l6-6-6-6"/></svg></span>
+        <span class="badge ${stCls(s)}">${n}</span>
+        <span class="mt-1 rotate-180 text-xs font-700 text-muted [writing-mode:vertical-rl]">${esc(s)}</span>
       </div>`
-      ).join('')}
+    }
+    return `<div class="kanban-col">
+      <div class="mb-2 flex items-center justify-between gap-2 px-1">
+        <span class="badge ${stCls(s)}">${esc(s)}</span>
+        <div class="flex items-center gap-1.5">
+          <span class="text-xs font-600 text-muted">${n}</span>
+          <button class="js-collapse rounded p-0.5 text-muted hover:bg-black/5 hover:text-ink" data-col="${esc(
+            s
+          )}" aria-label="Collapse ${esc(s)}">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 18l-6-6 6-6"/></svg>
+          </button>
+        </div>
+      </div>
+      <div class="js-drop col-drop space-y-2 rounded-xl bg-black/[0.03] p-2" data-col="${esc(s)}" style="min-height:140px">
+        ${cols[s].map((r) => cardHtml(r, sev)).join('')}
+      </div>
     </div>`
+  }
+
+  const prevScroll = document.getElementById('boardScroll')?.scrollLeft || 0
+  v.innerHTML = `
+    <p class="mb-4 text-sm text-muted">Drag a card between columns to change status · click a card for details · use the arrow to collapse a column.</p>
+    <div id="boardScroll" class="flex gap-4 overflow-x-auto pb-4">
+      ${PIPELINE.map(column).join('')}
+    </div>`
+  const scroller = document.getElementById('boardScroll')
+  if (scroller) scroller.scrollLeft = prevScroll
+
+  const toggle = (s, collapse) => {
+    collapse ? collapsedCols.add(s) : collapsedCols.delete(s)
+    board(v)
+  }
+  v.querySelectorAll('.js-collapse').forEach((b) =>
+    b.addEventListener('click', (e) => {
+      e.stopPropagation()
+      toggle(b.dataset.col, true)
+    })
+  )
+  v.querySelectorAll('[data-collapsed]').forEach((el) =>
+    el.addEventListener('click', () => toggle(el.dataset.col, false))
+  )
+
   let dragId = null
   let dragging = false
   v.querySelectorAll('[draggable=true]').forEach((c) => {
@@ -305,31 +345,63 @@ function board(v) {
       dragId = c.dataset.id
       dragging = true
     })
-    c.addEventListener('dragend', () => setTimeout(() => (dragging = false), 50))
+    c.addEventListener('dragend', () => setTimeout(() => (dragging = false), 60))
     c.addEventListener('click', () => {
       if (!dragging) openLead(c.dataset.id)
     })
   })
-  v.querySelectorAll('.col-drop').forEach((col) => {
+  v.querySelectorAll('.js-drop').forEach((col) => {
     col.addEventListener('dragover', (e) => {
       e.preventDefault()
       col.classList.add('drag-over')
     })
     col.addEventListener('dragleave', () => col.classList.remove('drag-over'))
-    col.addEventListener('drop', async () => {
+    col.addEventListener('drop', (e) => {
+      e.preventDefault()
       col.classList.remove('drag-over')
-      const rec = state.records.find((r) => r.lead.id === dragId)
-      const ns = col.dataset.col
-      if (!rec || (rec.track?.status || 'New') === ns) return
-      try {
-        await saveTracking(dragId, { status: ns }, getEmail(), rec.track)
-        toast(`Moved to ${ns}`)
-        await reload(false)
-      } catch (e) {
-        toast('Save failed: ' + e.message)
-      }
+      moveCard(dragId, col.dataset.col)
     })
   })
+}
+
+// Optimistic status move: mutate local state + re-render the board instantly
+// (no skeleton, no network on the visible path, scroll preserved), persist in
+// the background, then quietly resync. Reverts on failure.
+async function moveCard(leadId, ns) {
+  const rec = state.records.find((r) => r.lead.id === leadId)
+  if (!rec || !ns) return
+  const prevStatus = rec.track?.status || 'New'
+  if (prevStatus === ns || savingLeads.has(leadId)) return
+  savingLeads.add(leadId)
+
+  const prevSnap = rec.track ? { ...rec.track } : null
+  if (rec.track) {
+    rec.track.status = ns
+  } else {
+    rec.track = { id: leadId, status: ns, tags: '', notes: '', updated_at: '', updated_by: '' }
+    state.tracking.push(rec.track)
+    state.trackMap[leadId] = rec.track
+  }
+  items = computeNeedsAction(state)
+  if (view === 'board') board($('view'))
+  toast(`Moved to ${ns}`)
+
+  try {
+    await saveTracking(leadId, { status: ns }, getEmail(), prevSnap)
+    state = await loadAll() // silent resync (refreshes row indices); no re-render
+    items = computeNeedsAction(state)
+  } catch (e) {
+    toast('Save failed: ' + e.message)
+    try {
+      state = await loadAll()
+      items = computeNeedsAction(state)
+    } catch {
+      /* keep optimistic state */
+    }
+    if (view === 'board') board($('view'))
+  } finally {
+    savingLeads.delete(leadId)
+  }
 }
 
 /* ---------- Leads table ---------- */
