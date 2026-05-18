@@ -19,6 +19,7 @@ import {
   deleteTag,
 } from './sheets.js'
 import { computeNeedsAction, severityByLead } from './heuristics.js'
+import { mountWebsite } from './website.js'
 
 const $ = (id) => document.getElementById(id)
 const esc = (s) =>
@@ -33,7 +34,7 @@ const fmtD = (v) => {
   return isNaN(d) ? esc(v || '—') : d.toLocaleDateString([], { dateStyle: 'medium' })
 }
 const badge = (s) => `<span class="badge ${stCls(s)}"><span class="dot"></span>${esc(s || 'New')}</span>`
-const TITLES = { dashboard: 'Dashboard', board: 'Pipeline Board', leads: 'Leads', calendar: 'Calendar', todo: 'To-Do', notes: 'Notes', settings: 'Settings' }
+const TITLES = { dashboard: 'Dashboard', board: 'Pipeline Board', leads: 'Leads', calendar: 'Calendar', todo: 'To-Do', notes: 'Notes', settings: 'Settings', website: 'Website' }
 
 let state = null
 let items = []
@@ -415,6 +416,7 @@ function render() {
   else if (view === 'todo') todo(v)
   else if (view === 'notes') notesView(v)
   else if (view === 'settings') settingsView(v)
+  else if (view === 'website') mountWebsite(v)
 }
 
 const sevColor = { urgent: 'bg-rose-500', due: 'bg-amber-500', normal: 'bg-slate-300' }
