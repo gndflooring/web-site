@@ -1,0 +1,139 @@
+{
+  "meta": {
+    "title": "G&D Flooring — Premium Flooring & Renovations",
+    "description": "G&D Flooring is a premium flooring contractor specializing in hardwood, luxury vinyl, tile & stone, and bathroom renovations. Craftsmanship you can stand on.",
+    "ogTitle": "G&D Flooring — Premium Flooring & Renovations",
+    "ogDescription": "Hardwood, luxury vinyl, tile & stone, and bathroom renovations. Craftsmanship you can stand on."
+  },
+  "hero": {
+    "eyebrow": "Flooring & Renovation Specialists",
+    "headlineLead": "Floors that",
+    "highlight": "elevate",
+    "headlineRest": "every room.",
+    "subcopy": "G&D Flooring brings craftsmanship, premium materials, and a meticulous eye to hardwood, luxury vinyl, tile, and full bathroom renovations — built to last and finished beautifully.",
+    "ctaPrimary": "Get a Free Quote",
+    "ctaSecondary": "Explore Services",
+    "image": "/images/hero.svg",
+    "stats": [
+      { "value": "15+", "label": "Years of craft" },
+      { "value": "800+", "label": "Floors installed" },
+      { "value": "100%", "label": "Satisfaction focus" }
+    ]
+  },
+  "trust": [
+    "Licensed & Insured",
+    "Free On-Site Estimates",
+    "Lifetime Workmanship Warranty",
+    "Locally Owned & Operated"
+  ],
+  "services": {
+    "eyebrow": "Our Services",
+    "heading": "A full catalog of flooring craft",
+    "subcopy": "From timeless hardwood to a complete bathroom transformation — every project gets the same obsessive attention to detail.",
+    "items": [
+      {
+        "title": "Hardwood Flooring",
+        "desc": "Solid & engineered hardwood installation, sanding, staining, and refinishing for warmth that lasts generations.",
+        "bullets": ["Custom stains & finishes", "Dust-contained sanding"],
+        "image": "/images/service-hardwood.svg",
+        "alt": "Hardwood flooring placeholder"
+      },
+      {
+        "title": "Laminate & Vinyl",
+        "desc": "Waterproof luxury vinyl plank and premium laminate — the look of wood with everyday, family-proof durability.",
+        "bullets": ["100% waterproof options", "Fast, clean installs"],
+        "image": "/images/service-vinyl.svg",
+        "alt": "Laminate and luxury vinyl placeholder"
+      },
+      {
+        "title": "Tile & Stone",
+        "desc": "Porcelain, ceramic, and natural stone — precision-set floors, showers, and feature walls with flawless grout lines.",
+        "bullets": ["Heated-floor ready", "Custom patterns & inlays"],
+        "image": "/images/service-tile.svg",
+        "alt": "Tile and stone placeholder"
+      },
+      {
+        "title": "Bathroom Renovations",
+        "desc": "Full bathroom transformations — floors, tile surrounds, vanities, and waterproofing handled end to end.",
+        "bullets": ["Full project management", "Waterproofing guaranteed"],
+        "image": "/images/service-bathroom.svg",
+        "alt": "Bathroom renovation placeholder"
+      }
+    ]
+  },
+  "about": {
+    "eyebrow": "Why G&D",
+    "headingLead": "Built on detail,",
+    "headingRest": "finished with pride",
+    "body": "We treat every home like our own. From the first measurement to the final sweep, you work with the same dedicated team — no shortcuts, no surprises.",
+    "image": "/images/about.svg",
+    "alt": "Our craft placeholder",
+    "badgeValue": "15+",
+    "badgeLabel": "Years perfecting the craft",
+    "features": [
+      { "title": "Master Craftsmanship", "body": "Seasoned installers with an obsessive eye for level, seams, and finish." },
+      { "title": "Licensed & Insured", "body": "Fully covered, code-compliant work backed by a written warranty." },
+      { "title": "On-Time, On-Budget", "body": "Clear timelines and transparent quotes — what we promise is what you pay." },
+      { "title": "Spotless Cleanup", "body": "We leave your home cleaner than we found it — guaranteed." }
+    ]
+  },
+  "process": {
+    "eyebrow": "How We Work",
+    "heading": "A simple, four-step process",
+    "steps": [
+      { "title": "Consultation", "desc": "We listen to your vision, measure the space, and talk materials and budget." },
+      { "title": "Design & Quote", "desc": "You get a clear, itemized proposal with samples — no hidden costs, ever." },
+      { "title": "Installation", "desc": "Our craftsmen install with precision, protecting your home throughout." },
+      { "title": "Final Walkthrough", "desc": "We review every detail together and don't leave until you're delighted." }
+    ]
+  },
+  "gallery": {
+    "eyebrow": "Recent Work",
+    "heading": "A look at our floors",
+    "ctaLabel": "Start your project",
+    "items": [
+      { "image": "/images/gallery-1.svg", "alt": "Project placeholder 1", "caption": "Hardwood — Living space" },
+      { "image": "/images/gallery-2.svg", "alt": "Project placeholder 2", "caption": "Tile — Kitchen" },
+      { "image": "/images/gallery-3.svg", "alt": "Project placeholder 3", "caption": "Vinyl — Open plan" },
+      { "image": "/images/gallery-4.svg", "alt": "Project placeholder 4", "caption": "Bathroom — Full reno" },
+      { "image": "/images/gallery-5.svg", "alt": "Project placeholder 5", "caption": "Stone — Entryway" },
+      { "image": "/images/gallery-6.svg", "alt": "Project placeholder 6", "caption": "Hardwood — Staircase" }
+    ]
+  },
+  "testimonials": {
+    "eyebrow": "Kind Words",
+    "heading": "Homeowners love the result",
+    "items": [
+      { "quote": "The hardwood floors completely transformed our home. The crew was punctual, tidy, and the finish is flawless.", "name": "Placeholder Name", "role": "Homeowner" },
+      { "quote": "Our bathroom renovation was on time and on budget. G&D handled everything and the tile work is stunning.", "name": "Placeholder Name", "role": "Client" },
+      { "quote": "Professional from quote to cleanup. The luxury vinyl looks like real wood and survives our kids and dogs.", "name": "Placeholder Name", "role": "Homeowner" }
+    ]
+  },
+  "ctaBand": {
+    "heading": "Ready to transform your floors?",
+    "subcopy": "Book a free, no-obligation on-site estimate. We'll bring the samples and the honest advice.",
+    "primaryLabel": "Get a Free Quote",
+    "callLabel": "Call (555) 123-4567",
+    "callHref": "tel:+15551234567"
+  },
+  "contact": {
+    "eyebrow": "Get In Touch",
+    "heading": "Let's plan your project",
+    "subcopy": "Tell us about your space and we'll get back within one business day with next steps. All estimates are free.",
+    "phone": "(555) 123-4567",
+    "phoneHref": "tel:+15551234567",
+    "email": "hello@gnd-flooring.com",
+    "serviceArea": "Greater Your City — within 50 miles",
+    "address": "123 Placeholder Ave, Suite 100, Your City, ST 00000",
+    "hours": "Mon–Fri 8am–6pm · Sat 9am–2pm"
+  },
+  "footer": {
+    "blurb": "Premium flooring & renovation craftsmanship. Hardwood, vinyl, tile & full bathroom transformations — done right.",
+    "phone": "(555) 123-4567",
+    "phoneHref": "tel:+15551234567",
+    "email": "hello@gnd-flooring.com",
+    "hours": "Mon–Fri 8am–6pm",
+    "license": "License #PLACEHOLDER-000000",
+    "note": "Placeholder content — replace business details & imagery before launch."
+  }
+}
