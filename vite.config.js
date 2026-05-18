@@ -22,7 +22,23 @@ export default defineConfig(({ mode }) => {
 
   return {
     base: '/',
-    plugins: [tailwindcss(), contentInjection()],
+    plugins: [
+      tailwindcss(),
+      contentInjection(),
+      {
+        // Dev only: GitHub Pages resolves /admin → admin/index.html, but the
+        // Vite dev server does not. Rewrite bare /admin to /admin/ so local
+        // testing matches production.
+        name: 'admin-dev-route',
+        configureServer(server) {
+          server.middlewares.use((req, _res, next) => {
+            const [p, q] = (req.url || '').split('?')
+            if (p === '/admin') req.url = '/admin/' + (q ? '?' + q : '')
+            next()
+          })
+        },
+      },
+    ],
     define: {
       __SHEETS_URL__: JSON.stringify(SHEETS_URL),
       __RECAPTCHA_SITE_KEY__: JSON.stringify(RECAPTCHA_SITE_KEY),
