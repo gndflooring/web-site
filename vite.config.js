@@ -18,8 +18,8 @@ export default defineConfig(({ mode }) => {
   const GOOGLE_OAUTH_CLIENT_ID = pick('GOOGLE_OAUTH_CLIENT_ID')
   const SHEETS_SPREADSHEET_ID = pick('SHEETS_SPREADSHEET_ID')
   const ADMIN_ALLOWED_EMAILS = pick('ADMIN_ALLOWED_EMAILS')
-  const GITHUB_CLIENT_ID = pick('GITHUB_CLIENT_ID')
-  const GITHUB_REPO = pick('GITHUB_REPO') || 'gndflooring/web-site'
+  const GITHUB_CLIENT_ID = pick('GH_CMS_CLIENT_ID')
+  const GITHUB_REPO = pick('GH_CMS_REPO') || 'gndflooring/web-site'
 
   return {
     base: '/',
