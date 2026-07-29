@@ -40,6 +40,7 @@ jobs:
         run: npm run build
         env:
           SHEETS_URL: ${{ vars.SHEETS_URL }}
+          SHEETS_DEPLOYMENT_ID: ${{ vars.SHEETS_DEPLOYMENT_ID }}
           RECAPTCHA_SITE_KEY: ${{ vars.RECAPTCHA_SITE_KEY }}
           GOOGLE_OAUTH_CLIENT_ID: ${{ vars.GOOGLE_OAUTH_CLIENT_ID }}
           SHEETS_SPREADSHEET_ID: ${{ vars.SHEETS_SPREADSHEET_ID }}

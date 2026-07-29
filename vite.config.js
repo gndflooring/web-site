@@ -12,7 +12,8 @@ export default defineConfig(({ mode }) => {
   const fileEnv = loadEnv(mode, process.cwd(), '')
   const pick = (k) => process.env[k] ?? fileEnv[k] ?? ''
 
-  const SHEETS_URL = pick('SHEETS_URL')
+  const SHEETS_DEPLOYMENT_ID = pick('SHEETS_DEPLOYMENT_ID')
+  const SHEETS_URL = pick('SHEETS_URL') || (SHEETS_DEPLOYMENT_ID ? `https://script.google.com/macros/s/${SHEETS_DEPLOYMENT_ID}/exec` : '')
   const RECAPTCHA_SITE_KEY = pick('RECAPTCHA_SITE_KEY')
   const GOOGLE_OAUTH_CLIENT_ID = pick('GOOGLE_OAUTH_CLIENT_ID')
   const SHEETS_SPREADSHEET_ID = pick('SHEETS_SPREADSHEET_ID')
