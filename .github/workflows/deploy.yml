@@ -45,6 +45,8 @@ jobs:
           GOOGLE_OAUTH_CLIENT_ID: ${{ vars.GOOGLE_OAUTH_CLIENT_ID }}
           SHEETS_SPREADSHEET_ID: ${{ vars.SHEETS_SPREADSHEET_ID }}
           ADMIN_ALLOWED_EMAILS: ${{ vars.ADMIN_ALLOWED_EMAILS }}
+          SITE_GITHUB_CLIENT_ID: ${{ vars.SITE_GITHUB_CLIENT_ID }}
+          SITE_GITHUB_REPO: ${{ vars.SITE_GITHUB_REPO }}
 
       - name: Setup Pages
         uses: actions/configure-pages@v5
