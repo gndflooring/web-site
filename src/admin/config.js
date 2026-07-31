@@ -1,7 +1,7 @@
 // PUBLIC build-time values (inlined by Vite `define`; see vite.config.js).
 export const CLIENT_ID = __GOOGLE_OAUTH_CLIENT_ID__
 export const SPREADSHEET_ID = __SHEETS_SPREADSHEET_ID__
-export const ALLOWED_EMAILS = String(__ADMIN_ALLOWED_EMAILS__ || 'fabbari@gmail.com')
+export const ALLOWED_EMAILS = String(__ADMIN_ALLOWED_EMAILS__ || 'fabbari@gmail.com,gndflooringadmin@gmail.com')
   .split(',')
   .map((e) => e.trim().toLowerCase())
   .filter(Boolean)
