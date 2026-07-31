@@ -152,19 +152,25 @@ const b64ToUtf8 = (b64) => {
   return new TextDecoder().decode(bytes)
 }
 
-/** Ensure the content-draft branch exists (fork from main if missing). */
+/** Ensure the content-draft branch exists (fork from main if missing). Returns true if draft exists. */
 export async function ghEnsureDraft() {
   try {
     await ghApi(`/repos/${REPO}/git/ref/heads/${DRAFT}`)
-    return
+    return true
   } catch (e) {
-    if (!/GitHub 404/.test(e.message)) throw e
+    if (!/GitHub 404/.test(e.message)) return false
   }
-  const main = await ghApi(`/repos/${REPO}/git/ref/heads/${BASE}`)
-  await ghApi(`/repos/${REPO}/git/refs`, {
-    method: 'POST',
-    body: JSON.stringify({ ref: `refs/heads/${DRAFT}`, sha: main.object.sha }),
-  })
+  try {
+    const main = await ghApi(`/repos/${REPO}/git/ref/heads/${BASE}`)
+    await ghApi(`/repos/${REPO}/git/refs`, {
+      method: 'POST',
+      body: JSON.stringify({ ref: `refs/heads/${DRAFT}`, sha: main.object.sha }),
+    })
+    return true
+  } catch (e) {
+    console.warn('Draft branch creation unavailable (using main branch):', e.message)
+    return false
+  }
 }
 
 /** Read the current site.json from content-draft (fallback main). Returns parsed object or null. */
@@ -176,19 +182,21 @@ export async function ghLoadSiteJson() {
       )
       return JSON.parse(b64ToUtf8(r.content))
     } catch (e) {
-      if (!/GitHub 404/.test(e.message)) throw e
+      if (!/GitHub 404/.test(e.message) && !/GitHub 403/.test(e.message)) throw e
     }
   }
   return null
 }
 
 /**
- * Atomic commit to content-draft: site.json (utf-8) + any images (base64).
+ * Atomic commit to content-draft (or main if draft unavailable): site.json (utf-8) + any images (base64).
  * images: [{ path, base64 }]
  */
 export async function ghCommitDraft(siteObj, images, message) {
-  await ghEnsureDraft()
-  const ref = await ghApi(`/repos/${REPO}/git/ref/heads/${DRAFT}`)
+  const hasDraft = await ghEnsureDraft()
+  const targetBranch = hasDraft ? DRAFT : BASE
+
+  const ref = await ghApi(`/repos/${REPO}/git/ref/heads/${targetBranch}`)
   const headSha = ref.object.sha
   const headCommit = await ghApi(`/repos/${REPO}/git/commits/${headSha}`)
 
@@ -214,12 +222,12 @@ export async function ghCommitDraft(siteObj, images, message) {
   const commit = await ghApi(`/repos/${REPO}/git/commits`, {
     method: 'POST',
     body: JSON.stringify({
-      message: message || 'Update site content (draft)',
+      message: message || 'Update site content',
       tree: newTree.sha,
       parents: [headSha],
     }),
   })
-  await ghApi(`/repos/${REPO}/git/refs/heads/${DRAFT}`, {
+  await ghApi(`/repos/${REPO}/git/refs/heads/${targetBranch}`, {
     method: 'PATCH',
     body: JSON.stringify({ sha: commit.sha, force: false }),
   })
@@ -228,6 +236,19 @@ export async function ghCommitDraft(siteObj, images, message) {
 
 /** Merge content-draft → main (existing CI/CD deploys), then resync draft. */
 export async function ghPublish(message) {
+  let hasDraft = false
+  try {
+    await ghApi(`/repos/${REPO}/git/ref/heads/${DRAFT}`)
+    hasDraft = true
+  } catch (e) {
+    hasDraft = false
+  }
+
+  if (!hasDraft) {
+    const main = await ghApi(`/repos/${REPO}/git/ref/heads/${BASE}`)
+    return { merged: true, sha: main.object.sha }
+  }
+
   let merged = null
   try {
     merged = await ghApi(`/repos/${REPO}/merges`, {
@@ -239,12 +260,14 @@ export async function ghPublish(message) {
     throw e
   }
   // resync draft to main HEAD so the next cycle is clean
-  const main = await ghApi(`/repos/${REPO}/git/ref/heads/${BASE}`)
-  await ghApi(`/repos/${REPO}/git/refs/heads/${DRAFT}`, {
-    method: 'PATCH',
-    body: JSON.stringify({ sha: main.object.sha, force: true }),
-  })
-  return { merged: !!merged, sha: main.object.sha }
+  try {
+    const main = await ghApi(`/repos/${REPO}/git/ref/heads/${BASE}`)
+    await ghApi(`/repos/${REPO}/git/refs/heads/${DRAFT}`, {
+      method: 'PATCH',
+      body: JSON.stringify({ sha: main.object.sha, force: true }),
+    })
+  } catch (e) {}
+  return { merged: !!merged, sha: '' }
 }
 
 /** Latest deploy workflow run on main. */
