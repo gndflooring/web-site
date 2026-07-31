@@ -41,7 +41,7 @@ const gen = {
   'meta.description': (c) => esc(c.meta.description),
   'meta.ogTitle': (c) => esc(c.meta.ogTitle),
   'meta.ogDescription': (c) => esc(c.meta.ogDescription),
-  'hero.image': (c) => esc(c.hero.image),
+  'hero.image': (c) => esc(c.hero?.image),
   'footer.note': (c) => parseMd(c.footer.note, 'dark'),
 
   hero: (c) => {
