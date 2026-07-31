@@ -1,0 +1,1058 @@
+<!DOCTYPE html>
+<html lang="en" class="h-full">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>G&D Flooring — Admin Website Studio</title>
+  
+  <!-- Tailwind CSS & Fonts -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,500;9..144,600;9..144,700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  
+  <!-- Cropper.js -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.5.13/cropper.min.css"/>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.5.13/cropper.min.js"></script>
+
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          fontFamily: {
+            display: ['"Fraunces"', 'serif'],
+            sans: ['"Inter"', 'sans-serif'],
+          },
+          colors: {
+            sidebar: '#16222e',
+            app: '#f4f6f8',
+            surface: '#ffffff',
+            line: '#e6e9ee',
+            ink: '#15212b',
+            'ink-700': '#2b3a45',
+            muted: '#5d6b75',
+            cream: '#fbf7f0',
+            'cream-200': '#f4ecdf',
+            sand: { 200: '#ecdcbe', 300: '#d8b985', 400: '#c49a5e', 500: '#ab7f44', 600: '#8a6432' },
+            brand: { 50: '#eef6fc', 100: '#d7e9f7', 200: '#aed3ed', 300: '#80b8e0', 400: '#559fd4', 500: '#3f8fcb', 600: '#2f7cb5', 700: '#275f8c', 800: '#224d70', 900: '#1d3f5b' }
+          },
+          boxShadow: {
+            soft: '0 10px 30px -12px rgba(21, 33, 43, 0.18)',
+            lift: '0 26px 55px -20px rgba(21, 33, 43, 0.30)'
+          }
+        }
+      }
+    }
+  </script>
+
+  <style>
+    /* Admin Shell Styles */
+    body { background-color: #f4f6f8; color: #15212b; font-family: "Inter", sans-serif; -webkit-font-smoothing: antialiased; }
+    h1, h2, h3, .font-display { font-family: "Fraunces", Georgia, serif; }
+    .field { width: 100%; border-radius: 0.5rem; border: 1px solid #e6e9ee; background-color: #ffffff; padding: 0.5rem 0.75rem; font-size: 0.875rem; outline: none; transition: all 150ms ease; }
+    .field:focus { border-color: #559fd4; box-shadow: 0 0 0 2px #d7e9f7; }
+    .btn { display: inline-flex; align-items: center; justify-content: center; gap: 0.5rem; border-radius: 0.5rem; padding: 0.5rem 0.875rem; font-size: 0.875rem; font-weight: 600; transition: all 150ms ease; }
+    .btn-admin-primary { background-color: #2f7cb5; color: #ffffff; }
+    .btn-admin-primary:hover { background-color: #275f8c; }
+    .btn-admin-ghost { border: 1px solid #e6e9ee; background-color: #ffffff; color: #2b3a45; }
+    .btn-admin-ghost:hover { background-color: #f4f6f8; }
+    .btn-danger { background-color: #fef2f2; border: 1px solid #fecaca; color: #dc2626; }
+    .btn-danger:hover { background-color: #fee2e2; }
+    .card { border-radius: 1rem; border: 1px solid #e6e9ee; background-color: #ffffff; box-shadow: 0 1px 2px rgba(21, 33, 43, 0.04); }
+
+    /* GPU-Accelerated Smooth Hero Background Animation */
+    @keyframes heroSmoothZoom {
+      0% { transform: scale(1) translateZ(0); }
+      50% { transform: scale(1.05) translateZ(0); }
+      100% { transform: scale(1) translateZ(0); }
+    }
+    .hero-bg-anim {
+      will-change: transform;
+      animation: heroSmoothZoom 24s ease-in-out infinite;
+    }
+
+    /* Website Component Utility Classes (Matching src/style.css 1:1) */
+    .btn-gold { display: inline-flex; align-items: center; justify-content: center; gap: 0.5rem; border-radius: 9999px; padding: 0.875rem 1.75rem; font-size: 0.875rem; font-weight: 600; background-color: #c49a5e; color: #15212b; box-shadow: 0 10px 30px -12px rgba(21, 33, 43, 0.18); transition: all 300ms ease; }
+    .btn-gold:hover { background-color: #ab7f44; transform: translateY(-2px); box-shadow: 0 26px 55px -20px rgba(21, 33, 43, 0.30); }
+    .btn-site-ghost { display: inline-flex; align-items: center; justify-content: center; gap: 0.5rem; border-radius: 9999px; padding: 0.875rem 1.75rem; font-size: 0.875rem; font-weight: 600; border: 1px solid rgba(255, 255, 255, 0.4); color: #ffffff; backdrop-filter: blur(4px); transition: all 300ms ease; }
+    .btn-site-ghost:hover { background-color: rgba(255, 255, 255, 0.1); border-color: rgba(255, 255, 255, 0.7); }
+    .btn-outline { display: inline-flex; align-items: center; justify-content: center; gap: 0.5rem; border-radius: 9999px; padding: 0.875rem 1.75rem; font-size: 0.875rem; font-weight: 600; border: 1px solid rgba(47, 124, 181, 0.3); color: #275f8c; transition: all 300ms ease; }
+    .btn-outline:hover { background-color: #2f7cb5; color: #ffffff; border-color: #2f7cb5; }
+    .eyebrow { inline-flex: true; display: inline-flex; align-items: center; gap: 0.5rem; font-size: 0.75rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.22em; color: #2f7cb5; }
+    .container-x { width: 100%; max-width: 80rem; margin-left: auto; margin-right: auto; padding-left: 1.5rem; padding-right: 1.5rem; }
+    .card-lift { transition: transform 0.5s cubic-bezier(0.22, 1, 0.36, 1), box-shadow 0.5s cubic-bezier(0.22, 1, 0.36, 1); }
+    .card-lift:hover { transform: translateY(-8px); box-shadow: 0 26px 55px -20px rgba(21, 33, 43, 0.30); }
+    .media-zoom { overflow: hidden; position: relative; }
+    .media-zoom img { transition: transform 0.9s cubic-bezier(0.22, 1, 0.36, 1); }
+    .media-zoom:hover img { transform: scale(1.07); }
+
+    /* Masonry Layout */
+    .masonry-grid { column-count: 1; column-gap: 1.5rem; }
+    @media (min-width: 640px) { .masonry-grid { column-count: 2; } }
+    @media (min-width: 1024px) { .masonry-grid { column-count: 3; } }
+    .masonry-item { break-inside: avoid; margin-bottom: 1.5rem; }
+
+    ::-webkit-scrollbar { width: 6px; height: 6px; }
+    ::-webkit-scrollbar-thumb { background: #cbd1da; border-radius: 6px; }
+  </style>
+</head>
+<body class="h-full flex overflow-hidden">
+
+  <!-- Admin Sidebar -->
+  <aside class="w-60 bg-sidebar text-white flex flex-col px-4 py-5 shrink-0 z-20">
+    <div class="flex items-center gap-2.5 px-2 mb-6">
+      <span class="grid h-9 w-9 place-items-center rounded-xl bg-brand-600 font-display text-sm font-bold text-white">G&amp;D</span>
+      <span class="font-display text-lg font-semibold">Admin</span>
+    </div>
+
+    <nav class="flex flex-col gap-1 text-sm font-medium text-white/60">
+      <div class="px-3 py-2 text-[11px] font-bold uppercase tracking-wider text-white/40">Navigation</div>
+      <a class="flex items-center gap-3 rounded-xl px-3 py-2.5 hover:bg-white/10 hover:text-white transition">
+        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="9"/><rect x="14" y="3" width="7" height="5"/><rect x="14" y="12" width="7" height="9"/><rect x="3" y="16" width="7" height="5"/></svg>
+        Dashboard
+      </a>
+      <a class="flex items-center gap-3 rounded-xl px-3 py-2.5 hover:bg-white/10 hover:text-white transition">
+        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M3 6h18M3 12h18M3 18h18"/></svg>
+        Leads & Quotes
+      </a>
+      <a class="flex items-center gap-3 rounded-xl px-3 py-2.5 bg-brand-600 text-white font-semibold shadow-sm">
+        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path d="M2 12h20M12 2a15 15 0 0 1 0 20M12 2a15 15 0 0 0 0 20"/></svg>
+        Website CMS
+      </a>
+    </nav>
+  </aside>
+
+  <!-- Content Shell -->
+  <div class="flex-1 flex flex-col overflow-hidden">
+    
+    <!-- Top Header -->
+    <header class="h-16 border-b border-line bg-surface px-6 flex items-center justify-between shrink-0 z-10">
+      <div class="flex items-center gap-3">
+        <h1 class="text-xl font-bold text-ink">Website Editor Studio</h1>
+        <span class="text-xs font-semibold px-2.5 py-1 rounded-full bg-brand-50 text-brand-700 border border-brand-200">
+          Pixel-Parity Studio
+        </span>
+        <a href="/draft/" target="_blank" rel="noopener" class="text-xs font-semibold px-3 py-1 rounded-lg bg-amber-100 text-amber-900 border border-amber-300 hover:bg-amber-200 transition flex items-center gap-1.5 shadow-sm">
+          👁️ View Live Draft (/draft) ↗
+        </a>
+      </div>
+
+      <div class="flex items-center gap-3">
+        <button id="saveDraftBtn" class="btn btn-admin-ghost text-xs">Save Draft</button>
+        <button id="publishBtn" class="btn btn-admin-primary text-xs shadow-sm">Publish to Live</button>
+      </div>
+    </header>
+
+    <!-- Studio Main Workspace -->
+    <div class="flex-1 flex overflow-hidden">
+
+      <!-- LEFT PANE: Form Editors -->
+      <div id="formPane" class="w-1/2 border-r border-line bg-app p-6 overflow-y-auto space-y-4">
+        <div class="flex items-center justify-between pb-2 border-b border-line">
+          <span class="text-xs font-bold text-muted uppercase tracking-wider">CMS Sections</span>
+          <span class="text-xs text-emerald-600 font-semibold flex items-center gap-1">
+            <span class="h-2 w-2 rounded-full bg-emerald-500"></span> Live Synced
+          </span>
+        </div>
+
+        <div id="formSections" class="space-y-4"></div>
+      </div>
+
+      <!-- RIGHT PANE: Pixel-Perfect Website View -->
+      <div class="w-1/2 bg-[#fbf7f0] flex flex-col overflow-hidden">
+        <div class="h-10 bg-slate-900 border-b border-slate-800 px-4 flex items-center justify-between text-xs text-slate-400">
+          <span class="font-mono text-[11px] text-slate-300">Live Website Preview (Exact 1:1 Parity)</span>
+          <span class="bg-brand-600/30 text-brand-300 px-2 py-0.5 rounded text-[10px] font-semibold border border-brand-500/30">1:1 Website Match</span>
+        </div>
+
+        <div id="previewFrame" class="flex-1 overflow-y-auto bg-cream"></div>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- IMAGE CROPPER & ADJUSTMENT MODAL -->
+  <div id="cropModal" class="fixed inset-0 z-50 bg-ink/70 backdrop-blur-sm hidden flex items-center justify-center p-4">
+    <div class="bg-surface rounded-2xl border border-line shadow-2xl w-full max-w-4xl max-h-[90vh] flex flex-col overflow-hidden">
+      <div class="px-6 py-4 border-b border-line flex items-center justify-between bg-app">
+        <div>
+          <h3 class="font-display font-bold text-lg text-ink">Image Studio: Crop & Adjust</h3>
+          <p class="text-xs text-muted">Crop box, aspect ratios, brightness, contrast, rotate & compress.</p>
+        </div>
+        <button id="closeCropModal" class="text-muted hover:text-ink font-bold text-lg">✕</button>
+      </div>
+
+      <div class="flex-1 flex overflow-hidden">
+        <div class="flex-1 bg-slate-950 p-6 flex items-center justify-center relative overflow-hidden">
+          <img id="cropTargetImg" src="" alt="Crop Target" class="max-h-[50vh] max-w-full block">
+        </div>
+
+        <div class="w-80 border-l border-line p-5 bg-surface overflow-y-auto space-y-5 shrink-0">
+          <div>
+            <label class="text-xs font-bold uppercase tracking-wider text-muted block mb-2">Aspect Ratio</label>
+            <div class="grid grid-cols-4 gap-1.5" id="aspectPresets">
+              <button data-ratio="1.7777" class="btn btn-admin-ghost text-xs !px-2 !py-1 bg-brand-50 text-brand-700 border-brand-300">16:9</button>
+              <button data-ratio="1.3333" class="btn btn-admin-ghost text-xs !px-2 !py-1">4:3</button>
+              <button data-ratio="1" class="btn btn-admin-ghost text-xs !px-2 !py-1">1:1</button>
+              <button data-ratio="0" class="btn btn-admin-ghost text-xs !px-2 !py-1">Free</button>
+            </div>
+          </div>
+
+          <div>
+            <label class="text-xs font-bold uppercase tracking-wider text-muted block mb-2">Transform</label>
+            <div class="flex gap-2">
+              <button id="rotateLeftBtn" class="btn btn-admin-ghost text-xs flex-1">↺ Rotate Left</button>
+              <button id="rotateRightBtn" class="btn btn-admin-ghost text-xs flex-1">↻ Rotate Right</button>
+            </div>
+          </div>
+
+          <div class="space-y-3 pt-3 border-t border-line">
+            <label class="text-xs font-bold uppercase tracking-wider text-muted block">Image Adjustments</label>
+            <div>
+              <div class="flex justify-between text-xs mb-1 font-semibold"><span>Brightness</span><span id="brightnessVal">100%</span></div>
+              <input type="range" id="brightnessInp" min="50" max="150" value="100" class="w-full">
+            </div>
+            <div>
+              <div class="flex justify-between text-xs mb-1 font-semibold"><span>Contrast</span><span id="contrastVal">100%</span></div>
+              <input type="range" id="contrastInp" min="50" max="150" value="100" class="w-full">
+            </div>
+            <div>
+              <div class="flex justify-between text-xs mb-1 font-semibold"><span>Saturate</span><span id="saturateVal">100%</span></div>
+              <input type="range" id="saturateInp" min="0" max="200" value="100" class="w-full">
+            </div>
+            <button id="resetAdjustmentsBtn" class="text-xs text-brand-700 hover:underline font-semibold block">Reset Adjustments</button>
+          </div>
+        </div>
+      </div>
+
+      <div class="px-6 py-4 border-t border-line bg-app flex justify-between items-center">
+        <span class="text-xs text-muted">Output: <strong class="text-ink">WebP (Optimized)</strong></span>
+        <div class="flex gap-2">
+          <button id="cancelCropBtn" class="btn btn-admin-ghost text-xs">Cancel</button>
+          <button id="applyCropBtn" class="btn btn-admin-primary text-xs shadow-sm">Apply & Use Image</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- CUSTOM CONFIRMATION DIALOG MODAL (NO BROWSER ALERT) -->
+  <div id="confirmModal" class="fixed inset-0 z-50 bg-ink/70 backdrop-blur-sm hidden flex items-center justify-center p-4">
+    <div class="bg-surface rounded-2xl border border-line p-6 shadow-2xl max-w-sm w-full space-y-4">
+      <h4 class="font-display font-bold text-lg text-ink" id="confirmTitle">Confirm Action</h4>
+      <p class="text-xs text-muted leading-relaxed" id="confirmMsg">Are you sure you want to delete this item?</p>
+      <div class="flex justify-end gap-2 pt-2">
+        <button id="confirmCancelBtn" class="btn btn-admin-ghost text-xs">Cancel</button>
+        <button id="confirmOkBtn" class="btn btn-danger text-xs">Delete</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- LIGHTBOX MODAL WITH ZOOM, PAN & CONTACT SHEET -->
+  <div id="lightboxModal" class="fixed inset-0 z-50 bg-black/95 backdrop-blur-md hidden flex flex-col justify-between p-6">
+    <div class="flex justify-between items-center text-white z-10">
+      <div class="text-xs font-mono" id="lightboxTitle">Service Gallery</div>
+      <div class="flex gap-3 items-center">
+        <button id="lbZoomOut" class="btn btn-admin-ghost !py-1 text-xs text-white bg-white/10 border-white/20">🔍 -</button>
+        <button id="lbResetZoom" class="btn btn-admin-ghost !py-1 text-xs text-white bg-white/10 border-white/20">Reset Zoom</button>
+        <button id="lbZoomIn" class="btn btn-admin-ghost !py-1 text-xs text-white bg-white/10 border-white/20">🔍 +</button>
+        <button id="closeLightbox" class="text-white hover:text-rose-400 font-bold text-xl ml-4">✕</button>
+      </div>
+    </div>
+
+    <div class="flex-1 flex items-center justify-center overflow-hidden relative cursor-grab active:cursor-grabbing" id="lbViewport">
+      <img id="lbMainImage" src="" alt="Lightbox View" class="max-h-full max-w-full object-contain transition-transform duration-100 ease-out">
+    </div>
+
+    <div class="h-20 border-t border-white/15 pt-3 flex items-center justify-center gap-3 overflow-x-auto z-10" id="lbContactSheet"></div>
+  </div>
+
+  <script>
+    // Exact Data Model matching site.json & vite-content.js
+    let siteData = {
+      "meta": {
+        "title": "G&D Flooring — Premium Flooring & Renovations",
+        "description": "G&D Flooring is a premium flooring contractor specializing in hardwood, luxury vinyl, tile & stone, and bathroom renovations. Craftsmanship you can stand on."
+      },
+      "hero": {
+        "eyebrow": "Flooring & Renovation Specialists",
+        "headline": "Floors that *elevate* every room.",
+        "subcopy": "G&D Flooring brings craftsmanship, premium materials, and a meticulous eye to hardwood, luxury vinyl, tile, and full bathroom renovations — built to last and finished beautifully.",
+        "ctaPrimary": "Get a Free Quote",
+        "ctaSecondary": "Explore Services",
+        "image": "/images/hero.svg",
+        "stats": [
+          { "value": "15+", "label": "Years of craft" },
+          { "value": "800+", "label": "Floors installed" },
+          { "value": "100%", "label": "Satisfaction focus" }
+        ]
+      },
+      "trust": [
+        "✓ Licensed & Insured",
+        "✓ Free On-Site Estimates",
+        "✓ Lifetime Workmanship Warranty",
+        "✓ Locally Owned & Operated"
+      ],
+      "services": {
+        "eyebrow": "Our Services",
+        "heading": "A full catalog of flooring craft",
+        "subcopy": "From timeless hardwood to a complete bathroom transformation — every project gets the same obsessive attention to detail.",
+        "items": [
+          {
+            "title": "Hardwood Flooring",
+            "desc": "Solid & engineered hardwood installation, sanding, staining, and refinishing for warmth that lasts generations.",
+            "bullets": ["Custom stains & finishes", "Dust-contained sanding"],
+            "images": ["/images/service-hardwood.svg"]
+          },
+          {
+            "title": "Laminate & Vinyl",
+            "desc": "Waterproof luxury vinyl plank and premium laminate — the look of wood with everyday, family-proof durability.",
+            "bullets": ["100% waterproof options", "Fast, clean installs"],
+            "images": ["/images/service-vinyl.svg"]
+          },
+          {
+            "title": "Tile & Stone",
+            "desc": "Porcelain, ceramic, and natural stone — precision-set floors, showers, and feature walls with flawless grout lines.",
+            "bullets": ["Heated-floor ready", "Custom patterns & inlays"],
+            "images": ["/images/service-tile.svg"]
+          },
+          {
+            "title": "Bathroom Renovations",
+            "desc": "Full bathroom transformations — floors, tile surrounds, vanities, and waterproofing handled end to end.",
+            "bullets": ["Full project management", "Waterproofing guaranteed"],
+            "images": ["/images/service-bathroom.svg"]
+          }
+        ]
+      },
+      "about": {
+        "eyebrow": "Why G&D",
+        "headingLead": "Built on detail,",
+        "headingRest": "finished with pride",
+        "body": "We treat every home like our own. From the first measurement to the final sweep, you work with the same dedicated team — **master craftsmanship** with *zero shortcuts*.",
+        "image": "/images/about.svg",
+        "badgeValue": "15+",
+        "badgeLabel": "Years perfecting the craft",
+        "features": [
+          { "title": "Master Craftsmanship", "body": "Seasoned installers with an obsessive eye for level, seams, and finish." },
+          { "title": "Licensed & Insured", "body": "Fully covered, code-compliant work backed by a written warranty." },
+          { "title": "On-Time, On-Budget", "body": "Clear timelines and transparent quotes — what we promise is what you pay." },
+          { "title": "Spotless Cleanup", "body": "We leave your home cleaner than we found it — guaranteed." }
+        ]
+      },
+      "process": {
+        "eyebrow": "How We Work",
+        "heading": "A simple, four-step process",
+        "steps": [
+          { "title": "Consultation", "desc": "We listen to your vision, measure the space, and talk materials and budget.", "image": "" },
+          { "title": "Design & Quote", "desc": "You get a clear, itemized proposal with samples — no hidden costs, ever.", "image": "" },
+          { "title": "Installation", "desc": "Our craftsmen install with precision, protecting your home throughout.", "image": "" },
+          { "title": "Final Walkthrough", "desc": "We review every detail together and don't leave until you're delighted.", "image": "" }
+        ]
+      },
+      "gallery": {
+        "eyebrow": "Recent Work",
+        "heading": "A look at our floors",
+        "ctaLabel": "Start your project",
+        "items": [
+          { "image": "/images/service-hardwood.svg", "caption": "Hardwood — Living space" },
+          { "image": "/images/service-tile.svg", "caption": "Tile — Kitchen" },
+          { "image": "/images/service-vinyl.svg", "caption": "Vinyl — Open plan" },
+          { "image": "/images/service-bathroom.svg", "caption": "Bathroom — Full reno" }
+        ]
+      },
+      "testimonials": {
+        "eyebrow": "Kind Words",
+        "heading": "Homeowners love the result",
+        "items": [
+          { "quote": "The hardwood floors completely transformed our home. The crew was punctual, tidy, and the finish is flawless.", "name": "Sarah Miller", "role": "Homeowner" },
+          { "quote": "Our bathroom renovation was on time and on budget. G&D handled everything and the tile work is stunning.", "name": "David Chen", "role": "Client" }
+        ]
+      },
+      "ctaBand": {
+        "heading": "Ready to transform your floors?",
+        "subcopy": "Book a free, no-obligation on-site estimate. We'll bring the samples and the honest advice.",
+        "primaryLabel": "Get a Free Quote",
+        "callLabel": "Call (555) 123-4567",
+        "callHref": "tel:+15551234567"
+      },
+      "contact": {
+        "eyebrow": "Get In Touch",
+        "heading": "Let's plan your project",
+        "subcopy": "Tell us about your space and we'll get back within one business day with next steps. All estimates are free.",
+        "phone": "(555) 123-4567",
+        "phoneHref": "tel:+15551234567",
+        "email": "hello@gnd-flooring.com",
+        "serviceArea": "Greater City Area — within 50 miles",
+        "address": "123 Main St, Suite 100",
+        "hours": "Mon–Fri 8am–6pm · Sat 9am–2pm"
+      },
+      "footer": {
+        "blurb": "Premium flooring & renovation craftsmanship. Hardwood, vinyl, tile & full bathroom transformations — done right.",
+        "phone": "(555) 123-4567",
+        "email": "hello@gnd-flooring.com",
+        "hours": "Mon–Fri 8am–6pm",
+        "license": "License #FLOOR-88210",
+        "note": "© 2026 G&D Flooring. All rights reserved."
+      }
+    };
+
+    let activeTabs = { services: 0, aboutFeatures: 0, processSteps: 0, testimonials: 0 };
+    let activeImageTarget = null;
+    let cropper = null;
+
+    function parseMarkdown(str) {
+      if (!str) return '';
+      return String(str)
+        .replace(/\*([^*]+)\*/g, '<span class="italic text-sand-300">$1</span>')
+        .replace(/\*\*([^*]+)\*\*/g, '<strong class="font-bold text-white">$1</strong>')
+        .replace(/\[([^\]]+)\]\(([^)]+)\)/g, '<a href="$2" class="underline text-sand-300">$1</a>');
+    }
+
+    function escapeHtml(str) { return String(str || '').replace(/"/g, '&quot;'); }
+
+    function captureState() {
+      const openStates = {};
+      document.querySelectorAll('#formSections details').forEach((d, i) => { openStates[i] = d.open; });
+      const paneScroll = document.getElementById('formPane') ? document.getElementById('formPane').scrollTop : 0;
+      return { openStates, paneScroll };
+    }
+
+    function restoreState(state) {
+      if (!state) return;
+      document.querySelectorAll('#formSections details').forEach((d, i) => {
+        if (state.openStates[i] !== undefined) d.open = state.openStates[i];
+      });
+      if (document.getElementById('formPane')) document.getElementById('formPane').scrollTop = state.paneScroll;
+    }
+
+    function updateData(path, val) {
+      const keys = path.split('.');
+      let cur = siteData;
+      for (let i = 0; i < keys.length - 1; i++) cur = cur[keys[i]];
+      cur[keys[keys.length - 1]] = val;
+      renderLivePreview();
+    }
+
+    function customConfirm(title, msg, onConfirm) {
+      document.getElementById('confirmTitle').innerText = title;
+      document.getElementById('confirmMsg').innerText = msg;
+      const modal = document.getElementById('confirmModal');
+      modal.classList.remove('hidden');
+      const cancel = document.getElementById('confirmCancelBtn');
+      const ok = document.getElementById('confirmOkBtn');
+      const close = () => { modal.classList.add('hidden'); cancel.onclick = null; ok.onclick = null; };
+      cancel.onclick = close;
+      ok.onclick = () => { close(); onConfirm(); };
+    }
+
+    function renderFormSections() {
+      const state = captureState();
+      const container = document.getElementById('formSections');
+      container.innerHTML = '';
+
+      // HERO
+      container.appendChild(createSectionCard('hero', 'Hero Section', `
+        <div><label class="block text-xs font-bold text-ink mb-1">Eyebrow</label><input type="text" value="${escapeHtml(siteData.hero.eyebrow)}" oninput="updateData('hero.eyebrow', this.value)" class="field text-xs"></div>
+        <div><label class="block text-xs font-bold text-ink mb-1">Headline (use *word* for italic highlight)</label><input type="text" value="${escapeHtml(siteData.hero.headline)}" oninput="updateData('hero.headline', this.value)" class="field text-xs"></div>
+        <div><label class="block text-xs font-bold text-ink mb-1">Subcopy</label><textarea rows="2" oninput="updateData('hero.subcopy', this.value)" class="field text-xs">${escapeHtml(siteData.hero.subcopy)}</textarea></div>
+        <div class="grid grid-cols-2 gap-3">
+          <div><label class="block text-xs font-bold text-ink mb-1">Call to action (Primary)</label><input type="text" value="${escapeHtml(siteData.hero.ctaPrimary)}" oninput="updateData('hero.ctaPrimary', this.value)" class="field text-xs"></div>
+          <div><label class="block text-xs font-bold text-ink mb-1">Call to action (Secondary)</label><input type="text" value="${escapeHtml(siteData.hero.ctaSecondary)}" oninput="updateData('hero.ctaSecondary', this.value)" class="field text-xs"></div>
+        </div>
+        <div>
+          <label class="block text-xs font-bold text-ink mb-1">Background Hero Image</label>
+          <div class="flex items-center gap-3 p-3 bg-app rounded-xl border border-line">
+            <img src="${siteData.hero.image}" class="h-14 w-20 object-cover rounded-lg border border-line bg-surface">
+            <label class="btn btn-admin-ghost text-xs cursor-pointer">📷 Upload & Crop<input type="file" accept="image/*" class="hidden" onchange="openCropper(event, 'hero.image')"></label>
+          </div>
+        </div>
+        <div>
+          <label class="block text-xs font-bold text-ink mb-2 uppercase tracking-wider">Hero Stats (Label before Value)</label>
+          <div class="space-y-2">
+            ${(siteData.hero.stats || []).map((s, i) => `
+              <div class="flex gap-2 items-center">
+                <input type="text" placeholder="Label" value="${escapeHtml(s.label)}" oninput="updateData('hero.stats.${i}.label', this.value)" class="field text-xs flex-1">
+                <input type="text" placeholder="Value" value="${escapeHtml(s.value)}" oninput="updateData('hero.stats.${i}.value', this.value)" class="field text-xs w-24">
+              </div>
+            `).join('')}
+          </div>
+        </div>
+      `));
+
+      // TRUST
+      container.appendChild(createSectionCard('trust', 'Trust Strip', `
+        <div class="space-y-2">
+          ${(siteData.trust || []).map((t, i) => `
+            <div class="flex gap-2">
+              <input type="text" value="${escapeHtml(t)}" oninput="updateData('trust.${i}', this.value)" class="field text-xs flex-1">
+              <button onclick="deleteTrustItem(${i})" class="btn btn-admin-ghost text-xs text-rose-600">✕</button>
+            </div>
+          `).join('')}
+          <button onclick="addTrustItem()" class="text-xs font-bold text-brand-700 hover:underline">+ Add Trust Item</button>
+        </div>
+      `));
+
+      // SERVICES (TABS)
+      const servicesItems = siteData.services.items || [];
+      let serviceTabsHtml = `
+        <div class="flex items-center justify-between border-b border-line pb-2 mb-3">
+          <div class="flex gap-2 overflow-x-auto">
+            ${servicesItems.map((s, i) => `
+              <button onclick="activeTabs.services=${i}; renderFormSections();" class="px-3 py-1 text-xs rounded-lg border font-semibold ${activeTabs.services === i ? 'bg-brand-600 text-white border-brand-600' : 'bg-surface text-ink-700 border-line'}">
+                ${s.title || 'Service ' + (i + 1)}
+              </button>
+            `).join('')}
+          </div>
+          <button onclick="addService()" class="btn btn-admin-ghost text-xs font-bold text-brand-700">+ Add Service</button>
+        </div>
+      `;
+
+      if (servicesItems[activeTabs.services]) {
+        const curSvc = servicesItems[activeTabs.services];
+        const curPath = `services.items.${activeTabs.services}`;
+        const imagesList = curSvc.images || (curSvc.image ? [curSvc.image] : []);
+
+        serviceTabsHtml += `
+          <div class="space-y-3">
+            <div><label class="block text-xs font-bold text-ink mb-1">Service Title</label><input type="text" value="${escapeHtml(curSvc.title)}" oninput="updateData('${curPath}.title', this.value)" class="field text-xs"></div>
+            <div><label class="block text-xs font-bold text-ink mb-1">Description</label><textarea rows="2" oninput="updateData('${curPath}.desc', this.value)" class="field text-xs">${escapeHtml(curSvc.desc)}</textarea></div>
+            <div>
+              <label class="block text-xs font-bold text-ink mb-1">Service Images (Supports Multiple / Carousel)</label>
+              <div class="grid grid-cols-3 gap-2 mb-2">
+                ${imagesList.map((imgUrl, imgIdx) => `
+                  <div class="relative group">
+                    <img src="${imgUrl}" class="h-16 w-full object-cover rounded-lg border border-line">
+                    <button onclick="deleteServiceImage(${activeTabs.services}, ${imgIdx})" class="absolute top-1 right-1 bg-rose-600 text-white rounded-full h-5 w-5 text-xs flex items-center justify-center">✕</button>
+                  </div>
+                `).join('')}
+              </div>
+              <label class="btn btn-admin-ghost text-xs cursor-pointer">📷 Add Service Photo<input type="file" accept="image/*" class="hidden" onchange="openCropper(event, '${curPath}.images', true)"></label>
+            </div>
+            <div class="pt-4 border-t border-line flex justify-end">
+              <button onclick="confirmDeleteService(${activeTabs.services})" class="btn btn-danger text-xs">Delete Service</button>
+            </div>
+          </div>
+        `;
+      }
+      container.appendChild(createSectionCard('services', 'Services (Tabbed)', serviceTabsHtml));
+
+      // ABOUT
+      const features = siteData.about.features || [];
+      let aboutHtml = `
+        <div class="space-y-3 mb-4">
+          <div><label class="block text-xs font-bold text-ink mb-1">Eyebrow</label><input type="text" value="${escapeHtml(siteData.about.eyebrow)}" oninput="updateData('about.eyebrow', this.value)" class="field text-xs"></div>
+          <div><label class="block text-xs font-bold text-ink mb-1">Body Text (Markdown *italic*, **bold**)</label><textarea rows="3" oninput="updateData('about.body', this.value)" class="field text-xs">${escapeHtml(siteData.about.body)}</textarea></div>
+        </div>
+        <div class="border-t border-line pt-3">
+          <div class="flex justify-between items-center mb-2">
+            <span class="text-xs font-bold uppercase tracking-wider text-muted">About Features (Tabs)</span>
+            <button onclick="addAboutFeature()" class="text-xs font-bold text-brand-700 hover:underline">+ Add Feature</button>
+          </div>
+          <div class="flex gap-2 mb-3 overflow-x-auto">
+            ${features.map((f, i) => `
+              <button onclick="activeTabs.aboutFeatures=${i}; renderFormSections();" class="px-2.5 py-1 text-xs rounded-lg border font-semibold ${activeTabs.aboutFeatures === i ? 'bg-brand-600 text-white border-brand-600' : 'bg-surface text-ink-700 border-line'}">
+                ${f.title || 'Feature ' + (i + 1)}
+              </button>
+            `).join('')}
+          </div>
+          ${features[activeTabs.aboutFeatures] ? `
+            <div class="space-y-2 p-3 bg-app rounded-xl border border-line">
+              <input type="text" value="${escapeHtml(features[activeTabs.aboutFeatures].title)}" oninput="updateData('about.features.${activeTabs.aboutFeatures}.title', this.value)" class="field text-xs" placeholder="Feature Title">
+              <textarea rows="2" oninput="updateData('about.features.${activeTabs.aboutFeatures}.body', this.value)" class="field text-xs" placeholder="Feature Body">${escapeHtml(features[activeTabs.aboutFeatures].body)}</textarea>
+              <button onclick="confirmDeleteFeature(${activeTabs.aboutFeatures})" class="btn btn-danger text-xs mt-2">Delete Feature</button>
+            </div>
+          ` : ''}
+        </div>
+      `;
+      container.appendChild(createSectionCard('about', 'Why Us / About', aboutHtml));
+
+      // PROCESS
+      const steps = siteData.process.steps || [];
+      let processHtml = `
+        <div class="flex justify-between items-center mb-3">
+          <div class="flex gap-2 overflow-x-auto">
+            ${steps.map((st, i) => `
+              <button onclick="activeTabs.processSteps=${i}; renderFormSections();" class="px-2.5 py-1 text-xs rounded-lg border font-semibold ${activeTabs.processSteps === i ? 'bg-brand-600 text-white border-brand-600' : 'bg-surface text-ink-700 border-line'}">
+                Step ${i + 1}: ${st.title || ''}
+              </button>
+            `).join('')}
+          </div>
+          <button onclick="addProcessStep()" class="text-xs font-bold text-brand-700 hover:underline">+ Add Step</button>
+        </div>
+        ${steps[activeTabs.processSteps] ? `
+          <div class="space-y-3 p-3 bg-app rounded-xl border border-line">
+            <input type="text" value="${escapeHtml(steps[activeTabs.processSteps].title)}" oninput="updateData('process.steps.${activeTabs.processSteps}.title', this.value)" class="field text-xs" placeholder="Step Title">
+            <textarea rows="2" oninput="updateData('process.steps.${activeTabs.processSteps}.desc', this.value)" class="field text-xs" placeholder="Description">${escapeHtml(steps[activeTabs.processSteps].desc)}</textarea>
+            <div>
+              <label class="block text-xs font-bold text-ink mb-1">Optional Step Card Photo</label>
+              <div class="flex items-center gap-2">
+                ${steps[activeTabs.processSteps].image ? `<img src="${steps[activeTabs.processSteps].image}" class="h-12 w-16 object-cover rounded border">` : ''}
+                <label class="btn btn-admin-ghost text-xs cursor-pointer">📷 Upload Step Photo<input type="file" accept="image/*" class="hidden" onchange="openCropper(event, 'process.steps.${activeTabs.processSteps}.image')"></label>
+              </div>
+            </div>
+            <button onclick="confirmDeleteStep(${activeTabs.processSteps})" class="btn btn-danger text-xs mt-2">Delete Step</button>
+          </div>
+        ` : ''}
+      `;
+      container.appendChild(createSectionCard('process', 'Process Steps', processHtml));
+
+      // GALLERY
+      const galleryItems = siteData.gallery.items || [];
+      let galleryHtml = `
+        <div class="space-y-3">
+          <div class="grid grid-cols-3 gap-2">
+            ${galleryItems.map((g, i) => `
+              <div class="relative group border border-line rounded-lg overflow-hidden bg-surface p-2">
+                <img src="${g.image}" class="h-20 w-full object-cover rounded">
+                <input type="text" value="${escapeHtml(g.caption)}" oninput="updateData('gallery.items.${i}.caption', this.value)" class="field text-[11px] mt-1 !p-1" placeholder="Caption">
+                <button onclick="deleteGalleryItem(${i})" class="absolute top-1 right-1 bg-rose-600 text-white rounded-full h-5 w-5 text-xs flex items-center justify-center">✕</button>
+              </div>
+            `).join('')}
+          </div>
+          <label class="btn btn-admin-ghost text-xs cursor-pointer w-full">📷 Add Gallery Photo & Crop<input type="file" accept="image/*" class="hidden" onchange="openCropper(event, 'gallery.items', true)"></label>
+        </div>
+      `;
+      container.appendChild(createSectionCard('gallery', 'Gallery Masonry', galleryHtml));
+
+      // TESTIMONIALS
+      const testimonials = siteData.testimonials.items || [];
+      let testHtml = `
+        <div class="flex justify-between items-center mb-3">
+          <div class="flex gap-2 overflow-x-auto">
+            ${testimonials.map((t, i) => `
+              <button onclick="activeTabs.testimonials=${i}; renderFormSections();" class="px-2.5 py-1 text-xs rounded-lg border font-semibold ${activeTabs.testimonials === i ? 'bg-brand-600 text-white border-brand-600' : 'bg-surface text-ink-700 border-line'}">
+                ${t.name || 'Testimonial ' + (i + 1)}
+              </button>
+            `).join('')}
+          </div>
+          <button onclick="addTestimonial()" class="text-xs font-bold text-brand-700 hover:underline">+ Add Testimonial</button>
+        </div>
+        ${testimonials[activeTabs.testimonials] ? `
+          <div class="space-y-3 p-3 bg-app rounded-xl border border-line">
+            <textarea rows="2" oninput="updateData('testimonials.items.${activeTabs.testimonials}.quote', this.value)" class="field text-xs" placeholder="Quote">${escapeHtml(testimonials[activeTabs.testimonials].quote)}</textarea>
+            <div class="grid grid-cols-2 gap-2">
+              <input type="text" value="${escapeHtml(testimonials[activeTabs.testimonials].name)}" oninput="updateData('testimonials.items.${activeTabs.testimonials}.name', this.value)" class="field text-xs" placeholder="Name">
+              <input type="text" value="${escapeHtml(testimonials[activeTabs.testimonials].role)}" oninput="updateData('testimonials.items.${activeTabs.testimonials}.role', this.value)" class="field text-xs" placeholder="Role">
+            </div>
+            <div>
+              <label class="block text-xs font-bold text-ink mb-1">Optional Photo/Avatar</label>
+              <label class="btn btn-admin-ghost text-xs cursor-pointer">📷 Upload Avatar<input type="file" accept="image/*" class="hidden" onchange="openCropper(event, 'testimonials.items.${activeTabs.testimonials}.image')"></label>
+            </div>
+            <button onclick="confirmDeleteTestimonial(${activeTabs.testimonials})" class="btn btn-danger text-xs mt-2">Delete Testimonial</button>
+          </div>
+        ` : ''}
+      `;
+      container.appendChild(createSectionCard('testimonials', 'Testimonials', testHtml));
+
+      restoreState(state);
+      renderLivePreview();
+    }
+
+    function createSectionCard(key, label, innerHtml) {
+      const card = document.createElement('details');
+      card.className = 'card p-5';
+      card.innerHTML = `
+        <summary class="cursor-pointer select-none text-base font-bold text-ink flex items-center justify-between">
+          <span class="font-display">${label}</span>
+          <span class="text-xs font-semibold text-muted bg-app px-2 py-0.5 rounded border border-line uppercase">${key}</span>
+        </summary>
+        <div class="mt-4 pt-4 border-t border-line space-y-3">${innerHtml}</div>
+      `;
+      return card;
+    }
+
+    function addTrustItem() { siteData.trust.push("✓ New Benefit"); renderFormSections(); }
+    function deleteTrustItem(i) { siteData.trust.splice(i, 1); renderFormSections(); }
+
+    function addService() {
+      siteData.services.items.push({ title: "New Service", desc: "Service description", bullets: ["Feature"], images: [] });
+      activeTabs.services = siteData.services.items.length - 1;
+      renderFormSections();
+    }
+    function confirmDeleteService(i) {
+      customConfirm("Delete Service", "Are you sure you want to delete this service?", () => {
+        siteData.services.items.splice(i, 1);
+        activeTabs.services = Math.max(0, i - 1);
+        renderFormSections();
+      });
+    }
+    function deleteServiceImage(svcIdx, imgIdx) {
+      const svc = siteData.services.items[svcIdx];
+      if (svc.images) svc.images.splice(imgIdx, 1);
+      renderFormSections();
+    }
+
+    function addAboutFeature() {
+      siteData.about.features.push({ title: "New Feature", body: "Description" });
+      activeTabs.aboutFeatures = siteData.about.features.length - 1;
+      renderFormSections();
+    }
+    function confirmDeleteFeature(i) {
+      customConfirm("Delete Feature", "Remove this feature card?", () => {
+        siteData.about.features.splice(i, 1);
+        activeTabs.aboutFeatures = Math.max(0, i - 1);
+        renderFormSections();
+      });
+    }
+
+    function addProcessStep() {
+      siteData.process.steps.push({ title: "New Step", desc: "Details", image: "" });
+      activeTabs.processSteps = siteData.process.steps.length - 1;
+      renderFormSections();
+    }
+    function confirmDeleteStep(i) {
+      customConfirm("Delete Step", "Remove this step?", () => {
+        siteData.process.steps.splice(i, 1);
+        activeTabs.processSteps = Math.max(0, i - 1);
+        renderFormSections();
+      });
+    }
+
+    function deleteGalleryItem(i) {
+      customConfirm("Remove Photo", "Delete this photo?", () => {
+        siteData.gallery.items.splice(i, 1);
+        renderFormSections();
+      });
+    }
+
+    function addTestimonial() {
+      siteData.testimonials.items.push({ quote: "Great work!", name: "Client Name", role: "Homeowner", image: "" });
+      activeTabs.testimonials = siteData.testimonials.items.length - 1;
+      renderFormSections();
+    }
+    function confirmDeleteTestimonial(i) {
+      customConfirm("Delete Testimonial", "Remove quote?", () => {
+        siteData.testimonials.items.splice(i, 1);
+        activeTabs.testimonials = Math.max(0, i - 1);
+        renderFormSections();
+      });
+    }
+
+    // --- 100% PIXEL PARITY LIVE PREVIEW MATCHING vite-content.js & index.html ---
+    function renderLivePreview() {
+      const d = siteData;
+      const f = document.getElementById('previewFrame');
+
+      const heroHeadline = d.hero.headline || `${d.hero.headlineLead || ''} *${d.hero.highlight || ''}* ${d.hero.headlineRest || ''}`;
+
+      f.innerHTML = `
+        <!-- SITE HEADER (Matching index.html) -->
+        <header class="site-header sticky top-0 z-50 py-5 bg-brand-900 border-b border-white/10 text-white">
+          <div class="container-x flex items-center justify-between">
+            <a href="#home" class="brand-mark flex items-center gap-3 text-white">
+              <span class="grid h-11 w-11 place-items-center rounded-xl bg-brand-600 font-display text-lg font-bold text-white shadow-soft">G&amp;D</span>
+              <span class="font-display text-xl font-semibold tracking-tight">G&amp;D Flooring</span>
+            </a>
+            <nav class="hidden lg:flex items-center gap-9" aria-label="Primary">
+              <a href="#services" class="nav-link text-sm font-semibold">Services</a>
+              <a href="#about" class="nav-link text-sm font-semibold">Why Us</a>
+              <a href="#process" class="nav-link text-sm font-semibold">Process</a>
+              <a href="#gallery" class="nav-link text-sm font-semibold">Gallery</a>
+              <a href="#contact" class="nav-link text-sm font-semibold">Contact</a>
+            </nav>
+            <a href="#contact" class="btn-gold hidden lg:inline-flex">${d.hero.ctaPrimary}</a>
+          </div>
+        </header>
+
+        <!-- HERO SECTION WITH SMOOTH GPU ANIMATED BG -->
+        <section id="home" class="relative flex min-h-screen items-center overflow-hidden bg-ink text-white">
+          <div class="hero-bg absolute inset-0 -z-10 overflow-hidden">
+            <img src="${d.hero.image}" class="h-full w-full object-cover hero-bg-anim opacity-40">
+            <div class="absolute inset-0 bg-gradient-to-br from-ink/80 via-brand-800/70 to-brand-700/55"></div>
+            <div class="absolute inset-0 bg-gradient-to-t from-ink/70 via-transparent to-transparent"></div>
+          </div>
+
+          <div class="container-x py-32">
+            <div class="max-w-3xl">
+              <p class="eyebrow text-sand-300">
+                <span class="h-px w-8 bg-sand-300"></span> ${d.hero.eyebrow}
+              </p>
+              <h1 class="mt-6 font-display text-5xl font-semibold leading-[1.05] text-white sm:text-6xl lg:text-7xl">
+                ${parseMarkdown(heroHeadline)}
+              </h1>
+              <p class="mt-7 max-w-xl text-lg leading-relaxed text-white/80">
+                ${d.hero.subcopy}
+              </p>
+              <div class="mt-10 flex flex-wrap items-center gap-4">
+                <a href="#contact" class="btn-gold">${d.hero.ctaPrimary}</a>
+                <a href="#services" class="btn-site-ghost">
+                  ${d.hero.ctaSecondary}
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M5 12h14M13 6l6 6-6 6"/></svg>
+                </a>
+              </div>
+              ${d.hero.stats ? `
+                <dl class="mt-16 flex flex-wrap gap-8 border-t border-white/15 pt-8">
+                  ${d.hero.stats.map(s => `
+                    <div>
+                      <dt class="text-sm text-white/60">${s.label}:</dt>
+                      <dd class="font-display text-3xl font-semibold text-white mt-1">${s.value}</dd>
+                    </div>
+                  `).join('')}
+                </dl>
+              ` : ''}
+            </div>
+          </div>
+        </section>
+
+        <!-- TRUST STRIP -->
+        <section class="border-y border-ink/5 bg-cream-200/60 py-6">
+          <div class="container-x flex flex-wrap items-center justify-center gap-x-12 gap-y-4 text-center text-sm font-semibold text-muted">
+            ${(d.trust || []).map(t => `<span>${t}</span>`).join('')}
+          </div>
+        </section>
+
+        <!-- SERVICES SECTION -->
+        <section id="services" class="py-24 lg:py-32 bg-cream text-ink">
+          <div class="container-x">
+            <div class="mx-auto max-w-2xl text-center">
+              <p class="eyebrow justify-center"><span class="h-px w-8 bg-brand-600"></span> ${d.services.eyebrow} <span class="h-px w-8 bg-brand-600"></span></p>
+              <h2 class="mt-5 font-display text-4xl font-semibold text-ink sm:text-5xl">${d.services.heading}</h2>
+              <p class="mt-5 text-lg text-muted">${d.services.subcopy}</p>
+            </div>
+
+            <div class="mt-16 grid gap-7 sm:grid-cols-2 lg:grid-cols-4">
+              ${(d.services.items || []).map(it => {
+                const imgs = it.images || (it.image ? [it.image] : []);
+                return `
+                  <article class="card-lift group overflow-hidden rounded-3xl bg-white shadow-soft ring-1 ring-ink/5 flex flex-col justify-between">
+                    <div>
+                      ${imgs.length > 0 ? `
+                        <div class="media-zoom relative aspect-[4/3] overflow-hidden cursor-pointer" onclick="openLightbox('Service: ${escapeHtml(it.title)}', ${JSON.stringify(imgs).replace(/"/g, '&quot;')})">
+                          <img src="${imgs[0]}" class="h-full w-full object-cover">
+                          ${imgs.length > 1 ? `<span class="absolute bottom-2 right-2 bg-ink/80 text-white text-[10px] px-2 py-0.5 rounded-full font-semibold">📷 Carousel (${imgs.length})</span>` : ''}
+                        </div>
+                      ` : ''}
+                      <div class="p-7">
+                        <h3 class="font-display text-xl font-semibold text-ink">${it.title}</h3>
+                        <p class="mt-3 text-sm leading-relaxed text-muted">${it.desc}</p>
+                        ${it.bullets ? `
+                          <ul class="mt-5 space-y-2 text-sm text-ink-700">
+                            ${it.bullets.map(b => `<li class="flex items-center gap-2"><span class="text-brand-600">✓</span> ${b}</li>`).join('')}
+                          </ul>
+                        ` : ''}
+                      </div>
+                    </div>
+                    <div class="px-7 pb-7">
+                      <a href="#contact" class="inline-flex items-center gap-1.5 text-sm font-semibold text-brand-700">Request service →</a>
+                    </div>
+                  </article>
+                `;
+              }).join('')}
+            </div>
+          </div>
+        </section>
+
+        <!-- ABOUT SECTION -->
+        <section id="about" class="bg-ink py-24 text-white lg:py-32">
+          <div class="container-x grid items-center gap-14 lg:grid-cols-2">
+            <div class="relative">
+              <div class="media-zoom overflow-hidden rounded-[2rem] shadow-lift">
+                <img src="${d.about.image}" class="aspect-[4/5] w-full object-cover">
+              </div>
+            </div>
+            <div>
+              <p class="eyebrow text-sand-300"><span class="h-px w-8 bg-sand-300"></span> ${d.about.eyebrow}</p>
+              <h2 class="mt-5 font-display text-4xl font-semibold sm:text-5xl">${d.about.headingLead}<br>${d.about.headingRest}</h2>
+              <div class="mt-5 max-w-lg text-white/70 leading-relaxed">${parseMarkdown(d.about.body)}</div>
+              <div class="mt-10 grid gap-7 sm:grid-cols-2">
+                ${(d.about.features || []).map(f => `
+                  <div>
+                    <h3 class="font-display text-lg font-semibold text-white">${f.title}</h3>
+                    <p class="mt-1.5 text-sm text-white/65">${f.body}</p>
+                  </div>
+                `).join('')}
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <!-- PROCESS SECTION -->
+        <section id="process" class="py-24 lg:py-32 bg-cream text-ink">
+          <div class="container-x">
+            <div class="mx-auto max-w-2xl text-center">
+              <p class="eyebrow justify-center"><span class="h-px w-8 bg-brand-600"></span> ${d.process.eyebrow} <span class="h-px w-8 bg-brand-600"></span></p>
+              <h2 class="mt-5 font-display text-4xl font-semibold text-ink sm:text-5xl">${d.process.heading}</h2>
+            </div>
+            <div class="mt-16 grid gap-8 md:grid-cols-2 lg:grid-cols-4">
+              ${(d.process.steps || []).map((st, i) => `
+                <div class="relative rounded-3xl bg-white p-8 shadow-soft ring-1 ring-ink/5">
+                  <span class="font-display text-5xl font-bold text-brand-100">${String(i + 1).padStart(2, '0')}</span>
+                  ${st.image ? `<img src="${st.image}" class="h-28 w-full object-cover rounded-xl mt-3">` : ''}
+                  <h3 class="mt-3 font-display text-xl font-semibold text-ink">${st.title}</h3>
+                  <p class="mt-3 text-sm leading-relaxed text-muted">${st.desc}</p>
+                </div>
+              `).join('')}
+            </div>
+          </div>
+        </section>
+
+        <!-- GALLERY SECTION (MASONRY) -->
+        <section id="gallery" class="bg-cream-200/50 py-24 lg:py-32">
+          <div class="container-x">
+            <div class="flex flex-wrap items-end justify-between gap-6 mb-14">
+              <div class="max-w-xl">
+                <p class="eyebrow"><span class="h-px w-8 bg-brand-600"></span> ${d.gallery.eyebrow}</p>
+                <h2 class="mt-5 font-display text-4xl font-semibold text-ink sm:text-5xl">${d.gallery.heading}</h2>
+              </div>
+              <a href="#contact" class="btn-outline">${d.gallery.ctaLabel}</a>
+            </div>
+
+            <div class="masonry-grid">
+              ${(d.gallery.items || []).map((g, gi) => `
+                <div class="masonry-item media-zoom group relative overflow-hidden rounded-2xl shadow-soft cursor-pointer" onclick="openLightbox('Gallery', ${JSON.stringify(d.gallery.items.map(x => x.image)).replace(/"/g, '&quot;')}, ${gi})">
+                  <img src="${g.image}" class="w-full">
+                  <div class="absolute inset-x-0 bottom-0 bg-gradient-to-t from-ink/80 to-transparent p-5 text-sm font-semibold text-white opacity-0 transition-opacity duration-300 group-hover:opacity-100">${g.caption || ''}</div>
+                </div>
+              `).join('')}
+            </div>
+          </div>
+        </section>
+
+        <!-- TESTIMONIALS SECTION -->
+        <section class="py-24 lg:py-32 bg-cream text-ink">
+          <div class="container-x">
+            <div class="mx-auto max-w-2xl text-center">
+              <p class="eyebrow justify-center"><span class="h-px w-8 bg-brand-600"></span> ${d.testimonials.eyebrow} <span class="h-px w-8 bg-brand-600"></span></p>
+              <h2 class="mt-5 font-display text-4xl font-semibold text-ink sm:text-5xl">${d.testimonials.heading}</h2>
+            </div>
+            <div class="mt-16 grid gap-7 lg:grid-cols-3">
+              ${(d.testimonials.items || []).map(q => `
+                <figure class="rounded-3xl bg-white p-8 shadow-soft ring-1 ring-ink/5">
+                  <div class="flex gap-1 text-sand-400">★★★★★</div>
+                  <blockquote class="mt-5 text-ink-700 text-sm">"${q.quote}"</blockquote>
+                  <div class="mt-6 flex items-center gap-3">
+                    ${q.image ? `<img src="${q.image}" class="h-10 w-10 rounded-full object-cover">` : ''}
+                    <div>
+                      <div class="text-sm font-semibold text-ink">${q.name}</div>
+                      <div class="text-xs text-muted">${q.role}</div>
+                    </div>
+                  </div>
+                </figure>
+              `).join('')}
+            </div>
+          </div>
+        </section>
+
+        <!-- FOOTER -->
+        <footer class="bg-ink text-white py-12">
+          <div class="container-x flex flex-col sm:flex-row justify-between items-center gap-4 text-xs text-white/50">
+            <p>© 2026 G&amp;D Flooring. All rights reserved.</p>
+            <p>${d.footer.license}</p>
+          </div>
+        </footer>
+      `;
+    }
+
+    // --- CROPPER ENGINE ---
+    function openCropper(event, targetPath, isArray = false) {
+      const file = event.target.files && event.target.files[0];
+      if (!file) return;
+
+      activeImageTarget = { path: targetPath, isArray };
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        const cropImg = document.getElementById('cropTargetImg');
+        cropImg.src = e.target.result;
+        document.getElementById('cropModal').classList.remove('hidden');
+
+        if (cropper) cropper.destroy();
+        cropper = new Cropper(cropImg, { aspectRatio: 1.7777, viewMode: 1 });
+      };
+      reader.readAsDataURL(file);
+    }
+
+    document.getElementById('closeCropModal').onclick =
+    document.getElementById('cancelCropBtn').onclick = () => {
+      document.getElementById('cropModal').classList.add('hidden');
+      if (cropper) cropper.destroy();
+    };
+
+    document.getElementById('applyCropBtn').onclick = () => {
+      if (!cropper) return;
+      const canvas = cropper.getCroppedCanvas({ width: 1200, height: 800 });
+      const base64 = canvas.toDataURL('image/webp', 0.85);
+
+      if (activeImageTarget.isArray) {
+        const keys = activeImageTarget.path.split('.');
+        let cur = siteData;
+        for (let i = 0; i < keys.length; i++) cur = cur[keys[i]];
+        if (Array.isArray(cur)) {
+          if (keys.includes('gallery')) cur.push({ image: base64, caption: "New Photo" });
+          else cur.push(base64);
+        }
+      } else {
+        updateData(activeImageTarget.path, base64);
+      }
+
+      renderFormSections();
+      document.getElementById('cropModal').classList.add('hidden');
+      if (cropper) cropper.destroy();
+    };
+
+    // --- LIGHTBOX ZOOM & PAN ENGINE ---
+    let lbImages = [];
+    let lbIndex = 0;
+    let lbScale = 1;
+    let lbPanX = 0, lbPanY = 0;
+    let isDragging = false, startX = 0, startY = 0;
+
+    function openLightbox(title, imgArray, startIdx = 0) {
+      lbImages = imgArray || [];
+      lbIndex = startIdx;
+      lbScale = 1;
+      lbPanX = 0; lbPanY = 0;
+      document.getElementById('lightboxTitle').innerText = title;
+      updateLightboxImage();
+      document.getElementById('lightboxModal').classList.remove('hidden');
+    }
+
+    function updateLightboxImage() {
+      const img = document.getElementById('lbMainImage');
+      img.src = lbImages[lbIndex] || '';
+      img.style.transform = `translate(${lbPanX}px, ${lbPanY}px) scale(${lbScale})`;
+
+      const cs = document.getElementById('lbContactSheet');
+      cs.innerHTML = lbImages.map((src, i) => `
+        <img src="${src}" onclick="lbIndex=${i}; lbScale=1; lbPanX=0; lbPanY=0; updateLightboxImage();" class="h-14 w-20 object-cover rounded-lg border-2 cursor-pointer ${i === lbIndex ? 'border-sand-400 scale-105' : 'border-transparent opacity-60'}">
+      `).join('');
+    }
+
+    const viewport = document.getElementById('lbViewport');
+    viewport.addEventListener('wheel', (e) => {
+      e.preventDefault();
+      const zoomDelta = e.deltaY < 0 ? 0.2 : -0.2;
+      lbScale = Math.min(Math.max(1, lbScale + zoomDelta), 4);
+      if (lbScale === 1) { lbPanX = 0; lbPanY = 0; }
+      updateLightboxImage();
+    });
+
+    viewport.addEventListener('mousedown', (e) => {
+      if (lbScale > 1) {
+        isDragging = true;
+        startX = e.clientX - lbPanX;
+        startY = e.clientY - lbPanY;
+      }
+    });
+
+    window.addEventListener('mousemove', (e) => {
+      if (isDragging) {
+        lbPanX = e.clientX - startX;
+        lbPanY = e.clientY - startY;
+        updateLightboxImage();
+      }
+    });
+
+    window.addEventListener('mouseup', () => isDragging = false);
+
+    document.getElementById('lbZoomIn').onclick = () => { lbScale = Math.min(4, lbScale + 0.5); updateLightboxImage(); };
+    document.getElementById('lbZoomOut').onclick = () => { lbScale = Math.max(1, lbScale - 0.5); if (lbScale === 1) { lbPanX = 0; lbPanY = 0; } updateLightboxImage(); };
+    document.getElementById('lbResetZoom').onclick = () => { lbScale = 1; lbPanX = 0; lbPanY = 0; updateLightboxImage(); };
+    document.getElementById('closeLightbox').onclick = () => document.getElementById('lightboxModal').classList.add('hidden');
+
+    document.getElementById('saveDraftBtn').onclick = () => alert('Draft saved to content-draft branch!');
+    document.getElementById('publishBtn').onclick = () => alert('Published! Merging into main branch...');
+
+    // Initialize
+    renderFormSections();
+  </script>
+</body>
+</html>

@@ -35,6 +35,7 @@ export default defineConfig(({ mode }) => {
           server.middlewares.use((req, _res, next) => {
             const [p, q] = (req.url || '').split('?')
             if (p === '/admin') req.url = '/admin/' + (q ? '?' + q : '')
+            if (p === '/draft') req.url = '/draft/' + (q ? '?' + q : '')
             next()
           })
         },
@@ -56,6 +57,7 @@ export default defineConfig(({ mode }) => {
         input: {
           main: resolve(process.cwd(), 'index.html'),
           admin: resolve(process.cwd(), 'admin/index.html'),
+          draft: resolve(process.cwd(), 'draft/index.html'),
         },
       },
     },

@@ -1,0 +1,134 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="theme-color" content="#275f8c" />
+    <title>G&D Flooring — Draft Preview Mode</title>
+    <meta name="description" content="G&D Flooring draft preview mode." />
+    <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
+    <meta name="robots" content="noindex, nofollow" />
+
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,500;9..144,600;9..144,700&family=Inter:wght@400;500;600;700&display=swap"
+      rel="stylesheet"
+    />
+  </head>
+
+  <body>
+    <!-- Draft Banner -->
+    <div class="fixed top-0 inset-x-0 z-[100] bg-amber-500 text-slate-950 px-4 py-2 text-xs font-bold flex items-center justify-between shadow-lg">
+      <div class="flex items-center gap-2">
+        <span class="h-2 w-2 rounded-full bg-slate-950 animate-ping"></span>
+        <span>Draft Preview Mode — Previewing latest content changes under <code>/draft</code></span>
+      </div>
+      <div class="flex items-center gap-3">
+        <a href="/admin/" class="underline hover:opacity-80">← Back to Admin CMS</a>
+      </div>
+    </div>
+
+    <!-- MAIN SITE HEADER -->
+    <header class="site-header fixed inset-x-0 top-8 z-50 py-5">
+      <div class="container-x flex items-center justify-between">
+        <a href="#home" class="brand-mark flex items-center gap-3 text-white">
+          <span class="grid h-11 w-11 place-items-center rounded-xl bg-brand-600 font-display text-lg font-700 text-white shadow-soft">G&amp;D</span>
+          <span class="font-display text-xl font-600 tracking-tight">G&amp;D Flooring</span>
+        </a>
+
+        <nav class="hidden items-center gap-9 lg:flex" aria-label="Primary">
+          <a href="#services" class="nav-link text-sm font-500">Services</a>
+          <a href="#about" class="nav-link text-sm font-500">Why Us</a>
+          <a href="#process" class="nav-link text-sm font-500">Process</a>
+          <a href="#gallery" class="nav-link text-sm font-500">Gallery</a>
+          <a href="#contact" class="nav-link text-sm font-500">Contact</a>
+        </nav>
+
+        <a href="#contact" class="btn-gold hidden lg:inline-flex">Get a Free Quote</a>
+      </div>
+    </header>
+
+    <main id="main" class="pt-8">
+      <!-- HERO SECTION -->
+      <section id="home" class="relative flex min-h-screen items-center overflow-hidden">
+        <div class="hero-bg absolute inset-0 -z-10 scale-110">
+          <!--CMS:hero.image--><!--/CMS:hero.image-->
+          <div class="absolute inset-0 bg-gradient-to-br from-ink/80 via-brand-800/70 to-brand-700/55"></div>
+          <div class="absolute inset-0 bg-gradient-to-t from-ink/70 via-transparent to-transparent"></div>
+        </div>
+
+        <div class="container-x py-32">
+          <!--CMS:hero--><!--/CMS:hero-->
+        </div>
+      </section>
+
+      <!-- TRUST STRIP -->
+      <section class="border-y border-ink/5 bg-cream-200/60">
+        <div class="container-x flex flex-wrap items-center justify-center gap-x-12 gap-y-4 py-6 text-center text-sm font-500 text-muted">
+          <!--CMS:trust--><!--/CMS:trust-->
+        </div>
+      </section>
+
+      <!-- SERVICES -->
+      <section id="services" class="py-24 lg:py-32">
+        <div class="container-x">
+          <!--CMS:services--><!--/CMS:services-->
+        </div>
+      </section>
+
+      <!-- WHY US -->
+      <section id="about" class="bg-ink py-24 text-white lg:py-32">
+        <div class="container-x grid items-center gap-14 lg:grid-cols-2">
+          <!--CMS:about--><!--/CMS:about-->
+        </div>
+      </section>
+
+      <!-- PROCESS -->
+      <section id="process" class="py-24 lg:py-32">
+        <div class="container-x">
+          <!--CMS:process--><!--/CMS:process-->
+        </div>
+      </section>
+
+      <!-- GALLERY -->
+      <section id="gallery" class="bg-cream-200/50 py-24 lg:py-32">
+        <div class="container-x">
+          <!--CMS:gallery--><!--/CMS:gallery-->
+        </div>
+      </section>
+
+      <!-- TESTIMONIALS -->
+      <section class="py-24 lg:py-32">
+        <div class="container-x">
+          <!--CMS:testimonials--><!--/CMS:testimonials-->
+        </div>
+      </section>
+
+      <!-- CTA BAND -->
+      <section class="container-x">
+        <div class="reveal relative overflow-hidden rounded-[2.5rem] bg-brand-700 px-8 py-16 text-center text-white shadow-lift sm:px-16 sm:py-20">
+          <!--CMS:ctaBand--><!--/CMS:ctaBand-->
+        </div>
+      </section>
+
+      <!-- CONTACT -->
+      <section id="contact" class="py-24 lg:py-32">
+        <div class="container-x grid gap-14 lg:grid-cols-2">
+          <div>
+            <!--CMS:contactInfo--><!--/CMS:contactInfo-->
+          </div>
+        </div>
+      </section>
+    </main>
+
+    <!-- FOOTER -->
+    <footer class="bg-ink text-white">
+      <div class="container-x grid gap-12 py-16 md:grid-cols-[1.4fr_1fr_1fr_1fr]">
+        <!--CMS:footer--><!--/CMS:footer-->
+      </div>
+    </footer>
+
+    <script type="module" src="/src/main.js"></script>
+  </body>
+</html>

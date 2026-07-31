@@ -234,9 +234,161 @@ function sectionHtml(sec, idx) {
       )
       .join('')
   return `<details class="card p-5" ${idx === 0 ? 'open' : ''}>
-    <summary class="cursor-pointer select-none text-lg font-700">${esc(sec.label)}</summary>
-    <div class="mt-4 space-y-4">${inner}</div>
+    <summary class="cursor-pointer select-none text-base font-700 text-ink flex items-center justify-between">
+      <span>${esc(sec.label)}</span>
+      <span class="text-xs font-600 text-muted bg-app px-2 py-0.5 rounded border border-line uppercase">${esc(sec.key)}</span>
+    </summary>
+    <div class="mt-4 space-y-4 pt-4 border-t border-line">${inner}</div>
   </details>`
+}
+
+function parseMd(s) {
+  if (!s) return ''
+  return esc(s).replace(/\*([^*]+)\*/g, '<span class="italic text-[#d8b985] font-600">$1</span>')
+}
+
+function renderLivePreview() {
+  const d = content || seed
+  const prev = document.getElementById('cmsLivePreview')
+  if (!prev) return
+
+  const heroHeadline = d.hero?.headline || `${d.hero?.headlineLead || ''} *${d.hero?.highlight || ''}* ${d.hero?.headlineRest || ''}`
+
+  prev.innerHTML = `
+    <!-- HEADER -->
+    <header class="bg-brand-900 border-b border-white/10 px-6 py-4 flex items-center justify-between text-white sticky top-0 z-30">
+      <div class="flex items-center gap-3">
+        <span class="grid h-10 w-10 place-items-center rounded-xl bg-brand-600 font-display text-lg font-700">G&amp;D</span>
+        <span class="font-display text-xl font-600 tracking-tight">G&amp;D Flooring</span>
+      </div>
+      <nav class="hidden lg:flex items-center gap-9 text-sm font-500 text-white/85">
+        <a href="#services">Services</a>
+        <a href="#about">Why Us</a>
+        <a href="#process">Process</a>
+        <a href="#gallery">Gallery</a>
+        <a href="#contact">Contact</a>
+      </nav>
+      <button class="btn-gold hidden lg:inline-flex">${esc(d.hero?.ctaPrimary || 'Get a Free Quote')}</button>
+    </header>
+
+    <!-- HERO WITH GPU-ACCELERATED SMOOTH BG ANIMATION -->
+    <section class="relative bg-ink text-white p-8 md:p-14 overflow-hidden min-h-[80vh] flex items-center">
+      ${d.hero?.image ? `
+        <div class="absolute inset-0 -z-10 overflow-hidden">
+          <img src="${esc(d.hero.image)}" class="h-full w-full object-cover opacity-40 will-change-transform animate-[heroSmoothZoom_24s_ease-in-out_infinite]">
+          <div class="absolute inset-0 bg-gradient-to-br from-ink/80 via-brand-800/70 to-brand-700/55"></div>
+          <div class="absolute inset-0 bg-gradient-to-t from-ink/70 via-transparent to-transparent"></div>
+        </div>
+      ` : ''}
+
+      <div class="max-w-3xl relative z-10">
+        <p class="eyebrow text-sand-300">
+          <span class="h-px w-8 bg-sand-300"></span> ${esc(d.hero?.eyebrow)}
+        </p>
+        <h1 class="mt-6 font-display text-4xl md:text-6xl font-600 leading-[1.05] text-white">
+          ${parseMd(heroHeadline)}
+        </h1>
+        <p class="mt-7 max-w-xl text-lg leading-relaxed text-white/80">
+          ${esc(d.hero?.subcopy)}
+        </p>
+        <div class="mt-10 flex flex-wrap items-center gap-4">
+          <a href="#contact" class="btn-gold">${esc(d.hero?.ctaPrimary)}</a>
+          <a href="#services" class="btn-ghost">
+            ${esc(d.hero?.ctaSecondary)}
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M5 12h14M13 6l6 6-6 6"/></svg>
+          </a>
+        </div>
+        ${d.hero?.stats ? `
+          <dl class="mt-16 flex flex-wrap gap-8 border-t border-white/15 pt-8">
+            ${d.hero.stats.map(s => `
+              <div>
+                <dt class="text-sm text-white/60">${esc(s.label)}:</dt>
+                <dd class="font-display text-3xl font-600 text-white mt-1">${esc(s.value)}</dd>
+              </div>
+            `).join('')}
+          </dl>
+        ` : ''}
+      </div>
+    </section>
+
+    <!-- TRUST STRIP -->
+    <section class="border-y border-ink/5 bg-cream-200/60 py-6">
+      <div class="flex flex-wrap items-center justify-center gap-x-12 gap-y-4 text-center text-sm font-500 text-muted">
+        ${(d.trust || []).map(t => `<span>${esc(t)}</span>`).join('')}
+      </div>
+    </section>
+
+    <!-- SERVICES -->
+    <section class="py-20 bg-cream text-ink">
+      <div class="max-w-7xl mx-auto px-6">
+        <div class="mx-auto max-w-2xl text-center">
+          <p class="eyebrow justify-center"><span class="h-px w-8 bg-brand-600"></span> ${esc(d.services?.eyebrow)} <span class="h-px w-8 bg-brand-600"></span></p>
+          <h2 class="mt-5 font-display text-4xl font-600 text-ink sm:text-5xl">${esc(d.services?.heading)}</h2>
+          <p class="mt-5 text-lg text-muted">${esc(d.services?.subcopy)}</p>
+        </div>
+
+        <div class="mt-16 grid gap-7 sm:grid-cols-2 lg:grid-cols-4">
+          ${(d.services?.items || []).map(it => {
+            const imgs = it.images || (it.image ? [it.image] : [])
+            return `
+              <article class="card-lift group overflow-hidden rounded-3xl bg-white shadow-soft ring-1 ring-ink/5 flex flex-col justify-between">
+                <div>
+                  ${imgs.length > 0 ? `
+                    <div class="media-zoom relative aspect-[4/3] overflow-hidden">
+                      <img src="${esc(imgs[0])}" class="h-full w-full object-cover">
+                      ${imgs.length > 1 ? `<span class="absolute bottom-2 right-2 bg-ink/80 text-white text-[10px] px-2 py-0.5 rounded-full font-semibold">📷 Carousel (${imgs.length})</span>` : ''}
+                    </div>
+                  ` : ''}
+                  <div class="p-7">
+                    <h3 class="font-display text-xl font-600 text-ink">${esc(it.title)}</h3>
+                    <p class="mt-3 text-sm leading-relaxed text-muted">${esc(it.desc)}</p>
+                    ${it.bullets ? `
+                      <ul class="mt-5 space-y-2 text-sm text-ink-700">
+                        ${it.bullets.map(b => `<li class="flex items-center gap-2"><span class="text-brand-600">✓</span> ${esc(b)}</li>`).join('')}
+                      </ul>
+                    ` : ''}
+                  </div>
+                </div>
+                <div class="px-7 pb-7">
+                  <a href="#contact" class="inline-flex items-center gap-1.5 text-sm font-600 text-brand-700">Request service →</a>
+                </div>
+              </article>
+            `
+          }).join('')}
+        </div>
+      </div>
+    </section>
+
+    <section class="bg-[#15212b] text-white p-8 md:p-12">
+      <div class="max-w-2xl">
+        <p class="text-xs font-600 text-[#e2bf8b] uppercase tracking-wider">${esc(d.about?.eyebrow)}</p>
+        <h2 class="font-display text-3xl font-600 mt-2">${esc(d.about?.headingLead)}<br>${esc(d.about?.headingRest)}</h2>
+        <p class="text-xs text-white/70 mt-3 leading-relaxed">${esc(d.about?.body)}</p>
+
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mt-8">
+          ${(d.about?.features || []).map(f => `
+            <div class="p-4 bg-white/5 rounded-2xl border border-white/10">
+              <h4 class="font-display font-600 text-sm text-white">${esc(f.title)}</h4>
+              <p class="text-xs text-white/60 mt-1">${esc(f.body)}</p>
+            </div>
+          `).join('')}
+        </div>
+      </div>
+    </section>
+
+    <footer class="bg-slate-950 text-white/60 p-8 text-xs border-t border-white/10">
+      <div class="flex flex-col md:flex-row justify-between items-center gap-4">
+        <div>
+          <span class="font-display text-base font-600 text-white">G&amp;D Flooring</span>
+          <p class="text-[11px] mt-1">${esc(d.footer?.blurb)}</p>
+        </div>
+        <div class="text-right">
+          <p>${esc(d.footer?.phone)} · ${esc(d.footer?.email)}</p>
+          <p class="text-[10px] text-white/40 mt-1">${esc(d.footer?.license)}</p>
+        </div>
+      </div>
+    </footer>
+  `
 }
 
 function renderEditor(v) {
@@ -247,18 +399,41 @@ function renderEditor(v) {
         <span class="text-muted">@${esc(ghUser() || 'github')}</span>
       </div>
       <button id="wDisc" class="btn-ghost">Disconnect</button>
+      <a href="/draft/" target="_blank" rel="noopener" class="btn-ghost text-xs font-semibold bg-amber-100 text-amber-900 border-amber-300 hover:bg-amber-200 transition flex items-center gap-1.5">
+        👁️ View Live Draft (/draft) ↗
+      </a>
       <span id="wStatus" class="text-sm text-muted"></span>
       <div class="ml-auto flex gap-2">
         <button id="wSave" class="btn-ghost">Save draft</button>
         <button id="wPub" class="btn-primary">Publish</button>
       </div>
     </div>
-    <p class="mb-4 text-sm text-muted">Edits are saved to the <code>content-draft</code> branch. <span class="font-600">Publish</span> merges it into <code>main</code>; the site rebuilds and goes live in ~1–2 min.</p>
-    <div class="space-y-4">${SCHEMA.map(sectionHtml).join('')}</div>`
+    
+    <div class="flex gap-6 h-[calc(100vh-220px)] overflow-hidden">
+      <!-- Left Form Pane -->
+      <div class="w-1/2 overflow-y-auto space-y-4 pr-2">
+        <p class="text-sm text-muted">Edits save to <code>content-draft</code>. <span class="font-600">Publish</span> merges to <code>main</code>.</p>
+        <div class="space-y-4">${SCHEMA.map(sectionHtml).join('')}</div>
+      </div>
+
+      <!-- Right Live Preview Pane -->
+      <div class="w-1/2 bg-slate-900 rounded-2xl border border-line overflow-hidden flex flex-col shadow-lg">
+        <div class="h-9 bg-slate-950 px-4 flex items-center justify-between text-xs text-slate-400 border-b border-slate-800">
+          <span class="font-mono text-[11px] text-slate-300">Live Website Preview (Pixel Parity)</span>
+          <span class="bg-brand-600/30 text-brand-300 px-2 py-0.5 rounded text-[10px] font-semibold border border-brand-500/30">Live Sync</span>
+        </div>
+        <div id="cmsLivePreview" class="flex-1 overflow-y-auto bg-[#15212b]"></div>
+      </div>
+    </div>`
+
+  renderLivePreview()
 
   // scalar binding (no re-render → keeps focus while typing)
   v.querySelectorAll('[data-path]').forEach((el) =>
-    el.addEventListener('input', () => set(el.dataset.path, el.value))
+    el.addEventListener('input', () => {
+      set(el.dataset.path, el.value)
+      renderLivePreview()
+    })
   )
   // image pick → resize → queue + set url
   v.querySelectorAll('[data-img]').forEach((inp) =>

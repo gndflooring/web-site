@@ -1,0 +1,95 @@
+<!DOCTYPE html>
+<html lang="en" class="h-full">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>G&D Flooring CMS — 5 Redesign Options Showcase</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          fontFamily: { sans: ['"Plus Jakarta Sans"', 'sans-serif'] }
+        }
+      }
+    }
+  </script>
+  <style>
+    ::-webkit-scrollbar { width: 6px; }
+    ::-webkit-scrollbar-thumb { background: #3b82f6; border-radius: 4px; }
+    .nav-tab.active {
+      background: #2563eb;
+      color: #ffffff;
+      box-shadow: 0 4px 14px rgba(37, 99, 235, 0.4);
+    }
+  </style>
+</head>
+<body class="bg-slate-950 text-slate-100 h-full flex flex-col font-sans overflow-hidden">
+
+  <!-- Master Navigation Header -->
+  <header class="bg-slate-900 border-b border-slate-800 px-6 py-3 shrink-0 flex flex-wrap items-center justify-between gap-4 z-30">
+    <div class="flex items-center gap-3">
+      <div class="h-10 w-10 rounded-xl bg-gradient-to-tr from-blue-600 to-indigo-500 flex items-center justify-center font-extrabold text-white text-lg shadow-lg shadow-blue-500/20">
+        CMS
+      </div>
+      <div>
+        <h1 class="font-bold text-base text-white flex items-center gap-2">
+          G&D Flooring CMS Redesign
+          <span class="text-xs font-semibold px-2 py-0.5 rounded-full bg-blue-500/20 text-blue-300 border border-blue-500/30">5 Concepts</span>
+        </h1>
+        <p class="text-xs text-slate-400">Interactive live prototype viewer using existing <code class="text-blue-300">site.json</code> format</p>
+      </div>
+    </div>
+
+    <!-- Switcher Tabs -->
+    <div class="flex items-center gap-1.5 bg-slate-950 p-1 rounded-xl border border-slate-800" id="tabBar">
+      <button onclick="loadOption(1)" id="tab_1" class="nav-tab active px-3.5 py-1.5 rounded-lg text-xs font-semibold text-slate-300 transition">
+        Option 1: Split Builder
+      </button>
+      <button onclick="loadOption(2)" id="tab_2" class="nav-tab px-3.5 py-1.5 rounded-lg text-xs font-semibold text-slate-300 transition">
+        Option 2: Block Composer
+      </button>
+      <button onclick="loadOption(3)" id="tab_3" class="nav-tab px-3.5 py-1.5 rounded-lg text-xs font-semibold text-slate-300 transition">
+        Option 3: Tabbed Studio
+      </button>
+      <button onclick="loadOption(4)" id="tab_4" class="nav-tab px-3.5 py-1.5 rounded-lg text-xs font-semibold text-slate-300 transition">
+        Option 4: Canvas Inspector
+      </button>
+      <button onclick="loadOption(5)" id="tab_5" class="nav-tab px-3.5 py-1.5 rounded-lg text-xs font-semibold text-slate-300 transition">
+        Option 5: Command Center
+      </button>
+    </div>
+
+    <!-- External Link -->
+    <a id="openTabBtn" href="./option1-split-screen.html" target="_blank" class="text-xs text-blue-400 hover:text-blue-300 font-semibold flex items-center gap-1 bg-slate-800 px-3 py-1.5 rounded-lg border border-slate-700">
+      <span>Open Direct HTML</span>
+      <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"/></svg>
+    </a>
+  </header>
+
+  <!-- Content Frame -->
+  <div class="flex-1 relative bg-slate-950">
+    <iframe id="previewFrame" src="./option1-split-screen.html" class="w-full h-full border-none"></iframe>
+  </div>
+
+  <script>
+    const options = {
+      1: "./option1-split-screen.html",
+      2: "./option2-block-composer.html",
+      3: "./option3-tabbed-studio.html",
+      4: "./option4-canvas-inspector.html",
+      5: "./option5-command-center.html"
+    };
+
+    function loadOption(num) {
+      document.querySelectorAll('.nav-tab').forEach(t => t.classList.remove('active'));
+      document.getElementById(`tab_${num}`).classList.add('active');
+      document.getElementById('previewFrame').src = options[num];
+      document.getElementById('openTabBtn').href = options[num];
+    }
+  </script>
+</body>
+</html>

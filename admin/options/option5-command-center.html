@@ -1,0 +1,221 @@
+<!DOCTYPE html>
+<html lang="en" class="h-full">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>CMS Option 5: Enterprise Command Center Workspace</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          fontFamily: {
+            sans: ['"Plus Jakarta Sans"', 'sans-serif'],
+            mono: ['"JetBrains Mono"', 'monospace']
+          },
+          colors: {
+            roseBrand: { 500: '#f43f5e', 600: '#e11d48', 700: '#be123c' }
+          }
+        }
+      }
+    }
+  </script>
+  <style>
+    ::-webkit-scrollbar { width: 6px; }
+    ::-webkit-scrollbar-thumb { background: #f43f5e; border-radius: 4px; }
+    .cmd-card {
+      background: #181820;
+      border: 1px solid #272738;
+    }
+    .cmd-input {
+      background: #0f0f15;
+      border: 1px solid #2e2e42;
+      color: #f4f4f5;
+    }
+    .cmd-input:focus {
+      outline: none;
+      border-color: #f43f5e;
+      box-shadow: 0 0 0 2px rgba(244, 63, 94, 0.25);
+    }
+  </style>
+</head>
+<body class="bg-[#0f0f13] text-zinc-100 h-full flex flex-col font-sans overflow-hidden">
+
+  <!-- Command Center Header Bar -->
+  <header class="h-16 border-b border-zinc-800 bg-[#16161d] px-6 flex items-center justify-between shrink-0 z-30">
+    <div class="flex items-center gap-3">
+      <span class="h-9 w-9 rounded-xl bg-gradient-to-r from-rose-500 to-amber-500 flex items-center justify-center font-bold text-white text-base shadow-lg shadow-rose-500/30">
+        5
+      </span>
+      <div>
+        <h1 class="font-bold text-sm text-white flex items-center gap-2">
+          Enterprise Command Center
+          <span class="text-xs font-semibold px-2.5 py-0.5 rounded-full bg-rose-500/20 text-rose-300 border border-rose-500/30">Option 5</span>
+        </h1>
+        <p class="text-xs text-zinc-400">Dual 2-way real-time Form & JSON Code workspace with GitHub draft workflow</p>
+      </div>
+    </div>
+
+    <!-- Actions -->
+    <div class="flex items-center gap-3">
+      <span class="text-xs text-zinc-400 font-mono bg-zinc-900 px-3 py-1.5 rounded-lg border border-zinc-800 flex items-center gap-2">
+        <span class="h-2 w-2 rounded-full bg-emerald-400"></span> Valid JSON Schema
+      </span>
+      <button id="formatJson" class="px-3 py-1.5 text-xs font-semibold rounded-lg bg-zinc-800 hover:bg-zinc-700 text-zinc-200 border border-zinc-700">
+        Format JSON
+      </button>
+      <button id="exportJson" class="px-4 py-1.5 text-xs font-bold rounded-lg bg-rose-600 hover:bg-rose-500 text-white shadow-lg shadow-rose-600/20">
+        Publish / Export
+      </button>
+    </div>
+  </header>
+
+  <!-- Workspace split -->
+  <div class="flex-1 flex overflow-hidden">
+    
+    <!-- Left Column: Form Controls -->
+    <div class="w-1/2 border-r border-zinc-800 bg-[#13131a] p-6 overflow-y-auto space-y-6">
+      <div class="flex justify-between items-center pb-2 border-b border-zinc-800">
+        <span class="text-xs font-bold text-zinc-400 uppercase tracking-wider">Visual Form Editor</span>
+        <span class="text-[10px] text-zinc-500 font-mono">Syncs automatically</span>
+      </div>
+
+      <div id="formContainer" class="space-y-6"></div>
+    </div>
+
+    <!-- Right Column: Live Code Editor -->
+    <div class="w-1/2 bg-[#0a0a0d] p-6 flex flex-col overflow-hidden">
+      <div class="flex justify-between items-center mb-3">
+        <span class="text-xs font-mono font-bold text-rose-400 flex items-center gap-2">
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 20l4-16m4 4l4 4-4 4M6 16l-4-4 4-4"/></svg>
+          site.json (2-Way Code Editor)
+        </span>
+        <span id="jsonStatus" class="text-[11px] text-emerald-400 font-mono">Valid Format ✓</span>
+      </div>
+
+      <textarea id="codeEditor" class="flex-1 w-full bg-[#050508] font-mono text-xs text-rose-300/90 p-4 rounded-xl border border-zinc-800/80 outline-none resize-none focus:border-rose-500/50" spellcheck="false"></textarea>
+    </div>
+
+  </div>
+
+  <script>
+    let siteData = {
+      "meta": { "title": "G&D Flooring — Premium Flooring & Renovations", "description": "G&D Flooring is a premium flooring contractor." },
+      "hero": { "eyebrow": "Flooring Specialists", "headlineLead": "Floors that", "highlight": "elevate", "headlineRest": "every room.", "subcopy": "Craftsmanship and premium materials." },
+      "services": { "eyebrow": "Our Services", "heading": "Catalog of flooring craft", "items": [ { "title": "Hardwood Flooring", "desc": "Solid & engineered hardwood." } ] },
+      "contact": { "eyebrow": "Get In Touch", "heading": "Let's plan your project", "phone": "(555) 123-4567", "email": "hello@gnd-flooring.com" }
+    };
+
+    const formContainer = document.getElementById('formContainer');
+    const codeEditor = document.getElementById('codeEditor');
+
+    function renderForm() {
+      formContainer.innerHTML = '';
+
+      Object.keys(siteData).forEach(secKey => {
+        const sec = siteData[secKey];
+        const card = document.createElement('div');
+        card.className = 'cmd-card p-5 rounded-2xl space-y-4';
+
+        let html = `
+          <div class="flex items-center justify-between pb-3 border-b border-zinc-800">
+            <span class="text-xs font-bold text-rose-400 uppercase tracking-wider font-mono">${secKey}</span>
+            <span class="text-[10px] text-zinc-500">${typeof sec === 'object' ? Object.keys(sec).length + ' fields' : ''}</span>
+          </div>
+        `;
+
+        if (typeof sec === 'object' && !Array.isArray(sec)) {
+          Object.keys(sec).forEach(k => {
+            const val = sec[k];
+            if (typeof val === 'string') {
+              const isLong = k.includes('desc') || k.includes('subcopy') || k.includes('body');
+              html += `
+                <div>
+                  <label class="text-xs font-semibold text-zinc-300 block mb-1 capitalize">${k.replace(/([A-Z])/g, ' $1')}</label>
+                  ${isLong ? `
+                    <textarea rows="2" oninput="updateFromForm('${secKey}.${k}', this.value)" class="cmd-input text-xs rounded-xl p-3 w-full">${escapeHtml(val)}</textarea>
+                  ` : `
+                    <input type="text" value="${escapeHtml(val)}" oninput="updateFromForm('${secKey}.${k}', this.value)" class="cmd-input text-xs rounded-xl px-3 py-2 w-full">
+                  `}
+                </div>
+              `;
+            }
+          });
+        }
+
+        card.innerHTML = html;
+        formContainer.appendChild(card);
+      });
+
+      codeEditor.value = JSON.stringify(siteData, null, 2);
+    }
+
+    function escapeHtml(str) { return String(str || '').replace(/"/g, '&quot;'); }
+
+    function updateFromForm(path, val) {
+      const keys = path.split('.');
+      let cur = siteData;
+      for (let i = 0; i < keys.length - 1; i++) cur = cur[keys[i]];
+      cur[keys[keys.length - 1]] = val;
+      codeEditor.value = JSON.stringify(siteData, null, 2);
+    }
+
+    codeEditor.addEventListener('input', () => {
+      try {
+        siteData = JSON.parse(codeEditor.value);
+        document.getElementById('jsonStatus').innerText = "Valid Format ✓";
+        document.getElementById('jsonStatus').className = "text-[11px] text-emerald-400 font-mono";
+        renderFormWithoutEditorSync();
+      } catch(e) {
+        document.getElementById('jsonStatus').innerText = "Syntax Error!";
+        document.getElementById('jsonStatus').className = "text-[11px] text-rose-500 font-mono";
+      }
+    });
+
+    function renderFormWithoutEditorSync() {
+      formContainer.innerHTML = '';
+      Object.keys(siteData).forEach(secKey => {
+        const sec = siteData[secKey];
+        const card = document.createElement('div');
+        card.className = 'cmd-card p-5 rounded-2xl space-y-4';
+        let html = `<div class="text-xs font-bold text-rose-400 uppercase tracking-wider font-mono pb-2 border-b border-zinc-800">${secKey}</div>`;
+        if (typeof sec === 'object' && !Array.isArray(sec)) {
+          Object.keys(sec).forEach(k => {
+            const val = sec[k];
+            if (typeof val === 'string') {
+              html += `
+                <div>
+                  <label class="text-xs font-semibold text-zinc-300 block mb-1 capitalize">${k}</label>
+                  <input type="text" value="${escapeHtml(val)}" oninput="updateFromForm('${secKey}.${k}', this.value)" class="cmd-input text-xs rounded-xl px-3 py-2 w-full">
+                </div>
+              `;
+            }
+          });
+        }
+        card.innerHTML = html;
+        formContainer.appendChild(card);
+      });
+    }
+
+    document.getElementById('formatJson').onclick = () => {
+      try {
+        siteData = JSON.parse(codeEditor.value);
+        renderForm();
+      } catch(e) { alert('Fix JSON errors first'); }
+    };
+
+    document.getElementById('exportJson').onclick = () => {
+      const blob = new Blob([JSON.stringify(siteData, null, 2)], { type: 'application/json' });
+      const a = document.createElement('a');
+      a.href = URL.createObjectURL(blob);
+      a.download = 'site.json';
+      a.click();
+    };
+
+    renderForm();
+  </script>
+</body>
+</html>

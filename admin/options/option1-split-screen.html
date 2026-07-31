@@ -1,0 +1,488 @@
+<!DOCTYPE html>
+<html lang="en" class="h-full">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>CMS Option 1: Split-Screen Visual Builder</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          fontFamily: {
+            sans: ['"Plus Jakarta Sans"', 'sans-serif'],
+            mono: ['"JetBrains Mono"', 'monospace'],
+          },
+          colors: {
+            brand: {
+              50: '#eef6fc', 100: '#d7e9f7', 400: '#559fd4', 600: '#2f7cb5', 700: '#275f8c', 900: '#13283b'
+            }
+          }
+        }
+      }
+    }
+  </script>
+  <style>
+    /* Custom Scrollbar */
+    ::-webkit-scrollbar { width: 6px; height: 6px; }
+    ::-webkit-scrollbar-track { background: rgba(15, 23, 42, 0.6); }
+    ::-webkit-scrollbar-thumb { background: rgba(51, 65, 85, 0.8); border-radius: 4px; }
+    ::-webkit-scrollbar-thumb:hover { background: rgba(99, 102, 241, 0.8); }
+    
+    .glass-panel {
+      background: rgba(30, 41, 59, 0.7);
+      backdrop-filter: blur(16px);
+      -webkit-backdrop-filter: blur(16px);
+      border: 1px solid rgba(255, 255, 255, 0.08);
+    }
+    .input-field {
+      background: rgba(15, 23, 42, 0.75);
+      border: 1px solid rgba(255, 255, 255, 0.12);
+      color: #f8fafc;
+      transition: all 0.2s ease;
+    }
+    .input-field:focus {
+      outline: none;
+      border-color: #6366f1;
+      box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.2);
+    }
+  </style>
+</head>
+<body class="bg-slate-950 text-slate-100 font-sans h-full flex flex-col overflow-hidden">
+
+  <!-- Header Bar -->
+  <header class="h-16 border-b border-slate-800 bg-slate-900/90 px-6 flex items-center justify-between shrink-0 z-20">
+    <div class="flex items-center gap-4">
+      <div class="flex items-center gap-3">
+        <span class="h-9 w-9 rounded-xl bg-indigo-600 flex items-center justify-center font-bold text-white shadow-lg shadow-indigo-600/30">1</span>
+        <div>
+          <h1 class="font-bold text-base text-white flex items-center gap-2">
+            Split-Screen Visual Builder
+            <span class="text-xs font-semibold px-2 py-0.5 rounded-full bg-indigo-500/20 text-indigo-300 border border-indigo-500/30">Option 1</span>
+          </h1>
+          <p class="text-xs text-slate-400">Live side-by-side editing with instant component synchronization</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- Controls Toolbar -->
+    <div class="flex items-center gap-3">
+      <div class="relative">
+        <input type="text" id="searchInp" placeholder="Search section or field..." class="input-field text-xs rounded-lg px-3 py-1.5 w-56 pl-8">
+        <svg class="w-3.5 h-3.5 absolute left-2.5 top-2.5 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/></svg>
+      </div>
+
+      <button id="toggleJsonBtn" class="px-3 py-1.5 text-xs font-semibold rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 flex items-center gap-1.5 transition">
+        <svg class="w-3.5 h-3.5 text-indigo-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 20l4-16m4 4l4 4-4 4M6 16l-4-4 4-4"/></svg>
+        Raw JSON Mode
+      </button>
+
+      <button id="exportJsonBtn" class="px-3.5 py-1.5 text-xs font-semibold rounded-lg bg-indigo-600 hover:bg-indigo-500 text-white shadow-md shadow-indigo-600/20 flex items-center gap-1.5 transition">
+        <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/></svg>
+        Export site.json
+      </button>
+    </div>
+  </header>
+
+  <!-- Main Body: Split View -->
+  <div class="flex-1 flex overflow-hidden relative">
+
+    <!-- Left Editor Pane -->
+    <div id="editorPane" class="w-1/2 border-r border-slate-800 flex flex-col bg-slate-900/50 overflow-y-auto p-6 space-y-4">
+      <div class="flex items-center justify-between pb-2 border-b border-slate-800">
+        <span class="text-xs font-bold uppercase tracking-wider text-slate-400 flex items-center gap-2">
+          <svg class="w-4 h-4 text-indigo-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/></svg>
+          Content Sections (site.json)
+        </span>
+        <span id="saveStatus" class="text-xs text-emerald-400 font-medium flex items-center gap-1">
+          <span class="h-1.5 w-1.5 rounded-full bg-emerald-400"></span> Live Synced
+        </span>
+      </div>
+
+      <!-- JSON Editor Modal Container (Hidden by default) -->
+      <div id="jsonView" class="hidden flex-1 flex flex-col bg-slate-950 rounded-xl border border-slate-800 p-4">
+        <div class="flex justify-between items-center mb-2">
+          <span class="text-xs font-mono text-indigo-400">site.json (Editable)</span>
+          <button id="copyJsonBtn" class="text-xs text-slate-400 hover:text-white">Copy to Clipboard</button>
+        </div>
+        <textarea id="jsonTextArea" class="w-full h-full bg-slate-900 font-mono text-xs text-emerald-300 p-3 rounded-lg border border-slate-800 outline-none resize-none" spellcheck="false"></textarea>
+      </div>
+
+      <!-- Accordion Form Sections -->
+      <div id="formSections" class="space-y-3"></div>
+    </div>
+
+    <!-- Right Live Preview Pane -->
+    <div class="w-1/2 flex flex-col bg-slate-950 overflow-y-auto">
+      <div class="h-10 bg-slate-900/90 border-b border-slate-800 px-4 flex items-center justify-between sticky top-0 z-10">
+        <div class="flex items-center gap-2">
+          <span class="h-2 w-2 rounded-full bg-rose-500"></span>
+          <span class="h-2 w-2 rounded-full bg-amber-500"></span>
+          <span class="h-2 w-2 rounded-full bg-emerald-500"></span>
+          <span class="text-xs text-slate-400 font-mono ml-2">Website Live View (G&D Flooring)</span>
+        </div>
+        <div class="flex items-center gap-2 text-xs text-slate-400">
+          <span class="px-2 py-0.5 rounded bg-slate-800 border border-slate-700">Desktop View</span>
+        </div>
+      </div>
+
+      <div class="p-8 space-y-8 max-w-2xl mx-auto w-full" id="previewContainer">
+        <!-- Rendered live site preview will go here -->
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // Embedded site.json seed data
+    let siteData = {
+      "meta": {
+        "title": "G&D Flooring — Premium Flooring & Renovations",
+        "description": "G&D Flooring is a premium flooring contractor specializing in hardwood, luxury vinyl, tile & stone, and bathroom renovations.",
+        "ogTitle": "G&D Flooring — Premium Flooring & Renovations",
+        "ogDescription": "Hardwood, luxury vinyl, tile & stone, and bathroom renovations."
+      },
+      "hero": {
+        "eyebrow": "Flooring & Renovation Specialists",
+        "headlineLead": "Floors that",
+        "highlight": "elevate",
+        "headlineRest": "every room.",
+        "subcopy": "G&D Flooring brings craftsmanship, premium materials, and a meticulous eye to hardwood, luxury vinyl, tile, and full bathroom renovations.",
+        "ctaPrimary": "Get a Free Quote",
+        "ctaSecondary": "Explore Services",
+        "image": "/images/hero.svg",
+        "stats": [
+          { "value": "15+", "label": "Years of craft" },
+          { "value": "800+", "label": "Floors installed" },
+          { "value": "100%", "label": "Satisfaction focus" }
+        ]
+      },
+      "trust": [
+        "Licensed & Insured",
+        "Free On-Site Estimates",
+        "Lifetime Workmanship Warranty",
+        "Locally Owned & Operated"
+      ],
+      "services": {
+        "eyebrow": "Our Services",
+        "heading": "A full catalog of flooring craft",
+        "subcopy": "From timeless hardwood to a complete bathroom transformation — every project gets obsessive attention to detail.",
+        "items": [
+          { "title": "Hardwood Flooring", "desc": "Solid & engineered hardwood installation, sanding, staining, and refinishing.", "bullets": ["Custom stains", "Dust-contained sanding"], "image": "/images/service-hardwood.svg" },
+          { "title": "Laminate & Vinyl", "desc": "Waterproof luxury vinyl plank and premium laminate with everyday durability.", "bullets": ["100% waterproof", "Fast, clean installs"], "image": "/images/service-vinyl.svg" },
+          { "title": "Tile & Stone", "desc": "Porcelain, ceramic, and natural stone — precision-set floors and walls.", "bullets": ["Heated-floor ready", "Custom patterns"], "image": "/images/service-tile.svg" },
+          { "title": "Bathroom Renovations", "desc": "Full bathroom transformations — floors, tile surrounds, vanities end to end.", "bullets": ["Full project management", "Waterproofing guaranteed"], "image": "/images/service-bathroom.svg" }
+        ]
+      },
+      "about": {
+        "eyebrow": "Why G&D",
+        "headingLead": "Built on detail,",
+        "headingRest": "finished with pride",
+        "body": "We treat every home like our own. From the first measurement to the final sweep, you work with the same dedicated team.",
+        "badgeValue": "15+",
+        "badgeLabel": "Years perfecting craft",
+        "features": [
+          { "title": "Master Craftsmanship", "body": "Seasoned installers with an obsessive eye for level, seams, and finish." },
+          { "title": "Licensed & Insured", "body": "Fully covered, code-compliant work backed by a written warranty." }
+        ]
+      },
+      "testimonials": {
+        "eyebrow": "Kind Words",
+        "heading": "Homeowners love the result",
+        "items": [
+          { "quote": "The hardwood floors completely transformed our home. The crew was punctual, tidy, and the finish is flawless.", "name": "Sarah Miller", "role": "Homeowner in Austin" },
+          { "quote": "Our bathroom renovation was on time and on budget. G&D handled everything.", "name": "David Chen", "role": "Client" }
+        ]
+      },
+      "contact": {
+        "eyebrow": "Get In Touch",
+        "heading": "Let's plan your project",
+        "phone": "(555) 123-4567",
+        "email": "hello@gnd-flooring.com",
+        "serviceArea": "Greater Austin Area — within 50 miles"
+      }
+    };
+
+    const formSections = document.getElementById('formSections');
+    const previewContainer = document.getElementById('previewContainer');
+    const jsonView = document.getElementById('jsonView');
+    const jsonTextArea = document.getElementById('jsonTextArea');
+    let rawJsonActive = false;
+
+    // Render Forms
+    function renderEditorForms() {
+      if (rawJsonActive) return;
+      formSections.innerHTML = '';
+
+      Object.keys(siteData).forEach((key, idx) => {
+        const val = siteData[key];
+        const sectionCard = document.createElement('div');
+        sectionCard.className = 'glass-panel rounded-xl overflow-hidden transition-all duration-200 border border-slate-800';
+
+        let innerHtml = `
+          <button onclick="toggleAccordion('sec_${key}')" class="w-full px-4 py-3 bg-slate-800/80 hover:bg-slate-800 flex items-center justify-between text-left transition">
+            <div class="flex items-center gap-2.5">
+              <span class="text-xs font-mono font-bold text-indigo-400 bg-indigo-500/10 px-2 py-0.5 rounded border border-indigo-500/20">${key}</span>
+              <span class="text-sm font-semibold text-white capitalize">${key.replace(/([A-Z])/g, ' $1')}</span>
+            </div>
+            <svg id="arrow_sec_${key}" class="w-4 h-4 text-slate-400 transform transition-transform duration-200 ${idx === 0 ? 'rotate-180' : ''}" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
+          </button>
+          <div id="sec_${key}" class="${idx === 0 ? 'block' : 'hidden'} p-4 space-y-4 border-t border-slate-800/80">
+        `;
+
+        if (Array.isArray(val)) {
+          innerHtml += renderArrayFields(key, val);
+        } else if (typeof val === 'object' && val !== null) {
+          innerHtml += renderObjectFields(key, val);
+        }
+
+        innerHtml += `</div>`;
+        sectionCard.innerHTML = innerHtml;
+        formSections.appendChild(sectionCard);
+      });
+    }
+
+    function renderObjectFields(parentPath, obj) {
+      return Object.keys(obj).map(fieldKey => {
+        const value = obj[fieldKey];
+        const currentPath = `${parentPath}.${fieldKey}`;
+
+        if (Array.isArray(value)) {
+          return `
+            <div class="p-3 bg-slate-950/60 rounded-lg border border-slate-800">
+              <div class="flex justify-between items-center mb-2">
+                <label class="text-xs font-bold text-slate-300 uppercase tracking-wider">${fieldKey}</label>
+                <button onclick="addItemToArray('${currentPath}')" class="text-xs text-indigo-400 hover:text-indigo-300 font-medium">+ Add Item</button>
+              </div>
+              <div class="space-y-2">
+                ${value.map((item, i) => {
+                  if (typeof item === 'string') {
+                    return `
+                      <div class="flex gap-2">
+                        <input type="text" value="${escapeHtml(item)}" oninput="updateData('${currentPath}.${i}', this.value)" class="input-field text-xs rounded px-3 py-1.5 flex-1">
+                        <button onclick="removeItemFromArray('${currentPath}', ${i})" class="text-xs text-rose-400 hover:text-rose-300 px-2 py-1 bg-rose-500/10 rounded">✕</button>
+                      </div>`;
+                  } else {
+                    return `
+                      <div class="p-3 bg-slate-900/90 rounded border border-slate-800 space-y-2 relative group">
+                        <div class="flex justify-between items-center text-[10px] text-slate-400 font-mono">
+                          <span>Item #${i + 1}</span>
+                          <button onclick="removeItemFromArray('${currentPath}', ${i})" class="text-rose-400 hover:text-rose-300">Remove</button>
+                        </div>
+                        ${Object.keys(item).map(subKey => `
+                          <div>
+                            <label class="text-[10px] text-slate-400 font-semibold block mb-0.5">${subKey}</label>
+                            <input type="text" value="${escapeHtml(item[subKey])}" oninput="updateData('${currentPath}.${i}.${subKey}', this.value)" class="input-field text-xs rounded px-2.5 py-1 w-full">
+                          </div>
+                        `).join('')}
+                      </div>`;
+                  }
+                }).join('')}
+              </div>
+            </div>`;
+        } else if (typeof value === 'object' && value !== null) {
+          return renderObjectFields(currentPath, value);
+        } else {
+          const isLongText = fieldKey.includes('desc') || fieldKey.includes('subcopy') || fieldKey.includes('body') || fieldKey.includes('quote');
+          return `
+            <div>
+              <label class="text-xs font-semibold text-slate-300 block mb-1 capitalize">${fieldKey.replace(/([A-Z])/g, ' $1')}</label>
+              ${isLongText ? `
+                <textarea rows="2" oninput="updateData('${currentPath}', this.value)" class="input-field text-xs rounded-lg px-3 py-2 w-full">${escapeHtml(value)}</textarea>
+              ` : `
+                <input type="text" value="${escapeHtml(value)}" oninput="updateData('${currentPath}', this.value)" class="input-field text-xs rounded-lg px-3 py-1.5 w-full">
+              `}
+            </div>`;
+        }
+      }).join('');
+    }
+
+    function renderArrayFields(parentPath, arr) {
+      return `
+        <div class="space-y-2">
+          ${arr.map((item, i) => `
+            <div class="flex gap-2">
+              <input type="text" value="${escapeHtml(item)}" oninput="updateData('${parentPath}.${i}', this.value)" class="input-field text-xs rounded px-3 py-1.5 flex-1">
+              <button onclick="removeItemFromArray('${parentPath}', ${i})" class="text-xs text-rose-400 hover:text-rose-300 px-2 py-1 bg-rose-500/10 rounded">✕</button>
+            </div>
+          `).join('')}
+          <button onclick="addItemToArray('${parentPath}')" class="text-xs text-indigo-400 hover:text-indigo-300 font-semibold mt-2 block">+ Add Item</button>
+        </div>`;
+    }
+
+    function escapeHtml(str) {
+      return String(str || '').replace(/"/g, '&quot;');
+    }
+
+    function toggleAccordion(id) {
+      const el = document.getElementById(id);
+      const arrow = document.getElementById('arrow_' + id);
+      if (el.classList.contains('hidden')) {
+        el.classList.remove('hidden');
+        if (arrow) arrow.classList.add('rotate-180');
+      } else {
+        el.classList.add('hidden');
+        if (arrow) arrow.classList.remove('rotate-180');
+      }
+    }
+
+    // Helper data updater
+    function updateData(path, val) {
+      const keys = path.split('.');
+      let target = siteData;
+      for (let i = 0; i < keys.length - 1; i++) {
+        target = target[keys[i]];
+      }
+      target[keys[keys.length - 1]] = val;
+      renderLivePreview();
+    }
+
+    function addItemToArray(path) {
+      const keys = path.split('.');
+      let target = siteData;
+      for (let i = 0; i < keys.length; i++) {
+        target = target[keys[i]];
+      }
+      if (Array.isArray(target)) {
+        if (target.length > 0 && typeof target[0] === 'object') {
+          const template = JSON.parse(JSON.stringify(target[0]));
+          Object.keys(template).forEach(k => template[k] = "");
+          target.push(template);
+        } else {
+          target.push("New Entry");
+        }
+      }
+      renderEditorForms();
+      renderLivePreview();
+    }
+
+    function removeItemFromArray(path, index) {
+      const keys = path.split('.');
+      let target = siteData;
+      for (let i = 0; i < keys.length; i++) {
+        target = target[keys[i]];
+      }
+      if (Array.isArray(target)) {
+        target.splice(index, 1);
+      }
+      renderEditorForms();
+      renderLivePreview();
+    }
+
+    // Render Live Preview
+    function renderLivePreview() {
+      const d = siteData;
+      previewContainer.innerHTML = `
+        <!-- Hero Component Preview -->
+        <div class="p-6 rounded-2xl bg-gradient-to-br from-slate-900 to-slate-900/80 border border-slate-800 shadow-xl">
+          <span class="text-xs font-semibold uppercase tracking-wider text-indigo-400 bg-indigo-500/10 px-2.5 py-1 rounded-full border border-indigo-500/20 inline-block mb-3">
+            ${d.hero.eyebrow}
+          </span>
+          <h2 class="text-2xl font-extrabold text-white mb-2 leading-tight">
+            ${d.hero.headlineLead} <span class="text-indigo-400 underline decoration-indigo-500/40">${d.hero.highlight}</span> ${d.hero.headlineRest}
+          </h2>
+          <p class="text-xs text-slate-300 mb-4 leading-relaxed">${d.hero.subcopy}</p>
+          <div class="flex gap-3">
+            <button class="px-4 py-2 bg-indigo-600 text-white rounded-lg font-semibold text-xs shadow-md shadow-indigo-600/30">${d.hero.ctaPrimary}</button>
+            <button class="px-4 py-2 bg-slate-800 text-slate-200 rounded-lg font-semibold text-xs border border-slate-700">${d.hero.ctaSecondary}</button>
+          </div>
+          ${d.hero.stats ? `
+            <div class="grid grid-cols-3 gap-3 mt-6 pt-4 border-t border-slate-800/80 text-center">
+              ${d.hero.stats.map(s => `
+                <div>
+                  <div class="text-base font-extrabold text-indigo-400">${s.value}</div>
+                  <div class="text-[10px] text-slate-400">${s.label}</div>
+                </div>
+              `).join('')}
+            </div>
+          ` : ''}
+        </div>
+
+        <!-- Trust Badges -->
+        <div class="flex flex-wrap gap-2">
+          ${(d.trust || []).map(t => `
+            <span class="text-xs bg-slate-900 border border-slate-800 text-slate-300 px-3 py-1 rounded-full font-medium flex items-center gap-1.5">
+              <span class="w-1.5 h-1.5 rounded-full bg-emerald-400"></span> ${t}
+            </span>
+          `).join('')}
+        </div>
+
+        <!-- Services Catalog Preview -->
+        <div class="space-y-4">
+          <div>
+            <span class="text-xs font-bold text-indigo-400 uppercase tracking-widest">${d.services.eyebrow}</span>
+            <h3 class="text-xl font-bold text-white">${d.services.heading}</h3>
+            <p class="text-xs text-slate-400">${d.services.subcopy}</p>
+          </div>
+
+          <div class="grid grid-cols-2 gap-3">
+            ${(d.services.items || []).map(s => `
+              <div class="p-4 bg-slate-900/80 rounded-xl border border-slate-800 hover:border-indigo-500/40 transition">
+                <h4 class="font-bold text-sm text-white mb-1">${s.title}</h4>
+                <p class="text-xs text-slate-400 mb-2 leading-snug">${s.desc}</p>
+                ${s.bullets ? `
+                  <div class="space-y-1">
+                    ${s.bullets.map(b => `<div class="text-[10px] text-indigo-300">✓ ${b}</div>`).join('')}
+                  </div>
+                ` : ''}
+              </div>
+            `).join('')}
+          </div>
+        </div>
+
+        <!-- Contact Section -->
+        <div class="p-5 bg-indigo-950/30 rounded-xl border border-indigo-900/50 flex justify-between items-center">
+          <div>
+            <h4 class="font-bold text-sm text-white">${d.contact.heading}</h4>
+            <p class="text-xs text-slate-400">${d.contact.serviceArea}</p>
+          </div>
+          <span class="text-xs font-bold text-indigo-400 bg-indigo-900/50 px-3 py-1.5 rounded-lg border border-indigo-700/50">${d.contact.phone}</span>
+        </div>
+      `;
+    }
+
+    // Toggle Raw JSON Mode
+    document.getElementById('toggleJsonBtn').addEventListener('click', () => {
+      rawJsonActive = !rawJsonActive;
+      if (rawJsonActive) {
+        jsonTextArea.value = JSON.stringify(siteData, null, 2);
+        jsonView.classList.remove('hidden');
+        formSections.classList.add('hidden');
+        document.getElementById('toggleJsonBtn').classList.add('bg-indigo-600', 'text-white');
+      } else {
+        try {
+          siteData = JSON.parse(jsonTextArea.value);
+          renderEditorForms();
+          renderLivePreview();
+        } catch (e) {
+          alert('Invalid JSON syntax!');
+          rawJsonActive = true;
+          return;
+        }
+        jsonView.classList.add('hidden');
+        formSections.classList.remove('hidden');
+        document.getElementById('toggleJsonBtn').classList.remove('bg-indigo-600', 'text-white');
+      }
+    });
+
+    document.getElementById('copyJsonBtn').addEventListener('click', () => {
+      navigator.clipboard.writeText(JSON.stringify(siteData, null, 2));
+      alert('Copied JSON to clipboard!');
+    });
+
+    document.getElementById('exportJsonBtn').addEventListener('click', () => {
+      const blob = new Blob([JSON.stringify(siteData, null, 2)], { type: 'application/json' });
+      const a = document.createElement('a');
+      a.href = URL.createObjectURL(blob);
+      a.download = 'site.json';
+      a.click();
+    });
+
+    // Initialize
+    renderEditorForms();
+    renderLivePreview();
+  </script>
+</body>
+</html>
