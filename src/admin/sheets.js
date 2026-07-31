@@ -95,8 +95,8 @@ function rowsToObjects(rows, headers) {
 /** Read everything in one batch and join leads with their tracking record. */
 export async function loadAll() {
   const ranges = [
-    `${TABS.LEADS}!A:I`,
-    `${TABS.TRACKING}!A:H`,
+    `${TABS.LEADS}!A:J`,
+    `${TABS.TRACKING}!A:I`,
     `${TABS.ACTIVITY}!A:G`,
     `${TABS.SCHEDULE}!A:I`,
     `${TABS.TASKS}!A:H`,
@@ -160,7 +160,16 @@ export async function loadAll() {
 
   const records = leads
     .filter((l) => l.id) // ignore any not-yet-backfilled rows
-    .map((l) => ({ lead: l, track: trackMap[l.id] || null }))
+    .map((l) => {
+      const track = trackMap[l.id] || null
+      const isDeleted =
+        (l.deleted && String(l.deleted).trim().toLowerCase() === 'deleted') ||
+        (l.deleted && String(l.deleted).trim().toLowerCase() === 'true') ||
+        (track && String(track.deleted).trim().toLowerCase() === 'true') ||
+        (track && String(track.deleted).trim().toLowerCase() === 'deleted') ||
+        (track && track.status === 'Deleted')
+      return { lead: l, track, isDeleted: !!isDeleted }
+    })
 
   return {
     leads,
@@ -230,6 +239,7 @@ export async function saveTracking(id, patch, actor, prevTrack) {
     updated_by: actor,
     title: patch.title ?? prev.title ?? '',
     address_id: patch.address_id ?? prev.address_id ?? '',
+    deleted: patch.deleted ?? prev.deleted ?? '',
   }
   // Build the row in the tab's header order (robust to added columns).
   const values = HEADERS[TABS.TRACKING].map((h) => next[h] ?? '')
@@ -245,6 +255,41 @@ export async function saveTracking(id, patch, actor, prevTrack) {
     await appendActivity(id, actor, 'address changed', prev.address_id || '', next.address_id || '')
   }
   return next
+}
+
+/** Toggle or set lead deletion status (marks 'Deleted' in Column J of FormResponses and Tracking). */
+export async function deleteLead(lead, track, actor) {
+  const isCurrentlyDeleted =
+    (lead.deleted && String(lead.deleted).trim().toLowerCase() === 'deleted') ||
+    (lead.deleted && String(lead.deleted).trim().toLowerCase() === 'true') ||
+    (track && String(track.deleted).trim().toLowerCase() === 'true') ||
+    (track && String(track.deleted).trim().toLowerCase() === 'deleted') ||
+    (track && track.status === 'Deleted')
+
+  const newStatus = isCurrentlyDeleted ? 'New' : 'Deleted'
+  const newDeletedFlag = isCurrentlyDeleted ? '' : 'Deleted'
+  const newDeletedBool = isCurrentlyDeleted ? 'false' : 'true'
+
+  await saveTracking(
+    lead.id,
+    { status: newStatus, deleted: newDeletedBool },
+    actor,
+    track
+  )
+
+  if (lead._row) {
+    lead.deleted = newDeletedFlag
+    const values = LEAD_COLS.map((k) => lead[k] ?? '')
+    await updateRow(TABS.LEADS, lead._row, values)
+  }
+
+  await appendActivity(
+    lead.id,
+    actor,
+    isCurrentlyDeleted ? 'lead restored' : 'lead deleted',
+    isCurrentlyDeleted ? 'Deleted' : 'Active',
+    newStatus
+  )
 }
 
 const rowFor = (tab, obj) => HEADERS[tab].map((h) => obj[h] ?? '')

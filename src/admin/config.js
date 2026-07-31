@@ -36,11 +36,12 @@ export const LEAD_COLS = [
   'source',
   'timestamp',
   'id',
+  'deleted',
 ]
 
 // Header rows for auto-created tabs.
 export const HEADERS = {
-  [TABS.TRACKING]: ['id', 'status', 'tags', 'notes', 'updated_at', 'updated_by', 'title', 'address_id'],
+  [TABS.TRACKING]: ['id', 'status', 'tags', 'notes', 'updated_at', 'updated_by', 'title', 'address_id', 'deleted'],
   [TABS.ACTIVITY]: ['timestamp', 'id', 'actor', 'action', 'old_value', 'new_value', 'note'],
   [TABS.SCHEDULE]: ['appt_id', 'lead_id', 'type', 'start', 'end', 'notes', 'created_by', 'created_at', 'duration_min'],
   [TABS.TASKS]: ['task_id', 'lead_id', 'title', 'due_date', 'done', 'created_by', 'created_at', 'done_at'],

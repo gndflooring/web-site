@@ -37,7 +37,10 @@ export function computeNeedsAction(state, now = Date.now()) {
     ;(apptByLead[a.lead_id] ||= []).push(a)
   }
 
+  const deletedIds = new Set(records.filter((r) => r.isDeleted || r.track?.status === 'Deleted').map((r) => r.lead.id))
+
   for (const rec of records) {
+    if (rec.isDeleted || rec.track?.status === 'Deleted') continue
     const { lead, track } = rec
     const id = lead.id
     const status = track?.status || ''
@@ -111,6 +114,7 @@ export function computeNeedsAction(state, now = Date.now()) {
   today.setHours(0, 0, 0, 0)
   for (const t of tasks) {
     if (String(t.done).toUpperCase() === 'TRUE') continue
+    if (t.lead_id && deletedIds.has(t.lead_id)) continue
     const due = parseDate(t.due_date)
     if (due && due.getTime() < today.getTime()) {
       const key = `task:${t.task_id}`

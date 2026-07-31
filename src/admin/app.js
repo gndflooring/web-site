@@ -5,6 +5,7 @@ import {
   ensureTabs,
   loadAll,
   saveTracking,
+  deleteLead,
   addAppointment,
   updateAppointment,
   deleteAppointment,
@@ -425,15 +426,18 @@ const leadName = (id) => state.records.find((r) => r.lead.id === id)?.lead.name 
 /* ---------- Dashboard ---------- */
 function dashboard(v) {
   const now = Date.now()
+  const activeRecords = state.records.filter((r) => !r.isDeleted && r.track?.status !== 'Deleted')
+  const activeLeadIds = new Set(activeRecords.map((r) => r.lead.id))
   const urgent = items.filter((i) => i.severity === 'urgent').length
   const upcoming = state.schedule.filter((a) => {
+    if (a.lead_id && !activeLeadIds.has(a.lead_id)) return false
     const t = new Date(a.start).getTime()
     return !isNaN(t) && t > now && t < now + 7 * 864e5
   })
-  const openTasks = state.tasks.filter((t) => String(t.done).toUpperCase() !== 'TRUE')
+  const openTasks = state.tasks.filter((t) => String(t.done).toUpperCase() !== 'TRUE' && (!t.lead_id || activeLeadIds.has(t.lead_id)))
   const byStatus = {}
   PIPELINE.forEach((s) => (byStatus[s] = 0))
-  state.records.forEach((r) => {
+  activeRecords.forEach((r) => {
     const s = r.track?.status && PIPELINE.includes(r.track.status) ? r.track.status : 'New'
     byStatus[s]++
   })
@@ -446,7 +450,7 @@ function dashboard(v) {
 
   v.innerHTML = `
     <div class="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
-      ${tile(state.records.length, 'Total leads')}
+      ${tile(activeRecords.length, 'Total leads')}
       ${tile(items.length, 'Needs action', items.length ? 'text-amber-600' : '')}
       ${tile(urgent, 'Urgent', urgent ? 'text-rose-600' : '')}
       ${tile(upcoming.length, 'Upcoming (7d)')}
@@ -540,10 +544,12 @@ function board(v) {
   const sev = severityByLead(items)
   const cols = {}
   PIPELINE.forEach((s) => (cols[s] = []))
-  state.records.forEach((r) => {
-    const s = r.track?.status && PIPELINE.includes(r.track.status) ? r.track.status : 'New'
-    cols[s].push(r)
-  })
+  state.records
+    .filter((r) => !r.isDeleted && r.track?.status !== 'Deleted')
+    .forEach((r) => {
+      const s = r.track?.status && PIPELINE.includes(r.track.status) ? r.track.status : 'New'
+      cols[s].push(r)
+    })
 
   const column = (s) => {
     const n = cols[s].length
@@ -675,18 +681,26 @@ function tagPool() {
   )
   return [...set]
 }
+let leadSearchQuery = ''
+let showDeletedLeads = false
+
 function leads(v) {
   const rows = [...state.records].sort(
     (a, b) =>
-      new Date(b.lead.submittedAt || b.lead.timestamp) -
-      new Date(a.lead.submittedAt || a.lead.timestamp)
+      new Date(b.lead.submittedAt || b.lead.timestamp || 0) -
+      new Date(a.lead.submittedAt || a.lead.timestamp || 0)
   )
   const present = new Set(rows.map((r) => r.lead.id))
   ;[...selectedLeads].forEach((id) => present.has(id) || selectedLeads.delete(id))
 
   v.innerHTML = `
     <div class="mb-4 flex flex-wrap items-center gap-3">
-      <span class="text-sm text-muted">${rows.length} lead${rows.length === 1 ? '' : 's'}</span>
+      <input id="leadSearch" type="text" class="field max-w-xs text-sm" placeholder="Search by name, phone, type, message…" value="${esc(leadSearchQuery)}"/>
+      <label class="flex items-center gap-2 text-sm text-muted cursor-pointer select-none">
+        <input type="checkbox" id="showDeletedCb" class="h-4 w-4 accent-brand-600" ${showDeletedLeads ? 'checked' : ''}/>
+        Show Deleted
+      </label>
+      <span id="leadCount" class="text-sm text-muted"></span>
       <span id="selCount" class="text-sm font-600 text-brand-700"></span>
       <div class="ml-auto flex gap-2">
         <button id="printBtn" class="btn-primary" disabled>Print Visits PDF</button>
@@ -698,25 +712,39 @@ function leads(v) {
         <table class="tbl">
           <thead><tr>
             <th class="w-10"><input type="checkbox" id="selAll" class="h-4 w-4 accent-brand-600" aria-label="Select all"/></th>
-            <th>Title</th><th>Status</th><th>Tags</th><th>Received</th><th></th>
+            <th>Title</th><th>Status</th><th>Tags</th><th>Received</th><th class="text-right">Action</th>
           </tr></thead>
           <tbody id="rows">
             ${
               rows
-                .map(({ lead, track }) => {
+                .map(({ lead, track, isDeleted }) => {
                   const t = leadTitle(lead, track)
-                  const s = [t, lead.name, lead.email, lead.phone, lead.service, lead.message, track?.tags]
-                    .join(' ')
-                    .toLowerCase()
-                  return `<tr data-id="${esc(lead.id)}" data-s="${esc(s)}">
+                  const searchable = [
+                    t,
+                    lead.name || '',
+                    lead.phone || '',
+                    lead.service || '',
+                    lead.message || '',
+                    lead.email || '',
+                    track?.tags || '',
+                  ].join(' ').toLowerCase()
+
+                  return `<tr data-id="${esc(lead.id)}" data-deleted="${isDeleted ? '1' : '0'}" data-s="${esc(searchable)}" class="${isDeleted ? 'bg-rose-50/30' : ''}">
                   <td><input type="checkbox" class="sel h-4 w-4 accent-brand-600" data-id="${esc(lead.id)}" ${
                     selectedLeads.has(lead.id) ? 'checked' : ''
                   }/></td>
-                  <td><p class="font-700">${esc(t)}</p><p class="text-xs text-muted">${esc(lead.email || '')}</p></td>
-                  <td>${badge(track?.status || 'New')}</td>
+                  <td>
+                    <p class="font-700 ${isDeleted ? 'line-through text-muted' : ''}">${esc(t)}</p>
+                    <p class="text-xs text-muted">${esc(lead.email || '')} ${lead.phone ? '· ' + esc(lead.phone) : ''}</p>
+                  </td>
+                  <td>${isDeleted ? `<span class="badge st-Lost"><span class="dot"></span>Deleted</span>` : badge(track?.status || 'New')}</td>
                   <td class="max-w-[200px]"><div class="flex flex-wrap gap-1">${tagPills(track?.tags)}</div></td>
                   <td class="whitespace-nowrap text-xs text-muted">${fmtDT(lead.submittedAt || lead.timestamp)}</td>
-                  <td class="text-muted"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18l6-6-6-6"/></svg></td>
+                  <td class="text-right whitespace-nowrap">
+                    <button class="js-delete-lead btn-ghost !py-1 !px-2.5 text-xs ${isDeleted ? 'text-brand-700' : 'text-rose-600 hover:bg-rose-50'}" data-id="${esc(lead.id)}">
+                      ${isDeleted ? 'Restore' : 'Delete'}
+                    </button>
+                  </td>
                 </tr>`
                 })
                 .join('') ||
@@ -727,11 +755,36 @@ function leads(v) {
       </div>
     </div>`
 
+  const applyFilters = () => {
+    const q = ($('leadSearch')?.value || '').toLowerCase().trim()
+    const showDeleted = $('showDeletedCb')?.checked || false
+    leadSearchQuery = $('leadSearch')?.value || ''
+    showDeletedLeads = showDeleted
+
+    let visibleCount = 0
+    v.querySelectorAll('#rows tr[data-id]').forEach((tr) => {
+      const isDeleted = tr.dataset.deleted === '1'
+      const searchData = tr.dataset.s || ''
+      const matchesSearch = !q || searchData.includes(q)
+      const matchesDeleted = showDeleted || !isDeleted
+
+      if (matchesSearch && matchesDeleted) {
+        tr.hidden = false
+        visibleCount++
+      } else {
+        tr.hidden = true
+      }
+    })
+    $('leadCount').textContent = `${visibleCount} lead${visibleCount === 1 ? '' : 's'}`
+    updateSel()
+  }
+
   const visibleBoxes = () =>
     [...v.querySelectorAll('#rows tr')]
       .filter((tr) => !tr.hidden)
       .map((tr) => tr.querySelector('.sel'))
       .filter(Boolean)
+
   const updateSel = () => {
     $('selCount').textContent = selectedLeads.size ? `${selectedLeads.size} selected` : ''
     $('printBtn').disabled = selectedLeads.size === 0
@@ -739,18 +792,40 @@ function leads(v) {
     $('selAll').checked = boxes.length > 0 && boxes.every((b) => b.checked)
   }
 
+  $('leadSearch').addEventListener('input', applyFilters)
+  $('showDeletedCb').addEventListener('change', applyFilters)
+
   v.querySelectorAll('#rows tr[data-id]').forEach((tr) =>
     tr.addEventListener('click', (e) => {
-      if (e.target.closest('.sel')) return
+      if (e.target.closest('.sel') || e.target.closest('.js-delete-lead')) return
       openLead(tr.dataset.id)
     })
   )
+
+  v.querySelectorAll('.js-delete-lead').forEach((btn) =>
+    btn.addEventListener('click', async (e) => {
+      e.stopPropagation()
+      const id = btn.dataset.id
+      const rec = state.records.find((r) => r.lead.id === id)
+      if (!rec) return
+      try {
+        btn.disabled = true
+        await deleteLead(rec.lead, rec.track, getEmail())
+        toast(rec.isDeleted ? 'Lead restored' : 'Lead marked as deleted')
+        await reload(false)
+      } catch (err) {
+        toast('Failed: ' + err.message)
+      }
+    })
+  )
+
   v.querySelectorAll('.sel').forEach((cb) =>
     cb.addEventListener('change', () => {
       cb.checked ? selectedLeads.add(cb.dataset.id) : selectedLeads.delete(cb.dataset.id)
       updateSel()
     })
   )
+
   $('selAll').addEventListener('change', () => {
     const on = $('selAll').checked
     visibleBoxes().forEach((b) => {
@@ -759,13 +834,15 @@ function leads(v) {
     })
     updateSel()
   })
+
   $('printBtn').addEventListener('click', () => {
     const recs = rows.filter((r) => selectedLeads.has(r.lead.id))
     if (recs.length) openVisitsDialog(recs)
   })
-  $('csv').addEventListener('click', () => exportCsv(rows))
-  applySearch()
-  updateSel()
+
+  $('csv').addEventListener('click', () => exportCsv(rows.filter((r) => showDeletedLeads || !r.isDeleted)))
+
+  applyFilters()
 }
 
 /* ---------- Visits PDF ---------- */
@@ -1450,6 +1527,12 @@ function leadPanel(id) {
         </ul>
       </section>
 
+      <section class="rounded-xl border border-line p-4">
+        <button id="dwDeleteLead" class="w-full py-2 font-600 text-sm rounded-lg ${rec.isDeleted ? 'btn-ghost text-brand-700' : 'btn-ghost text-rose-600 hover:bg-rose-50'}">
+          ${rec.isDeleted ? 'Restore lead' : 'Delete lead'}
+        </button>
+      </section>
+
       <details class="rounded-xl border border-line p-4">
         <summary class="cursor-pointer select-none text-xs font-700 uppercase tracking-wider text-muted">History (${hist.length})</summary>
         <ol class="mt-3 space-y-3 border-l-2 border-line pl-4">
@@ -1474,6 +1557,17 @@ function leadPanel(id) {
         </ol>
       </details>
     </div>`)
+
+  $('dwDeleteLead').addEventListener('click', async () => {
+    try {
+      await deleteLead(lead, track, getEmail())
+      toast(rec.isDeleted ? 'Lead restored' : 'Lead marked as deleted')
+      await reload(false)
+      popPanel()
+    } catch (err) {
+      toast('Failed: ' + err.message)
+    }
+  })
 
   wireTagEditor('dwTags')
   $('dwSave').addEventListener('click', async () => {
@@ -1864,12 +1958,14 @@ function calendar(v) {
   const sameDay = (a, b) => a.toDateString() === b.toDateString()
   const WD = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat']
 
+  const activeLeadIds = new Set(state.records.filter((r) => !r.isDeleted && r.track?.status !== 'Deleted').map((r) => r.lead.id))
   const events = [
     ...state.schedule
+      .filter((a) => !a.lead_id || activeLeadIds.has(a.lead_id))
       .map((a) => ({ when: new Date(a.start), kind: 'appt', a }))
       .filter((x) => !isNaN(x.when)),
     ...state.tasks
-      .filter((t) => t.due_date)
+      .filter((t) => t.due_date && (!t.lead_id || activeLeadIds.has(t.lead_id)))
       .map((t) => ({ when: new Date(t.due_date), kind: 'task', t }))
       .filter((x) => !isNaN(x.when)),
   ]
