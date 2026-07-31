@@ -84,14 +84,29 @@ try {
 console.log('\n3. Deploying Web App Version...')
 const depId = env.SHEETS_DEPLOYMENT_ID || ''
 try {
+  let output = ''
   if (depId) {
-    execSync(`npx @google/clasp deploy -i "${depId}" -d "CLI deployment ${new Date().toISOString()}"`, { stdio: 'inherit' })
+    output = execSync(`npx @google/clasp deploy -i "${depId}" -d "CLI deployment ${new Date().toISOString()}"`, { encoding: 'utf8' })
   } else {
-    execSync(`npx @google/clasp deploy -d "CLI deployment ${new Date().toISOString()}"`, { stdio: 'inherit' })
+    output = execSync(`npx @google/clasp deploy -d "CLI deployment ${new Date().toISOString()}"`, { encoding: 'utf8' })
   }
+  console.log(output)
   console.log('  [OK] Deployment updated successfully.')
+
+  // Parse new deployment ID if created
+  const match = output.match(/- (AKfyc[a-zA-Z0-9_-]+) @/ ) || output.match(/Created version \d+ of deployment (AKfyc[a-zA-Z0-9_-]+)/)
+  const newDepId = match ? match[1] : depId
+  if (newDepId && newDepId !== env.SHEETS_DEPLOYMENT_ID) {
+    console.log(`\n  [UPDATE] Detected new Deployment ID: ${newDepId}`)
+    const newUrl = `https://script.google.com/macros/s/${newDepId}/exec`
+    let envRaw = fs.readFileSync(envPath, 'utf8')
+    envRaw = envRaw.replace(/SHEETS_DEPLOYMENT_ID=.*/g, `SHEETS_DEPLOYMENT_ID=${newDepId}`)
+    envRaw = envRaw.replace(/SHEETS_URL=.*/g, `SHEETS_URL=${newUrl}`)
+    fs.writeFileSync(envPath, envRaw)
+    console.log('  [OK] Updated .env file with new SHEETS_DEPLOYMENT_ID and SHEETS_URL.')
+  }
 } catch (e) {
-  console.log('  [WARN] Clasp deploy warning:', e.message)
+  console.log('  [WARN] Clasp deploy output:', e.message)
 }
 
 console.log('\n======================================================================')
