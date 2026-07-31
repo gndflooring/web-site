@@ -92,11 +92,19 @@ async function fetchEmail(accessToken) {
   return (j.email || '').toLowerCase()
 }
 
+function isEmailAllowed(email) {
+  if (!ALLOWED_EMAILS.length) return true
+  const target = (email || '').trim().toLowerCase()
+  return ALLOWED_EMAILS.some((a) => a.trim().toLowerCase() === target)
+}
+
 /** Interactive sign-in. Throws on failure or unauthorized email. */
 export async function signIn() {
   const resp = await requestToken('consent')
-  const email = await fetchEmail(resp.access_token)
-  if (ALLOWED_EMAILS.length && !ALLOWED_EMAILS.includes(email)) {
+  const rawEmail = await fetchEmail(resp.access_token)
+  const email = (rawEmail || '').trim().toLowerCase()
+  if (!isEmailAllowed(email)) {
+    console.error('[AUTH ERROR] Email not allowed:', { email, ALLOWED_EMAILS })
     throw Object.assign(new Error(`${email} is not authorized for this console.`), {
       code: 'UNAUTHORIZED',
     })
@@ -122,8 +130,9 @@ export async function resume() {
 export async function refreshSilently() {
   const resp = await requestToken('')
   const prev = session || loadSession()
-  const email = prev?.email || (await fetchEmail(resp.access_token))
-  if (ALLOWED_EMAILS.length && !ALLOWED_EMAILS.includes(email)) {
+  const rawEmail = prev?.email || (await fetchEmail(resp.access_token))
+  const email = (rawEmail || '').trim().toLowerCase()
+  if (!isEmailAllowed(email)) {
     clearSession()
     throw Object.assign(new Error('Session no longer authorized.'), { code: 'UNAUTHORIZED' })
   }
