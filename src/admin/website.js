@@ -242,9 +242,19 @@ function sectionHtml(sec, idx) {
   </details>`
 }
 
-function parseMd(s) {
+function parseMd(s, bgContext = 'light') {
   if (!s) return ''
-  return esc(s).replace(/\*([^*]+)\*/g, '<span class="italic text-[#d8b985] font-600">$1</span>')
+  let text = esc(s)
+  let hl = 'text-[#2f7cb5] font-600' // light default
+  if (bgContext === 'dark') hl = 'text-[#d8b985] font-600'
+  else if (bgContext === 'sand' || bgContext === 'gold') hl = 'text-[#134e4a] font-700' // teal on sand!
+  else if (bgContext === 'eyebrow-light') hl = 'text-[#0f766e] font-700'
+
+  text = text.replace(/\*([^*]+)\*/g, `<span class="italic ${hl}">$1</span>`)
+  text = text.replace(/\*\*([^*]+)\*\*/g, `<strong class="font-bold">$1</strong>`)
+  text = text.replace(/_([^_]+)_/g, `<em class="italic">$1</em>`)
+  text = text.replace(/\[([^\]]+)\]\(([^)]+)\)/g, `<a href="$2" class="underline hover:opacity-80">$1</a>`)
+  return text
 }
 
 function renderLivePreview() {
@@ -268,7 +278,7 @@ function renderLivePreview() {
         <a href="#gallery">Gallery</a>
         <a href="#contact">Contact</a>
       </nav>
-      <button class="btn-gold hidden lg:inline-flex">${esc(d.hero?.ctaPrimary || 'Get a Free Quote')}</button>
+      <button class="btn-gold hidden lg:inline-flex">${parseMd(d.hero?.ctaPrimary || 'Get a Free Quote', 'gold')}</button>
     </header>
 
     <!-- HERO WITH GPU-ACCELERATED SMOOTH BG ANIMATION -->
@@ -283,18 +293,18 @@ function renderLivePreview() {
 
       <div class="max-w-3xl relative z-10">
         <p class="eyebrow text-sand-300">
-          <span class="h-px w-8 bg-sand-300"></span> ${esc(d.hero?.eyebrow)}
+          <span class="h-px w-8 bg-sand-300"></span> ${parseMd(d.hero?.eyebrow, 'dark')}
         </p>
         <h1 class="mt-6 font-display text-4xl md:text-6xl font-600 leading-[1.05] text-white">
-          ${parseMd(heroHeadline)}
+          ${parseMd(heroHeadline, 'dark')}
         </h1>
         <p class="mt-7 max-w-xl text-lg leading-relaxed text-white/80">
-          ${esc(d.hero?.subcopy)}
+          ${parseMd(d.hero?.subcopy, 'dark')}
         </p>
         <div class="mt-10 flex flex-wrap items-center gap-4">
-          <a href="#contact" class="btn-gold">${esc(d.hero?.ctaPrimary)}</a>
+          <a href="#contact" class="btn-gold">${parseMd(d.hero?.ctaPrimary, 'gold')}</a>
           <a href="#services" class="btn-ghost">
-            ${esc(d.hero?.ctaSecondary)}
+            ${parseMd(d.hero?.ctaSecondary, 'dark')}
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M5 12h14M13 6l6 6-6 6"/></svg>
           </a>
         </div>
@@ -302,8 +312,8 @@ function renderLivePreview() {
           <dl class="mt-16 flex flex-wrap gap-8 border-t border-white/15 pt-8">
             ${d.hero.stats.map(s => `
               <div>
-                <dt class="text-sm text-white/60">${esc(s.label)}:</dt>
-                <dd class="font-display text-3xl font-600 text-white mt-1">${esc(s.value)}</dd>
+                <dt class="text-sm text-white/60">${parseMd(s.label, 'dark')}:</dt>
+                <dd class="font-display text-3xl font-600 text-white mt-1">${parseMd(s.value, 'dark')}</dd>
               </div>
             `).join('')}
           </dl>
@@ -311,20 +321,20 @@ function renderLivePreview() {
       </div>
     </section>
 
-    <!-- TRUST STRIP -->
+    <!-- TRUST STRIP (Sand BG -> Teal Highlight) -->
     <section class="border-y border-ink/5 bg-cream-200/60 py-6">
       <div class="flex flex-wrap items-center justify-center gap-x-12 gap-y-4 text-center text-sm font-500 text-muted">
-        ${(d.trust || []).map(t => `<span>${esc(t)}</span>`).join('')}
+        ${(d.trust || []).map(t => `<span>${parseMd(t, 'sand')}</span>`).join('')}
       </div>
     </section>
 
-    <!-- SERVICES -->
+    <!-- SERVICES (Light BG -> Brand Blue Highlight) -->
     <section class="py-20 bg-cream text-ink">
       <div class="max-w-7xl mx-auto px-6">
         <div class="mx-auto max-w-2xl text-center">
-          <p class="eyebrow justify-center"><span class="h-px w-8 bg-brand-600"></span> ${esc(d.services?.eyebrow)} <span class="h-px w-8 bg-brand-600"></span></p>
-          <h2 class="mt-5 font-display text-4xl font-600 text-ink sm:text-5xl">${esc(d.services?.heading)}</h2>
-          <p class="mt-5 text-lg text-muted">${esc(d.services?.subcopy)}</p>
+          <p class="eyebrow justify-center"><span class="h-px w-8 bg-brand-600"></span> ${parseMd(d.services?.eyebrow, 'eyebrow-light')} <span class="h-px w-8 bg-brand-600"></span></p>
+          <h2 class="mt-5 font-display text-4xl font-600 text-ink sm:text-5xl">${parseMd(d.services?.heading, 'light')}</h2>
+          <p class="mt-5 text-lg text-muted">${parseMd(d.services?.subcopy, 'light')}</p>
         </div>
 
         <div class="mt-16 grid gap-7 sm:grid-cols-2 lg:grid-cols-4">
@@ -340,11 +350,11 @@ function renderLivePreview() {
                     </div>
                   ` : ''}
                   <div class="p-7">
-                    <h3 class="font-display text-xl font-600 text-ink">${esc(it.title)}</h3>
-                    <p class="mt-3 text-sm leading-relaxed text-muted">${esc(it.desc)}</p>
+                    <h3 class="font-display text-xl font-600 text-ink">${parseMd(it.title, 'light')}</h3>
+                    <p class="mt-3 text-sm leading-relaxed text-muted">${parseMd(it.desc, 'light')}</p>
                     ${it.bullets ? `
                       <ul class="mt-5 space-y-2 text-sm text-ink-700">
-                        ${it.bullets.map(b => `<li class="flex items-center gap-2"><span class="text-brand-600">✓</span> ${esc(b)}</li>`).join('')}
+                        ${it.bullets.map(b => `<li class="flex items-center gap-2"><span class="text-brand-600">✓</span> ${parseMd(b, 'light')}</li>`).join('')}
                       </ul>
                     ` : ''}
                   </div>

@@ -21,41 +21,55 @@ const featureIcons = [
 ]
 const ri = (i) => (i ? ` style="--reveal-i: ${i}"` : '')
 
+const parseMd = (s, bgContext = 'light') => {
+  if (!s) return ''
+  let text = esc(s)
+  let hl = 'text-brand-600 font-semibold'
+  if (bgContext === 'dark') hl = 'text-sand-300 font-semibold'
+  else if (bgContext === 'sand' || bgContext === 'gold') hl = 'text-teal-900 font-bold'
+  else if (bgContext === 'eyebrow-light') hl = 'text-teal-700 font-bold'
+
+  text = text.replace(/\*([^*]+)\*/g, `<span class="italic ${hl}">$1</span>`)
+  text = text.replace(/\*\*([^*]+)\*\*/g, `<strong class="font-bold">$1</strong>`)
+  text = text.replace(/_([^_]+)_/g, `<em class="italic">$1</em>`)
+  text = text.replace(/\[([^\]]+)\]\(([^)]+)\)/g, `<a href="$2" class="underline hover:opacity-80">$1</a>`)
+  return text
+}
+
 const gen = {
   'meta.title': (c) => esc(c.meta.title),
   'meta.description': (c) => esc(c.meta.description),
   'meta.ogTitle': (c) => esc(c.meta.ogTitle),
   'meta.ogDescription': (c) => esc(c.meta.ogDescription),
   'hero.image': (c) => esc(c.hero.image),
-  'footer.note': (c) => esc(c.footer.note),
+  'footer.note': (c) => parseMd(c.footer.note, 'dark'),
 
   hero: (c) => {
     const h = c.hero
+    const headline = h.headline || `${h.headlineLead || ''} *${h.highlight || ''}* ${h.headlineRest || ''}`
     return `<div class="max-w-3xl">
             <p class="eyebrow reveal text-sand-300">
               <span class="h-px w-8 bg-sand-300"></span>
-              ${esc(h.eyebrow)}
+              ${parseMd(h.eyebrow, 'dark')}
             </p>
             <h1 class="reveal mt-6 font-display text-5xl font-600 leading-[1.05] text-white sm:text-6xl lg:text-7xl"${ri(1)}>
-              ${esc(h.headlineLead)}
-              <span class="italic text-sand-300">${esc(h.highlight)}</span><br />
-              ${esc(h.headlineRest)}
+              ${parseMd(headline, 'dark')}
             </h1>
             <p class="reveal mt-7 max-w-xl text-lg leading-relaxed text-white/80"${ri(2)}>
-              ${esc(h.subcopy)}
+              ${parseMd(h.subcopy, 'dark')}
             </p>
             <div class="reveal mt-10 flex flex-wrap items-center gap-4"${ri(3)}>
-              <a href="#contact" class="btn-gold">${esc(h.ctaPrimary)}</a>
+              <a href="#contact" class="btn-gold">${parseMd(h.ctaPrimary, 'gold')}</a>
               <a href="#services" class="btn-ghost">
-                ${esc(h.ctaSecondary)}
+                ${parseMd(h.ctaSecondary, 'dark')}
                 ${arrowSvg}
               </a>
             </div>
-            <dl class="reveal mt-16 grid max-w-xl grid-cols-3 gap-6 border-t border-white/15 pt-8"${ri(4)}>
-              ${h.stats
+            <dl class="reveal mt-16 flex flex-wrap gap-8 border-t border-white/15 pt-8"${ri(4)}>
+              ${(h.stats || [])
                 .map(
                   (s) =>
-                    `<div><dt class="font-display text-3xl font-600 text-white">${esc(s.value)}</dt><dd class="mt-1 text-sm text-white/60">${esc(s.label)}</dd></div>`
+                    `<div><dt class="text-sm text-white/60">${parseMd(s.label, 'dark')}:</dt><dd class="font-display text-3xl font-600 text-white mt-1">${parseMd(s.value, 'dark')}</dd></div>`
                 )
                 .join('')}
             </dl>
@@ -64,8 +78,8 @@ const gen = {
 
   trust: (c) => {
     const sep = '<span class="hidden h-4 w-px bg-ink/15 sm:block"></span>'
-    return c.trust
-      .map((t, i) => `<span class="reveal"${ri(i)}>${esc(t)}</span>`)
+    return (c.trust || [])
+      .map((t, i) => `<span class="reveal"${ri(i)}>${parseMd(t, 'sand')}</span>`)
       .join(sep)
   },
 
@@ -74,14 +88,14 @@ const gen = {
     return `<div class="mx-auto max-w-2xl text-center">
             <p class="eyebrow reveal justify-center">
               <span class="h-px w-8 bg-brand-600"></span>
-              ${esc(s.eyebrow)}
+              ${parseMd(s.eyebrow, 'eyebrow-light')}
               <span class="h-px w-8 bg-brand-600"></span>
             </p>
             <h2 class="reveal mt-5 font-display text-4xl font-600 text-ink sm:text-5xl"${ri(1)}>
-              ${esc(s.heading)}
+              ${parseMd(s.heading, 'light')}
             </h2>
             <p class="reveal mt-5 text-lg text-muted"${ri(2)}>
-              ${esc(s.subcopy)}
+              ${parseMd(s.subcopy, 'light')}
             </p>
           </div>
 
@@ -93,13 +107,13 @@ const gen = {
                 <img src="${esc(it.image)}" alt="${esc(it.alt)}" class="h-full w-full object-cover" loading="lazy" />
               </div>
               <div class="p-7">
-                <h3 class="font-display text-xl font-600 text-ink">${esc(it.title)}</h3>
-                <p class="mt-3 text-sm leading-relaxed text-muted">${esc(it.desc)}</p>
+                <h3 class="font-display text-xl font-600 text-ink">${parseMd(it.title, 'light')}</h3>
+                <p class="mt-3 text-sm leading-relaxed text-muted">${parseMd(it.desc, 'light')}</p>
                 <ul class="mt-5 space-y-2 text-sm text-ink-700">
                   ${(it.bullets || [])
                     .map(
                       (b) =>
-                        `<li class="flex items-center gap-2"><span class="text-brand-600">✓</span> ${esc(b)}</li>`
+                        `<li class="flex items-center gap-2"><span class="text-brand-600">✓</span> ${parseMd(b, 'light')}</li>`
                     )
                     .join('')}
                 </ul>
@@ -121,20 +135,20 @@ const gen = {
               <img src="${esc(a.image)}" alt="${esc(a.alt)}" class="aspect-[4/5] w-full object-cover" loading="lazy" />
             </div>
             <div class="absolute -bottom-7 -right-3 hidden rounded-2xl bg-sand-400 p-6 text-ink shadow-lift sm:block lg:-right-7">
-              <p class="font-display text-3xl font-700">${esc(a.badgeValue)}</p>
-              <p class="text-xs font-600 uppercase tracking-wider">${esc(a.badgeLabel)}</p>
+              <p class="font-display text-3xl font-700">${parseMd(a.badgeValue, 'sand')}</p>
+              <p class="text-xs font-600 uppercase tracking-wider">${parseMd(a.badgeLabel, 'sand')}</p>
             </div>
           </div>
 
           <div>
             <p class="eyebrow reveal text-sand-300">
-              <span class="h-px w-8 bg-sand-300"></span> ${esc(a.eyebrow)}
+              <span class="h-px w-8 bg-sand-300"></span> ${parseMd(a.eyebrow, 'dark')}
             </p>
             <h2 class="reveal mt-5 font-display text-4xl font-600 sm:text-5xl"${ri(1)}>
-              ${esc(a.headingLead)}<br />${esc(a.headingRest)}
+              ${parseMd(a.headingLead, 'dark')}<br />${parseMd(a.headingRest, 'dark')}
             </h2>
             <p class="reveal mt-5 max-w-lg text-white/70"${ri(2)}>
-              ${esc(a.body)}
+              ${parseMd(a.body, 'dark')}
             </p>
 
             <div class="mt-10 grid gap-7 sm:grid-cols-2">
@@ -145,8 +159,8 @@ const gen = {
                   ${featureIcons[i] || featureIcons[0]}
                 </span>
                 <div>
-                  <h3 class="font-display text-lg font-600">${esc(f.title)}</h3>
-                  <p class="mt-1.5 text-sm text-white/65">${esc(f.body)}</p>
+                  <h3 class="font-display text-lg font-600">${parseMd(f.title, 'dark')}</h3>
+                  <p class="mt-1.5 text-sm text-white/65">${parseMd(f.body, 'dark')}</p>
                 </div>
               </div>`
                 )
@@ -159,11 +173,11 @@ const gen = {
     const p = c.process
     return `<div class="mx-auto max-w-2xl text-center">
             <p class="eyebrow reveal justify-center">
-              <span class="h-px w-8 bg-brand-600"></span> ${esc(p.eyebrow)}
+              <span class="h-px w-8 bg-brand-600"></span> ${parseMd(p.eyebrow, 'eyebrow-light')}
               <span class="h-px w-8 bg-brand-600"></span>
             </p>
             <h2 class="reveal mt-5 font-display text-4xl font-600 text-ink sm:text-5xl"${ri(1)}>
-              ${esc(p.heading)}
+              ${parseMd(p.heading, 'light')}
             </h2>
           </div>
 
@@ -172,8 +186,8 @@ const gen = {
               .map(
                 (st, i) => `<div class="reveal relative rounded-3xl bg-white p-8 shadow-soft ring-1 ring-ink/5"${ri(i)}>
               <span class="font-display text-5xl font-700 text-brand-100">${String(i + 1).padStart(2, '0')}</span>
-              <h3 class="mt-3 font-display text-xl font-600 text-ink">${esc(st.title)}</h3>
-              <p class="mt-3 text-sm leading-relaxed text-muted">${esc(st.desc)}</p>
+              <h3 class="mt-3 font-display text-xl font-600 text-ink">${parseMd(st.title, 'light')}</h3>
+              <p class="mt-3 text-sm leading-relaxed text-muted">${parseMd(st.desc, 'light')}</p>
             </div>`
               )
               .join('')}
@@ -185,13 +199,13 @@ const gen = {
     return `<div class="flex flex-wrap items-end justify-between gap-6">
             <div class="max-w-xl">
               <p class="eyebrow reveal">
-                <span class="h-px w-8 bg-brand-600"></span> ${esc(g.eyebrow)}
+                <span class="h-px w-8 bg-brand-600"></span> ${parseMd(g.eyebrow, 'eyebrow-light')}
               </p>
               <h2 class="reveal mt-5 font-display text-4xl font-600 text-ink sm:text-5xl"${ri(1)}>
-                ${esc(g.heading)}
+                ${parseMd(g.heading, 'light')}
               </h2>
             </div>
-            <a href="#contact" class="btn-outline reveal"${ri(2)}>${esc(g.ctaLabel)}</a>
+            <a href="#contact" class="btn-outline reveal"${ri(2)}>${parseMd(g.ctaLabel, 'light')}</a>
           </div>
 
           <div class="mt-14 columns-1 gap-6 sm:columns-2 lg:columns-3 [&>*]:mb-6">
@@ -199,7 +213,7 @@ const gen = {
               .map(
                 (it, i) => `<figure class="media-zoom reveal group relative overflow-hidden rounded-2xl shadow-soft"${ri(i % 3)}>
               <img src="${esc(it.image)}" alt="${esc(it.alt)}" class="w-full" loading="lazy" />
-              <figcaption class="absolute inset-x-0 bottom-0 translate-y-2 bg-gradient-to-t from-ink/80 to-transparent p-5 text-sm font-500 text-white opacity-0 transition-all duration-500 group-hover:translate-y-0 group-hover:opacity-100">${esc(it.caption)}</figcaption>
+              <figcaption class="absolute inset-x-0 bottom-0 translate-y-2 bg-gradient-to-t from-ink/80 to-transparent p-5 text-sm font-500 text-white opacity-0 transition-all duration-500 group-hover:translate-y-0 group-hover:opacity-100">${parseMd(it.caption, 'dark')}</figcaption>
             </figure>`
               )
               .join('')}
@@ -210,11 +224,11 @@ const gen = {
     const t = c.testimonials
     return `<div class="mx-auto max-w-2xl text-center">
             <p class="eyebrow reveal justify-center">
-              <span class="h-px w-8 bg-brand-600"></span> ${esc(t.eyebrow)}
+              <span class="h-px w-8 bg-brand-600"></span> ${parseMd(t.eyebrow, 'eyebrow-light')}
               <span class="h-px w-8 bg-brand-600"></span>
             </p>
             <h2 class="reveal mt-5 font-display text-4xl font-600 text-ink sm:text-5xl"${ri(1)}>
-              ${esc(t.heading)}
+              ${parseMd(t.heading, 'light')}
             </h2>
           </div>
 
@@ -223,8 +237,8 @@ const gen = {
               .map(
                 (q, i) => `<figure class="reveal rounded-3xl bg-white p-8 shadow-soft ring-1 ring-ink/5"${ri(i)}>
               <div class="flex gap-1 text-sand-400" aria-label="5 out of 5 stars">★★★★★</div>
-              <blockquote class="mt-5 text-ink-700">"${esc(q.quote)}"</blockquote>
-              <figcaption class="mt-6 text-sm font-600 text-ink">— ${esc(q.name)} <span class="font-400 text-muted">· ${esc(q.role)}</span></figcaption>
+              <blockquote class="mt-5 text-ink-700">"${parseMd(q.quote, 'light')}"</blockquote>
+              <figcaption class="mt-6 text-sm font-600 text-ink">— ${parseMd(q.name, 'light')} <span class="font-400 text-muted">· ${parseMd(q.role, 'light')}</span></figcaption>
             </figure>`
               )
               .join('')}
