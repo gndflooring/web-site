@@ -61,12 +61,8 @@ function doGet(e) {
 }
 
 function jsonp_(cb, obj) {
-  if (cb) {
-    var safe = /^[\w$.]{1,64}$/.test(cb) ? cb : 'callback'
-    return ContentService.createTextOutput(
-      safe + '(' + JSON.stringify(obj) + ');'
-    ).setMimeType(ContentService.MimeType.JAVASCRIPT)
-  }
-  return ContentService.createTextOutput(JSON.stringify(obj))
-    .setMimeType(ContentService.MimeType.JSON)
+  var callbackName = (cb && /^[\w$.]{1,64}$/.test(cb)) ? cb : 'callback'
+  return ContentService.createTextOutput(
+    callbackName + '(' + JSON.stringify(obj) + ');'
+  ).setMimeType(ContentService.MimeType.JAVASCRIPT)
 }

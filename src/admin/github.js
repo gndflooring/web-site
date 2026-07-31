@@ -24,7 +24,7 @@ export const ghUser = () => sessionStorage.getItem('gnd_gh_user') || ''
 
 /* ---------- JSONP to the relay (GitHub device endpoints lack CORS) ---------- */
 let jsonpN = 0
-function jsonpScriptTag(params) {
+function jsonp(params) {
   return new Promise((resolve, reject) => {
     const cb = `__ghcb_${Date.now()}_${jsonpN++}`
     const s = document.createElement('script')
@@ -49,28 +49,6 @@ function jsonpScriptTag(params) {
     }
     document.head.appendChild(s)
   })
-}
-
-async function jsonp(params) {
-  try {
-    const qs = new URLSearchParams(params).toString()
-    const res = await fetch(`${RELAY}?${qs}`, { redirect: 'follow' })
-    if (res.ok) {
-      const text = await res.text()
-      const jsonpMatch = text.match(/^\s*[\w$.]+\s*\(([\s\S]*)\)\s*;?\s*$/)
-      if (jsonpMatch) {
-        return JSON.parse(jsonpMatch[1])
-      }
-      try {
-        return JSON.parse(text)
-      } catch {
-        /* ignore parse error and fallback */
-      }
-    }
-  } catch {
-    /* ignore fetch error and fallback */
-  }
-  return jsonpScriptTag(params)
 }
 
 /** Start device flow. Returns { user_code, verification_uri, device_code, interval, expires_in }. */
