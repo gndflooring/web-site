@@ -5,21 +5,19 @@
  */
 
 function getTargetSpreadsheet_() {
-  // 1. Container-bound active spreadsheet
-  var ss = SpreadsheetApp.getActiveSpreadsheet()
-  if (ss) return ss
-
-  // 2. Script Property configured in Apps Script Project Settings
+  // 1. Script Property configured in Apps Script (Project Settings -> Script Properties)
   try {
     var propId = PropertiesService.getScriptProperties().getProperty('SHEETS_SPREADSHEET_ID')
     if (propId) return SpreadsheetApp.openById(propId)
-  } catch (e) {}
+  } catch (e) {
+    throw new Error('Failed opening spreadsheet from Script Properties: ' + e.message)
+  }
 
-  // 3. Injected SPREADSHEET_ID_INJECTED (from .env during clasp deployment) or fallback
-  var injectedId = typeof SPREADSHEET_ID_INJECTED !== 'undefined' ? SPREADSHEET_ID_INJECTED : '18qjPt3IIn_Wtpj25OwNbV4atd3jgHjy7eVprU6rous8'
-  if (injectedId) return SpreadsheetApp.openById(injectedId)
+  // 2. Fallback to active container spreadsheet (if container-bound)
+  var ss = SpreadsheetApp.getActiveSpreadsheet()
+  if (ss) return ss
 
-  throw new Error('Spreadsheet ID not configured.')
+  throw new Error('SHEETS_SPREADSHEET_ID property not configured in Script Properties.')
 }
 
 function doPost(e) {

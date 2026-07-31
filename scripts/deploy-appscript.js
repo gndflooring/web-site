@@ -54,15 +54,6 @@ const claspConfig = { scriptId, rootDir: 'app-script' }
 fs.writeFileSync(claspJsonPath, JSON.stringify(claspConfig, null, 2) + '\n')
 console.log(`  [OK] Using Script ID: ${scriptId}`)
 
-// Generate app-script/env-config.gs with current environment's Spreadsheet ID
-const sheetId = env.SHEETS_SPREADSHEET_ID || process.env.SHEETS_SPREADSHEET_ID || ''
-if (sheetId) {
-  const envConfigPath = path.resolve(process.cwd(), 'app-script', 'env-config.gs')
-  const envContent = `// Auto-generated build artifact from .env during deployment\nvar SPREADSHEET_ID_INJECTED = ${JSON.stringify(sheetId)};\n`
-  fs.writeFileSync(envConfigPath, envContent)
-  console.log(`  [OK] Injected SHEETS_SPREADSHEET_ID (${sheetId}) into app-script/env-config.gs`)
-}
-
 // 2. Check login status
 try {
   console.log('\n1. Checking Google Clasp Authentication...')
