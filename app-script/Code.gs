@@ -15,6 +15,9 @@ function doPost(e) {
     }
 
     var ss = SpreadsheetApp.getActiveSpreadsheet()
+    if (!ss) {
+      ss = SpreadsheetApp.openById('18qjPt3IIn_Wtpj25OwNbV4atd3jgHjy7eVprU6rous8')
+    }
     var sheet = ss.getSheetByName('FormResponses') || ss.getSheetByName('Leads') || ss.getSheets()[0]
 
     var timestamp = data.submittedAt || new Date().toISOString()
