@@ -5,17 +5,12 @@
     "ogTitle": "G&D Flooring — Premium Flooring & Renovations",
     "ogDescription": "Hardwood, luxury vinyl, tile & stone, and bathroom renovations. Craftsmanship you can stand on."
   },
-  "brand": {
-    "name": "G&D Flooring",
-    "logo": "/images/logo.svg"
-  },
   "hero": {
-    "eyebrow": "Flooring & Renovation Specialists",
-    "headline": "Floors that *elevate* every room.",
+    "eyebrow": "Flooring & Renovation Specialists You Can *Trust*",
     "subcopy": "G&D Flooring brings craftsmanship, premium materials, and a meticulous eye to hardwood, luxury vinyl, tile, and full bathroom renovations — built to last and finished beautifully.",
     "ctaPrimary": "Get a Free Quote",
     "ctaSecondary": "Explore Services",
-    "image": "/images/hero.svg",
+    "image": "/uploads/1785533401766-482022264-600938916113585-48503508381486.jpg",
     "stats": [
       {
         "value": "15+",
@@ -29,7 +24,8 @@
         "value": "100%",
         "label": "Satisfaction focus"
       }
-    ]
+    ],
+    "headline": "Floors that *elevate* every room."
   },
   "trust": [
     "Licensed & Insured",
@@ -53,17 +49,8 @@
           {
             "src": "/images/service-hardwood.svg",
             "alt": "Hardwood flooring placeholder",
-            "caption": ""
-          },
-          {
-            "src": "/images/gallery-1.svg",
-            "alt": "",
-            "caption": "Site-finished oak, *living room*"
-          },
-          {
-            "src": "/images/gallery-6.svg",
-            "alt": "",
-            "caption": "Stair treads matched to the floor"
+            "caption": "",
+            "blur": 0
           }
         ]
       },
@@ -78,12 +65,8 @@
           {
             "src": "/images/service-vinyl.svg",
             "alt": "Laminate and luxury vinyl placeholder",
-            "caption": ""
-          },
-          {
-            "src": "/images/gallery-3.svg",
-            "alt": "",
-            "caption": "Waterproof plank in a *family kitchen*"
+            "caption": "",
+            "blur": 0
           }
         ]
       },
@@ -98,17 +81,8 @@
           {
             "src": "/images/service-tile.svg",
             "alt": "Tile and stone placeholder",
-            "caption": ""
-          },
-          {
-            "src": "/images/gallery-2.svg",
-            "alt": "",
-            "caption": "Large-format porcelain, *walk-in shower*"
-          },
-          {
-            "src": "/images/gallery-5.svg",
-            "alt": "",
-            "caption": "Mosaic inlay detail"
+            "caption": "",
+            "blur": 0
           }
         ]
       },
@@ -123,12 +97,8 @@
           {
             "src": "/images/service-bathroom.svg",
             "alt": "Bathroom renovation placeholder",
-            "caption": ""
-          },
-          {
-            "src": "/images/gallery-4.svg",
-            "alt": "",
-            "caption": "Full bathroom rebuild — *tile to fixtures*"
+            "caption": "",
+            "blur": 0
           }
         ]
       }
@@ -139,7 +109,7 @@
     "headingLead": "Built on detail,",
     "headingRest": "finished with pride",
     "body": "We treat every home like our own. From the first measurement to the final sweep, you work with the same dedicated team — no shortcuts, no surprises.",
-    "image": "/images/about.svg",
+    "image": "/uploads/1785533443948-482012659-601611949379615-10013439896755.jpg",
     "alt": "Our craft placeholder",
     "badgeValue": "15+",
     "badgeLabel": "Years perfecting the craft",
@@ -169,8 +139,8 @@
       {
         "title": "Consultation",
         "desc": "We listen to your vision, measure the space, and talk materials and budget.",
-        "image": "/images/gallery-3.svg",
-        "alt": "Consultation placeholder"
+        "image": "",
+        "alt": ""
       },
       {
         "title": "Design & Quote",
@@ -181,8 +151,8 @@
       {
         "title": "Installation",
         "desc": "Our craftsmen install with precision, protecting your home throughout.",
-        "image": "/images/gallery-6.svg",
-        "alt": "Installation placeholder"
+        "image": "",
+        "alt": ""
       },
       {
         "title": "Final Walkthrough",
@@ -202,7 +172,8 @@
           {
             "src": "/images/gallery-1.svg",
             "alt": "Project placeholder 1",
-            "caption": "Hardwood — Living space"
+            "caption": "Hardwood — Living space",
+            "blur": 0
           }
         ]
       },
@@ -211,7 +182,8 @@
           {
             "src": "/images/gallery-2.svg",
             "alt": "Project placeholder 2",
-            "caption": "Tile — Kitchen"
+            "caption": "Tile — Kitchen",
+            "blur": 0
           }
         ]
       },
@@ -220,7 +192,8 @@
           {
             "src": "/images/gallery-3.svg",
             "alt": "Project placeholder 3",
-            "caption": "Vinyl — Open plan"
+            "caption": "Vinyl — Open plan",
+            "blur": 0
           }
         ]
       },
@@ -229,7 +202,8 @@
           {
             "src": "/images/gallery-4.svg",
             "alt": "Project placeholder 4",
-            "caption": "Bathroom — Full reno"
+            "caption": "Bathroom — Full reno",
+            "blur": 0
           }
         ]
       },
@@ -238,7 +212,8 @@
           {
             "src": "/images/gallery-5.svg",
             "alt": "Project placeholder 5",
-            "caption": "Stone — Entryway"
+            "caption": "Stone — Entryway",
+            "blur": 0
           }
         ]
       },
@@ -247,7 +222,8 @@
           {
             "src": "/images/gallery-6.svg",
             "alt": "Project placeholder 6",
-            "caption": "Hardwood — Staircase"
+            "caption": "Hardwood — Staircase",
+            "blur": 0
           }
         ]
       }
@@ -261,30 +237,13 @@
         "quote": "The hardwood floors completely transformed our home. The crew was punctual, tidy, and the finish is flawless.",
         "name": "Placeholder Name",
         "role": "Homeowner",
-        "images": [
-          {
-            "src": "/images/gallery-1.svg",
-            "alt": "Finished living room floor",
-            "caption": "Oak throughout the *main floor*"
-          }
-        ]
+        "images": []
       },
       {
         "quote": "Our bathroom renovation was on time and on budget. G&D handled everything and the tile work is stunning.",
         "name": "Placeholder Name",
         "role": "Client",
-        "images": [
-          {
-            "src": "/images/gallery-4.svg",
-            "alt": "Finished bathroom",
-            "caption": "Bathroom rebuild — *tile to fixtures*"
-          },
-          {
-            "src": "/images/gallery-5.svg",
-            "alt": "Stone entryway",
-            "caption": "Matching stone at the entry"
-          }
-        ]
+        "images": []
       },
       {
         "quote": "Professional from quote to cleanup. The luxury vinyl looks like real wood and survives our kids and dogs.",
@@ -320,5 +279,9 @@
     "hours": "Mon–Fri 8am–6pm",
     "license": "License #PLACEHOLDER-000000",
     "note": "Placeholder content — replace business details & imagery before launch."
+  },
+  "brand": {
+    "name": "G&D Flooring",
+    "logo": "/uploads/1785533224412-logo.svg"
   }
 }
