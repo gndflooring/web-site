@@ -152,6 +152,23 @@ const b64ToUtf8 = (b64) => {
   return new TextDecoder().decode(bytes)
 }
 
+const utf8ToB64 = (str) => {
+  const bytes = new TextEncoder().encode(str)
+  let bin = ''
+  bytes.forEach((b) => (bin += String.fromCharCode(b)))
+  return btoa(bin)
+}
+
+// GitHub answers "Resource not accessible by integration" (403) when the
+// connected app may read the repo but not write it. The Git Data endpoints
+// (blobs/trees/commits/refs) are refused before the Contents endpoint is,
+// so a 403 there is worth retrying the simpler route.
+const isDenied = (e) => /GitHub 403/.test(e.message)
+const WRITE_HELP =
+  'GitHub denied write access to ' +
+  REPO +
+  '. Grant the connected app “Contents: Read and write” (GitHub → Settings → Applications → the app → repository access), then Disconnect and reconnect here.'
+
 /** Ensure the content-draft branch exists (fork from main if missing). Returns true if draft exists. */
 export async function ghEnsureDraft() {
   try {
@@ -195,7 +212,24 @@ export async function ghLoadSiteJson() {
 export async function ghCommitDraft(siteObj, images, message) {
   const hasDraft = await ghEnsureDraft()
   const targetBranch = hasDraft ? DRAFT : BASE
+  try {
+    return await commitViaGitData(targetBranch, siteObj, images, message)
+  } catch (e) {
+    if (!isDenied(e)) throw e
+    // The app cannot use the Git Data API. The Contents API is a separate
+    // permission surface and often still allowed; it costs one commit per
+    // file instead of one for the set.
+    console.warn('Git Data API denied — falling back to the Contents API:', e.message)
+    try {
+      return await commitViaContents(targetBranch, siteObj, images, message)
+    } catch (e2) {
+      throw isDenied(e2) ? new Error(WRITE_HELP) : e2
+    }
+  }
+}
 
+/** One atomic commit: blobs → tree → commit → ref. Needs Git Data write. */
+async function commitViaGitData(targetBranch, siteObj, images, message) {
   const ref = await ghApi(`/repos/${REPO}/git/ref/heads/${targetBranch}`)
   const headSha = ref.object.sha
   const headCommit = await ghApi(`/repos/${REPO}/git/commits/${headSha}`)
@@ -234,6 +268,41 @@ export async function ghCommitDraft(siteObj, images, message) {
   return commit.sha
 }
 
+/**
+ * Fallback: PUT each file through the Contents API. Not atomic — one commit
+ * per file — but it only needs plain contents:write, and the last commit is
+ * what CI sees. Files are capped at 1 MB by this endpoint; the editor's
+ * images are resized well below that.
+ */
+async function commitViaContents(targetBranch, siteObj, images, message) {
+  const files = [
+    { path: 'src/content/site.json', base64: utf8ToB64(JSON.stringify(siteObj, null, 2) + '\n') },
+    ...(images || []).map((img) => ({ path: img.path, base64: img.base64 })),
+  ]
+  let sha = ''
+  for (const [i, f] of files.entries()) {
+    const label = files.length > 1 ? `${message} (${i + 1}/${files.length})` : message
+    sha = await putFile(targetBranch, f.path, f.base64, label || 'Update site content')
+  }
+  return sha
+}
+
+async function putFile(branch, path, base64, message) {
+  const url = `/repos/${REPO}/contents/${path.split('/').map(encodeURIComponent).join('/')}`
+  let sha // the blob being replaced, when the file already exists
+  try {
+    const cur = await ghApi(`${url}?ref=${branch}`)
+    sha = cur.sha
+  } catch (e) {
+    if (!/GitHub 404/.test(e.message)) throw e
+  }
+  const r = await ghApi(url, {
+    method: 'PUT',
+    body: JSON.stringify({ message, content: base64, branch, ...(sha ? { sha } : {}) }),
+  })
+  return r.commit?.sha || ''
+}
+
 /** Merge content-draft → main (existing CI/CD deploys), then resync draft. */
 export async function ghPublish(message) {
   let hasDraft = false
@@ -257,7 +326,7 @@ export async function ghPublish(message) {
     })
   } catch (e) {
     if (/GitHub 409/.test(e.message)) throw new Error('Merge conflict — main changed; reload and try again')
-    throw e
+    throw isDenied(e) ? new Error(WRITE_HELP) : e
   }
   // resync draft to main HEAD so the next cycle is clean
   try {
