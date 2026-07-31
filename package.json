@@ -3,7 +3,7 @@
   "private": true,
   "version": "1.0.0",
   "type": "module",
-  "description": "G&D Flooring — premium flooring & renovation contractor website",
+  "description": "G&D Flooring \u2014 premium flooring & renovation contractor website",
   "scripts": {
     "dev": "vite",
     "dev:cms": "GITHUB_CLIENT_ID=local-dev-harness vite --open /dev/cms-studio.html",
@@ -11,6 +11,7 @@
     "preview": "vite preview",
     "setup:check": "node scripts/setup-check.js",
     "verify:system": "node scripts/verify-full-system.js",
+    "gh:check": "node scripts/check-github-app.js",
     "appscript:deploy": "node scripts/deploy-appscript.js",
     "appscript:login": "npx @google/clasp login",
     "env:pull": "node scripts/sync-env-from-gh.js",
