@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="robots" content="noindex, nofollow" />
+    <title>CMS Editor Studio — local preview</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,600;9..144,700&family=Inter:wght@400;500;600;700&display=swap"
+      rel="stylesheet"
+    />
+  </head>
+  <body>
+    <!--
+      Dev-only harness: mounts the real Website CMS view (src/admin/website.js)
+      without Google sign-in or a GitHub connection, seeded from
+      src/content/site.json. Everything is live except Save Draft / Publish,
+      which need a real GitHub token and will fail with a toast.
+
+        npm run dev:cms   →   http://localhost:5173/dev/cms-studio.html
+
+      Not listed in vite.config.js build inputs, so it never ships to /dist.
+    -->
+    <div id="app" class="flex min-h-screen">
+      <aside class="fixed inset-y-0 left-0 z-40 flex w-60 flex-col bg-sidebar px-4 py-5 text-white">
+        <div class="flex items-center gap-2.5 px-2">
+          <span class="grid h-9 w-9 place-items-center rounded-lg bg-brand-600 font-display text-sm font-700">G&amp;D</span>
+          <span class="font-display text-lg font-600">Admin</span>
+        </div>
+        <p class="mt-8 rounded-xl bg-white/5 px-3 py-2.5 text-xs leading-relaxed text-white/50">
+          Local CMS preview.<br />No sign-in, no GitHub.<br />Save &amp; Publish are disabled.
+        </p>
+      </aside>
+      <div class="flex min-h-screen w-full flex-col lg:pl-60">
+        <header class="sticky top-0 z-30 flex items-center gap-4 border-b border-line bg-app/85 px-5 py-3 backdrop-blur sm:px-7">
+          <h1 class="text-xl font-700">Website</h1>
+          <span class="rounded-full border border-amber-300 bg-amber-100 px-2.5 py-1 text-xs font-600 text-amber-900">dev harness</span>
+        </header>
+        <main id="view" class="min-h-0 flex-1"></main>
+      </div>
+      <div
+        id="toast"
+        class="pointer-events-none fixed bottom-6 left-1/2 z-[60] -translate-x-1/2 rounded-full bg-ink px-5 py-2.5 text-sm font-500 text-white opacity-0 transition-opacity duration-300"
+      ></div>
+    </div>
+
+    <script type="module">
+      // A dummy token short-circuits the connect screen; the GitHub calls that
+      // follow fail, and mountWebsite falls back to the bundled site.json.
+      sessionStorage.setItem('gnd_gh_token', 'local-dev-harness')
+      sessionStorage.setItem('gnd_gh_user', 'local-dev')
+      await import('/src/admin/admin.css')
+      const { mountWebsite } = await import('/src/admin/website.js')
+      mountWebsite(document.getElementById('view'))
+    </script>
+  </body>
+</html>

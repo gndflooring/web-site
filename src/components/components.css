@@ -1,0 +1,360 @@
+/* ============================================================
+   Shared components — carousel + lightbox.
+   Imported by both src/style.css (site, /draft) and
+   src/admin/admin.css (CMS preview), so the two render alike.
+   Plain CSS on purpose: no Tailwind layer, no admin scoping.
+   ============================================================ */
+
+/* ---------------- Carousel ---------------- */
+.carousel {
+  position: relative;
+  overflow: hidden;
+  cursor: zoom-in;
+  isolation: isolate;
+  background-color: rgb(21 33 43 / 0.06);
+}
+.carousel-viewport {
+  aspect-ratio: var(--carousel-aspect, 4 / 3);
+  overflow: hidden;
+}
+.carousel--natural .carousel-viewport { aspect-ratio: auto; }
+.carousel--rounded { border-radius: 1rem; }
+.carousel--flush { border-radius: inherit; }
+
+.carousel-track {
+  display: flex;
+  height: 100%;
+  transition: transform 0.7s cubic-bezier(0.22, 1, 0.36, 1);
+  will-change: transform;
+}
+.carousel-slide {
+  flex: 0 0 100%;
+  height: 100%;
+  margin: 0;
+  min-width: 0;
+}
+.carousel-slide img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  transition: transform 0.9s cubic-bezier(0.22, 1, 0.36, 1);
+}
+.carousel--natural .carousel-slide img { height: auto; }
+
+/* The delight: a slight, slow push-in on hover. */
+.carousel:hover .carousel-slide img,
+.carousel:focus-visible .carousel-slide img { transform: scale(1.06); }
+.carousel:hover .carousel-slide img[data-blur],
+.carousel:focus-visible .carousel-slide img[data-blur] { transform: scale(1.12); }
+.carousel:focus-visible {
+  outline: 2px solid var(--color-brand-400, #559fd4);
+  outline-offset: 3px;
+}
+
+/* Zoom affordance */
+.carousel-zoom {
+  position: absolute;
+  right: 0.625rem;
+  bottom: 0.625rem;
+  z-index: 3;
+  display: grid;
+  place-items: center;
+  width: 2rem;
+  height: 2rem;
+  border-radius: 9999px;
+  color: #fff;
+  background: rgb(21 33 43 / 0.45);
+  backdrop-filter: blur(6px);
+  opacity: 0;
+  transform: translateY(4px);
+  transition: opacity 0.3s ease, transform 0.3s ease;
+  pointer-events: none;
+}
+.carousel:hover .carousel-zoom { opacity: 1; transform: translateY(0); }
+
+.carousel-nav {
+  position: absolute;
+  top: 50%;
+  z-index: 3;
+  display: grid;
+  place-items: center;
+  width: 2.25rem;
+  height: 2.25rem;
+  margin-top: -1.125rem;
+  border-radius: 9999px;
+  color: #fff;
+  background: rgb(21 33 43 / 0.42);
+  backdrop-filter: blur(6px);
+  border: 1px solid rgb(255 255 255 / 0.18);
+  opacity: 0;
+  transition: opacity 0.25s ease, background-color 0.25s ease;
+  cursor: pointer;
+}
+.carousel-nav--prev { left: 0.5rem; }
+.carousel-nav--next { right: 0.5rem; }
+.carousel:hover .carousel-nav,
+.carousel:focus-within .carousel-nav { opacity: 1; }
+.carousel-nav:hover { background: rgb(21 33 43 / 0.72); }
+
+.carousel-dots {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0.6rem;
+  z-index: 3;
+  display: flex;
+  justify-content: center;
+  gap: 0.375rem;
+}
+.carousel-dot {
+  width: 0.4rem;
+  height: 0.4rem;
+  border-radius: 9999px;
+  background: rgb(255 255 255 / 0.5);
+  box-shadow: 0 1px 2px rgb(21 33 43 / 0.4);
+  transition: width 0.3s ease, background-color 0.3s ease;
+  cursor: pointer;
+  border: 0;
+  padding: 0;
+}
+.carousel-dot.is-active {
+  width: 1.1rem;
+  background: #fff;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .carousel-track { transition: none; }
+  .carousel:hover .carousel-slide img { transform: none; }
+}
+
+/* ---------------- Lightbox ---------------- */
+html.lb-open { overflow: hidden; }
+
+.lb {
+  position: fixed;
+  inset: 0;
+  z-index: 200;
+  display: grid;
+  grid-template-rows: 1fr auto;
+  color: #fff;
+}
+.lb[hidden] { display: none; }
+
+.lb-backdrop {
+  position: absolute;
+  inset: 0;
+  background: rgb(8 12 16 / 0.92);
+  backdrop-filter: blur(10px);
+}
+
+.lb-stage {
+  position: relative;
+  z-index: 1;
+  overflow: hidden;
+  /* Grid items default to min-height:auto, which would let a tall image push
+     the row past the viewport; the image is then absolutely positioned so its
+     percentage limits resolve against a definite box (SVGs have no intrinsic
+     size to fall back on). */
+  min-height: 0;
+  min-width: 0;
+  cursor: zoom-in;
+  touch-action: none;
+}
+.lb.is-zoomed .lb-stage { cursor: grab; }
+.lb.is-zoomed .lb-stage:active { cursor: grabbing; }
+
+.lb-image {
+  position: absolute;
+  inset: 0.75rem 1rem;
+  margin: auto;
+  max-width: 100%;
+  max-height: 100%;
+  width: auto;
+  height: auto;
+  object-fit: contain;
+  transform-origin: center center;
+  transition: transform 0.12s ease-out;
+  user-select: none;
+  -webkit-user-drag: none;
+  box-shadow: 0 30px 80px -20px rgb(0 0 0 / 0.8);
+}
+
+/* Title and caption ride on the picture itself — nothing to hunt for.
+   The layer never swallows a wheel/drag event meant for the image. */
+.lb-overlay {
+  position: absolute;
+  inset: 0;
+  z-index: 2;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  align-items: center;
+  padding: 1rem 4.5rem;
+  pointer-events: none;
+}
+
+.lb-title {
+  display: inline-flex;
+  align-items: baseline;
+  gap: 0.75rem;
+  max-width: min(80vw, 46rem);
+  padding: 0.55rem 1.15rem;
+  border-radius: 9999px;
+  font-family: var(--font-display, Georgia, serif);
+  font-size: 1rem;
+  font-weight: 600;
+  letter-spacing: 0.01em;
+  color: #fff;
+  background: rgb(18 26 34 / 0.42);
+  border: 1px solid rgb(255 255 255 / 0.16);
+  box-shadow: 0 8px 32px rgb(0 0 0 / 0.35), inset 0 1px 0 rgb(255 255 255 / 0.14);
+  backdrop-filter: blur(16px) saturate(140%);
+  -webkit-backdrop-filter: blur(16px) saturate(140%);
+}
+.lb-title.is-empty { visibility: hidden; }
+.lb-title-text { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.lb-counter {
+  flex: 0 0 auto;
+  font-family: var(--font-sans, system-ui, sans-serif);
+  font-size: 0.75rem;
+  font-weight: 500;
+  letter-spacing: 0.08em;
+  color: rgb(255 255 255 / 0.62);
+}
+
+.lb-caption {
+  max-width: min(80vw, 46rem);
+  margin: 0;
+  padding: 0.6rem 1.25rem;
+  border-radius: 1rem;
+  text-align: center;
+  font-size: 0.875rem;
+  line-height: 1.55;
+  color: rgb(255 255 255 / 0.92);
+  background: rgb(18 26 34 / 0.42);
+  border: 1px solid rgb(255 255 255 / 0.16);
+  box-shadow: 0 8px 32px rgb(0 0 0 / 0.35), inset 0 1px 0 rgb(255 255 255 / 0.14);
+  backdrop-filter: blur(16px) saturate(140%);
+  -webkit-backdrop-filter: blur(16px) saturate(140%);
+}
+.lb-caption.is-empty { display: none; }
+
+.lb-btn {
+  position: absolute;
+  top: 1rem;
+  z-index: 4;
+  display: grid;
+  place-items: center;
+  width: 2.5rem;
+  height: 2.5rem;
+  border-radius: 9999px;
+  color: #fff;
+  background: rgb(255 255 255 / 0.08);
+  border: 1px solid rgb(255 255 255 / 0.16);
+  backdrop-filter: blur(10px);
+  cursor: pointer;
+  transition: background-color 0.2s ease;
+}
+.lb-btn:hover { background: rgb(255 255 255 / 0.2); }
+.lb-btn--close { right: 1rem; }
+.lb-btn--close:hover { background: rgb(244 63 94 / 0.65); }
+/* Only offered once there is a zoom to undo. */
+.lb-btn--reset { right: 3.9rem; display: none; }
+.lb.is-zoomed .lb-btn--reset { display: grid; }
+
+.lb-arrow {
+  position: absolute;
+  top: 50%;
+  z-index: 4;
+  display: none;
+  place-items: center;
+  width: 3rem;
+  height: 3rem;
+  margin-top: -1.5rem;
+  border-radius: 9999px;
+  color: #fff;
+  background: rgb(255 255 255 / 0.08);
+  border: 1px solid rgb(255 255 255 / 0.16);
+  backdrop-filter: blur(10px);
+  cursor: pointer;
+  transition: background-color 0.2s ease;
+}
+.lb.has-many .lb-arrow { display: grid; }
+.lb-arrow:hover { background: rgb(255 255 255 / 0.22); }
+.lb-arrow--prev { left: 1rem; }
+.lb-arrow--next { right: 1rem; }
+
+.lb-sheet {
+  position: relative;
+  z-index: 2;
+  display: flex;
+  justify-content: center;
+  gap: 0.5rem;
+  overflow-x: auto;
+  padding: 0.75rem 1.25rem 1.25rem;
+  scrollbar-width: thin;
+}
+.lb-sheet:empty { display: none; }
+/* Thumbs keep each image's own aspect ratio: fixed height, width follows. */
+.lb-thumb {
+  flex: 0 0 auto;
+  height: 3.75rem;
+  width: auto;
+  min-width: 2.25rem;
+  padding: 0;
+  border-radius: 0.6rem;
+  overflow: hidden;
+  border: 2px solid transparent;
+  opacity: 0.55;
+  cursor: pointer;
+  transform-origin: center bottom;
+  transition:
+    opacity 0.2s ease,
+    border-color 0.2s ease,
+    transform 0.28s cubic-bezier(0.22, 1, 0.36, 1);
+  background: none;
+}
+.lb-thumb img {
+  display: block;
+  height: 100%;
+  width: auto;
+  max-width: 9rem;
+  object-fit: contain;
+}
+.lb-thumb:hover { opacity: 0.9; transform: scale(1.09); }
+.lb-thumb.is-active {
+  opacity: 1;
+  border-color: var(--color-sand-400, #c49a5e);
+  transform: translateY(-2px) scale(1.04);
+}
+.lb-thumb.is-active:hover { transform: translateY(-2px) scale(1.11); }
+
+@media (max-width: 640px) {
+  .lb-overlay { padding: 0.75rem 1rem; }
+  .lb-title { font-size: 0.875rem; padding: 0.45rem 0.85rem; }
+  .lb-arrow { width: 2.5rem; height: 2.5rem; }
+  .lb-thumb { height: 2.75rem; }
+}
+
+/* ---------------- Process step image ---------------- */
+/* Faded band behind the step number, dissolving into the card. */
+.step-card-bg {
+  position: absolute;
+  inset: 0 0 auto 0;
+  height: 45%;
+  overflow: hidden;
+  pointer-events: none;
+}
+.step-card-bg img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  opacity: 0.85;
+}
+.step-card-bg::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(to bottom, rgb(21 33 43 / 0.35) 0%, rgb(21 33 43 / 0.1) 45%, #fff 100%);
+}

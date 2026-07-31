@@ -1,4 +1,6 @@
 @import "tailwindcss";
+/* Carousel + lightbox, shared verbatim with the public site. */
+@import "../components/components.css";
 
 /* Design tokens — brand-aligned, tuned for a dense admin product. */
 @theme {
@@ -135,6 +137,30 @@
 [hidden] { display: none !important; }
 
 /* =============================================================
+   CMS Editor Studio — full-bleed split workspace. The website
+   view drops the main padding and locks to the viewport so the
+   form pane and the preview pane scroll independently.
+   ============================================================= */
+.cms-view {
+  padding: 0 !important;
+  /* `flex: none` so the explicit height wins over flex-basis in the
+     column-flex app shell — otherwise the pane grows with its content. */
+  flex: none;
+  height: calc(100dvh - var(--admin-header-h, 61px));
+  overflow: hidden;
+}
+
+/* Crop studio: keep Cropper's canvas inside the modal body — it sizes itself
+   from the image, so it has to be clamped to the stage in both axes or the
+   crop box's right/bottom handles end up outside the visible area. */
+#cropModal .cropper-container {
+  max-width: 100%;
+  max-height: 55vh;
+}
+#cropStage { position: relative; }
+#cropModal input[type='range'] { accent-color: var(--color-brand-600); }
+
+/* =============================================================
    Live preview — site component classes
    These mirror src/style.css so the CMS preview pane renders
    with pixel parity to the actual website.
@@ -175,6 +201,9 @@
   font-size: 0.875rem;
   font-weight: 600;
   letter-spacing: 0.025em;
+  /* The admin's own .btn-ghost is white-filled; the site's is a glass
+     outline on dark, so the fill has to be reset explicitly. */
+  background-color: transparent;
   border: 1px solid rgba(255, 255, 255, 0.4);
   color: #ffffff;
   backdrop-filter: blur(4px);
@@ -275,18 +304,6 @@
   transform: scale(1.07);
 }
 
-/* --- Hero background animation --- */
-@keyframes heroSmoothZoom {
-  0%   { transform: scale(1)    translateZ(0); }
-  50%  { transform: scale(1.05) translateZ(0); }
-  100% { transform: scale(1)    translateZ(0); }
-}
-
-#cmsLivePreview .hero-bg-anim {
-  will-change: transform;
-  animation: heroSmoothZoom 24s ease-in-out infinite;
-}
-
 /* --- Nav link underlines --- */
 #cmsLivePreview .nav-link,
 .cms-preview .nav-link {
@@ -302,9 +319,77 @@
   transform: none !important;
 }
 
-/* --- Site header preview --- */
+/* --- Gallery masonry (mirrors the site's columns-1/2/3 layout) --- */
+#cmsLivePreview .masonry-grid,
+.cms-preview .masonry-grid {
+  column-count: 1;
+  column-gap: 1.5rem;
+}
+@media (min-width: 900px) {
+  #cmsLivePreview .masonry-grid,
+  .cms-preview .masonry-grid { column-count: 2; }
+}
+@media (min-width: 1400px) {
+  #cmsLivePreview .masonry-grid,
+  .cms-preview .masonry-grid { column-count: 3; }
+}
+#cmsLivePreview .masonry-item,
+.cms-preview .masonry-item {
+  break-inside: avoid;
+  margin-bottom: 1.5rem;
+}
+
+/* The preview is half-width, so relax the site container gutters. */
+#cmsLivePreview .container-x,
+.cms-preview .container-x { padding-left: 2rem; padding-right: 2rem; }
+
+/* Tailwind's sm:/lg: breakpoints follow the viewport, not this pane, so the
+   pane is a query container and the bits that would overflow a narrow pane
+   (the site nav) collapse on their own. The preview never scrolls sideways. */
+#cmsLivePreview {
+  container-type: inline-size;
+  overflow-x: hidden;
+}
+@container (max-width: 780px) {
+  #cmsLivePreview .preview-nav { display: none; }
+}
+
+/* --- Site header inside the preview pane ---
+   The real header is `fixed`; inside a scrolling pane that would escape to
+   the viewport, so it becomes sticky and picks up the site's scrolled state
+   from the pane's own scroll position. --- */
 #cmsLivePreview .site-header,
 .cms-preview .site-header {
+  position: sticky;
   background-color: transparent;
   transition: background-color 0.4s ease, box-shadow 0.4s ease;
 }
+#cmsLivePreview .site-header.is-scrolled,
+.cms-preview .site-header.is-scrolled {
+  background-color: rgb(251 247 240 / 0.9);
+  backdrop-filter: blur(14px);
+  box-shadow: 0 1px 0 rgb(21 33 43 / 0.06), var(--shadow-soft);
+}
+#cmsLivePreview .site-header.is-scrolled .nav-link,
+.cms-preview .site-header.is-scrolled .nav-link { color: var(--color-ink-700); }
+#cmsLivePreview .site-header.is-scrolled .brand-mark,
+.cms-preview .site-header.is-scrolled .brand-mark { color: var(--color-ink); }
+
+/* Hero scroll hint */
+@keyframes float-soft {
+  0%, 100% { transform: translateY(0); opacity: 1; }
+  50% { transform: translateY(6px); opacity: 0.4; }
+}
+#cmsLivePreview .animate-float-soft,
+.cms-preview .animate-float-soft { animation: float-soft 6s ease-in-out infinite; }
+
+/* The preview pane is short: a full-viewport hero would swallow it. */
+#cmsLivePreview section#home,
+.cms-preview section#home {
+  min-height: 70vh;
+  /* The hero's background layer sits at -z-10. Without its own stacking
+     context that would paint behind the pane's background and vanish, so
+     the section isolates itself. */
+  isolation: isolate;
+}
+#cmsLivePreview { position: relative; }

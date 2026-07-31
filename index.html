@@ -51,217 +51,24 @@
       >Skip to content</a
     >
 
-    <!-- ===================== HEADER ===================== -->
-    <header class="site-header fixed inset-x-0 top-0 z-50 py-5">
-      <div class="container-x flex items-center justify-between">
-        <a href="#home" class="brand-mark flex items-center gap-3 text-white">
-          <span
-            class="grid h-11 w-11 place-items-center rounded-xl bg-brand-600 font-display text-lg font-700 text-white shadow-soft"
-            >G&amp;D</span
-          >
-          <span class="font-display text-xl font-600 tracking-tight"
-            >G&amp;D Flooring</span
-          >
-        </a>
-
-        <nav class="hidden items-center gap-9 lg:flex" aria-label="Primary">
-          <a href="#services" class="nav-link text-sm font-500">Services</a>
-          <a href="#about" class="nav-link text-sm font-500">Why Us</a>
-          <a href="#process" class="nav-link text-sm font-500">Process</a>
-          <a href="#gallery" class="nav-link text-sm font-500">Gallery</a>
-          <a href="#contact" class="nav-link text-sm font-500">Contact</a>
-        </nav>
-
-        <a href="#contact" class="btn-gold hidden lg:inline-flex"
-          >Get a Free Quote</a
-        >
-
-        <button
-          id="menuToggle"
-          class="grid h-11 w-11 place-items-center rounded-xl border border-white/30 text-white lg:hidden"
-          aria-label="Open menu"
-          aria-expanded="false"
-          aria-controls="mobileMenu"
-        >
-          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M3 6h18M3 12h18M3 18h18"/></svg>
-        </button>
-      </div>
-
-      <!-- Mobile menu -->
-      <div
-        id="mobileMenu"
-        class="mobile-menu absolute inset-x-4 top-[calc(100%+0.5rem)] rounded-2xl bg-cream p-6 shadow-lift lg:hidden"
-        data-open="false"
-      >
-        <nav class="flex flex-col gap-1" aria-label="Mobile">
-          <a href="#services" class="rounded-xl px-4 py-3 text-base font-500 text-ink-700 hover:bg-brand-50">Services</a>
-          <a href="#about" class="rounded-xl px-4 py-3 text-base font-500 text-ink-700 hover:bg-brand-50">Why Us</a>
-          <a href="#process" class="rounded-xl px-4 py-3 text-base font-500 text-ink-700 hover:bg-brand-50">Process</a>
-          <a href="#gallery" class="rounded-xl px-4 py-3 text-base font-500 text-ink-700 hover:bg-brand-50">Gallery</a>
-          <a href="#contact" class="rounded-xl px-4 py-3 text-base font-500 text-ink-700 hover:bg-brand-50">Contact</a>
-          <a href="#contact" class="btn-gold mt-3 w-full">Get a Free Quote</a>
-        </nav>
-      </div>
-    </header>
+    <!-- Header, every section and the footer are generated from
+         src/content/site.json by src/content/render.js at build time.
+         A CMSIF block disappears entirely when its section is empty. -->
+    <!--CMS:header--><!--/CMS:header-->
 
     <main id="main">
-      <!-- ===================== HERO ===================== -->
-      <section id="home" class="relative flex min-h-screen items-center overflow-hidden">
-        <div class="hero-bg absolute inset-0 -z-10 scale-110">
-          <img
-            src="%%hero.image%%"
-            alt=""
-            class="h-full w-full object-cover"
-            fetchpriority="high"
-          />
-          <div
-            class="absolute inset-0 bg-gradient-to-br from-ink/80 via-brand-800/70 to-brand-700/55"
-          ></div>
-          <div
-            class="absolute inset-0 bg-gradient-to-t from-ink/70 via-transparent to-transparent"
-          ></div>
-        </div>
-
-        <div class="container-x py-32">
-          <!--CMS:hero--><!--/CMS:hero-->
-        </div>
-
-        <a
-          href="#services"
-          class="absolute bottom-8 left-1/2 hidden -translate-x-1/2 flex-col items-center gap-2 text-white/60 md:flex"
-          aria-label="Scroll to services"
-        >
-          <span class="text-[10px] uppercase tracking-[0.3em]">Scroll</span>
-          <span class="relative grid h-9 w-5 place-items-start justify-center rounded-full border border-white/40 pt-1.5">
-            <span class="h-1.5 w-1 rounded-full bg-white/70 animate-float-soft"></span>
-          </span>
-        </a>
-      </section>
-
-      <!-- ===================== TRUST STRIP ===================== -->
-      <section class="border-y border-ink/5 bg-cream-200/60">
-        <div
-          class="container-x flex flex-wrap items-center justify-center gap-x-12 gap-y-4 py-6 text-center text-sm font-500 text-muted"
-        >
-          <!--CMS:trust--><!--/CMS:trust-->
-        </div>
-      </section>
-
-      <!-- ===================== SERVICES ===================== -->
-      <section id="services" class="py-24 lg:py-32">
-        <div class="container-x">
-          <!--CMS:services--><!--/CMS:services-->
-        </div>
-      </section>
-
-      <!-- ===================== WHY US ===================== -->
-      <section id="about" class="bg-ink py-24 text-white lg:py-32">
-        <div class="container-x grid items-center gap-14 lg:grid-cols-2">
-          <!--CMS:about--><!--/CMS:about-->
-        </div>
-      </section>
-
-      <!-- ===================== PROCESS ===================== -->
-      <section id="process" class="py-24 lg:py-32">
-        <div class="container-x">
-          <!--CMS:process--><!--/CMS:process-->
-        </div>
-      </section>
-
-      <!-- ===================== GALLERY ===================== -->
-      <section id="gallery" class="bg-cream-200/50 py-24 lg:py-32">
-        <div class="container-x">
-          <!--CMS:gallery--><!--/CMS:gallery-->
-        </div>
-      </section>
-
-      <!-- ===================== TESTIMONIALS ===================== -->
-      <section class="py-24 lg:py-32">
-        <div class="container-x">
-          <!--CMS:testimonials--><!--/CMS:testimonials-->
-        </div>
-      </section>
-
-      <!-- ===================== CTA BAND ===================== -->
-      <section class="container-x">
-        <div class="reveal relative overflow-hidden rounded-[2.5rem] bg-brand-700 px-8 py-16 text-center text-white shadow-lift sm:px-16 sm:py-20">
-          <!--CMS:ctaBand--><!--/CMS:ctaBand-->
-        </div>
-      </section>
-
-      <!-- ===================== CONTACT ===================== -->
-      <section id="contact" class="py-24 lg:py-32">
-        <div class="container-x grid gap-14 lg:grid-cols-2">
-          <div>
-            <!--CMS:contactInfo--><!--/CMS:contactInfo-->
-          </div>
-
-          <div class="reveal" style="--reveal-i: 1">
-            <form
-              id="quoteForm"
-              class="rounded-3xl bg-white p-8 shadow-soft ring-1 ring-ink/5 sm:p-10"
-              novalidate
-            >
-              <div class="grid gap-5 sm:grid-cols-2">
-                <label class="block">
-                  <span class="text-sm font-600 text-ink">Full name</span>
-                  <input type="text" name="name" required class="mt-2 w-full rounded-xl border border-ink/10 bg-cream/50 px-4 py-3 text-sm outline-none transition focus:border-brand-500 focus:ring-2 focus:ring-brand-200" placeholder="Jane Doe" />
-                </label>
-                <label class="block">
-                  <span class="text-sm font-600 text-ink">Phone</span>
-                  <input type="tel" name="phone" class="mt-2 w-full rounded-xl border border-ink/10 bg-cream/50 px-4 py-3 text-sm outline-none transition focus:border-brand-500 focus:ring-2 focus:ring-brand-200" placeholder="(555) 000-0000" />
-                </label>
-              </div>
-              <label class="mt-5 block">
-                <span class="text-sm font-600 text-ink">Email</span>
-                <input type="email" name="email" required class="mt-2 w-full rounded-xl border border-ink/10 bg-cream/50 px-4 py-3 text-sm outline-none transition focus:border-brand-500 focus:ring-2 focus:ring-brand-200" placeholder="jane@example.com" />
-              </label>
-              <label class="mt-5 block">
-                <span class="text-sm font-600 text-ink">Service of interest</span>
-                <select name="service" class="mt-2 w-full rounded-xl border border-ink/10 bg-cream/50 px-4 py-3 text-sm outline-none transition focus:border-brand-500 focus:ring-2 focus:ring-brand-200">
-                  <option>Hardwood Flooring</option>
-                  <option>Laminate &amp; Vinyl</option>
-                  <option>Tile &amp; Stone</option>
-                  <option>Bathroom Renovation</option>
-                  <option>Not sure yet</option>
-                </select>
-              </label>
-              <label class="mt-5 block">
-                <span class="text-sm font-600 text-ink">Project details</span>
-                <textarea name="message" rows="4" class="mt-2 w-full rounded-xl border border-ink/10 bg-cream/50 px-4 py-3 text-sm outline-none transition focus:border-brand-500 focus:ring-2 focus:ring-brand-200" placeholder="Tell us about the space, square footage, timeline…"></textarea>
-              </label>
-              <button type="submit" id="quoteSubmit" class="btn-primary mt-7 w-full">Request My Free Quote</button>
-              <p
-                id="quoteStatus"
-                role="status"
-                aria-live="polite"
-                class="mt-4 text-center text-sm font-500 empty:hidden"
-              ></p>
-              <p class="mt-4 text-center text-xs text-muted">
-                Protected by reCAPTCHA — the Google
-                <a href="https://policies.google.com/privacy" class="underline hover:text-ink" target="_blank" rel="noopener">Privacy Policy</a>
-                and
-                <a href="https://policies.google.com/terms" class="underline hover:text-ink" target="_blank" rel="noopener">Terms of Service</a>
-                apply.
-              </p>
-            </form>
-          </div>
-        </div>
-      </section>
+      <!--CMSIF:hero--><!--CMS:sectionHero--><!--/CMS:sectionHero--><!--/CMSIF:hero-->
+      <!--CMSIF:trust--><!--CMS:sectionTrust--><!--/CMS:sectionTrust--><!--/CMSIF:trust-->
+      <!--CMSIF:services--><!--CMS:sectionServices--><!--/CMS:sectionServices--><!--/CMSIF:services-->
+      <!--CMSIF:about--><!--CMS:sectionAbout--><!--/CMS:sectionAbout--><!--/CMSIF:about-->
+      <!--CMSIF:process--><!--CMS:sectionProcess--><!--/CMS:sectionProcess--><!--/CMSIF:process-->
+      <!--CMSIF:gallery--><!--CMS:sectionGallery--><!--/CMS:sectionGallery--><!--/CMSIF:gallery-->
+      <!--CMSIF:testimonials--><!--CMS:sectionTestimonials--><!--/CMS:sectionTestimonials--><!--/CMSIF:testimonials-->
+      <!--CMSIF:ctaBand--><!--CMS:sectionCtaBand--><!--/CMS:sectionCtaBand--><!--/CMSIF:ctaBand-->
+      <!--CMSIF:contact--><!--CMS:sectionContact--><!--/CMS:sectionContact--><!--/CMSIF:contact-->
     </main>
 
-    <!-- ===================== FOOTER ===================== -->
-    <footer class="bg-ink text-white">
-      <div class="container-x grid gap-12 py-16 md:grid-cols-[1.4fr_1fr_1fr_1fr]">
-        <!--CMS:footer--><!--/CMS:footer-->
-      </div>
-      <div class="border-t border-white/10">
-        <div class="container-x flex flex-col items-center justify-between gap-3 py-6 text-xs text-white/50 sm:flex-row">
-          <p>© <span id="year">2026</span> G&amp;D Flooring. All rights reserved.</p>
-          <p>%%footer.note%%</p>
-        </div>
-      </div>
-    </footer>
+    <!--CMS:footerBlock--><!--/CMS:footerBlock-->
 
     <script type="module" src="/src/main.js"></script>
   </body>

@@ -1,0 +1,38 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="64" height="64" role="img" aria-label="G&amp;D">
+  <title>G&amp;D</title>
+  <defs>
+    <linearGradient id="gd-tile" gradientUnits="userSpaceOnUse" x1="32" y1="0" x2="32" y2="64">
+      <stop offset="0" stop-color="#3183bd"/>
+      <stop offset="1" stop-color="#1d3f5b"/>
+    </linearGradient>
+    <!-- userSpaceOnUse: an objectBoundingBox gradient would not paint the
+         D's stem, whose bounding box has zero width. -->
+    <linearGradient id="gd-gold" gradientUnits="userSpaceOnUse" x1="14" y1="18" x2="52" y2="48">
+      <stop offset="0" stop-color="#f0e3ca"/>
+      <stop offset="0.42" stop-color="#c49a5e"/>
+      <stop offset="1" stop-color="#966d38"/>
+    </linearGradient>
+  </defs>
+
+  <!-- Tile: Guatemalan sky-blue, deepened so it reads on light and dark -->
+  <rect x="0" y="0" width="64" height="64" rx="15" fill="url(#gd-tile)"/>
+
+  <!-- The flag's two vertical bands, whispered rather than stated -->
+  <rect x="7" y="7" width="2.5" height="50" rx="1.25" fill="#ffffff" opacity="0.20"/>
+  <rect x="54.5" y="7" width="2.5" height="50" rx="1.25" fill="#ffffff" opacity="0.20"/>
+
+  <!-- Gold hairline inset — the luxury cue -->
+  <rect x="4.25" y="4.25" width="55.5" height="55.5" rx="11.5" fill="none" stroke="url(#gd-gold)" stroke-width="1" opacity="0.9"/>
+
+  <g fill="none" stroke="url(#gd-gold)" stroke-width="3.4" stroke-linecap="round" stroke-linejoin="round">
+    <!-- G -->
+    <path d="M28.6 26.6 A9.2 9.2 0 1 0 28.6 37.4"/>
+    <path d="M28.6 37.4 V32.2 H23.2"/>
+    <!-- D -->
+    <path d="M39.8 22.8 V41.2"/>
+    <path d="M39.8 22.8 H41.4 A9.2 9.2 0 0 1 41.4 41.2 H39.8"/>
+  </g>
+
+  <!-- Mitred plank joint, standing in for the ampersand -->
+  <path d="M34.2 29.6 L36.6 32 L34.2 34.4 L31.8 32 Z" fill="url(#gd-gold)"/>
+</svg>

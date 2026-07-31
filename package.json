@@ -6,6 +6,7 @@
   "description": "G&D Flooring — premium flooring & renovation contractor website",
   "scripts": {
     "dev": "vite",
+    "dev:cms": "GITHUB_CLIENT_ID=local-dev-harness vite --open /dev/cms-studio.html",
     "build": "vite build",
     "preview": "vite preview",
     "setup:check": "node scripts/setup-check.js",
@@ -21,6 +22,7 @@
     "vite": "^7.0.0"
   },
   "dependencies": {
+    "cropperjs": "^1.6.2",
     "jspdf": "^4.2.1"
   }
 }

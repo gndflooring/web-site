@@ -1,0 +1,81 @@
+/* Chrome for the /draft full-page preview. The page below the bar is the real
+   site markup, so nothing here may leak into it. */
+
+.pv-bar {
+  position: fixed;
+  inset: 0 0 auto 0;
+  z-index: 300;
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.5rem 0.9rem;
+  font-family: var(--font-sans, system-ui, sans-serif);
+  font-size: 0.75rem;
+  color: #e6edf3;
+  background: rgb(12 18 24 / 0.86);
+  border-bottom: 1px solid rgb(255 255 255 / 0.12);
+  backdrop-filter: blur(14px) saturate(140%);
+}
+
+.pv-tag {
+  padding: 0.2rem 0.55rem;
+  border-radius: 9999px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  font-size: 0.625rem;
+  color: #1b1206;
+  background: var(--color-sand-400, #c49a5e);
+}
+
+.pv-sources { display: flex; gap: 0.25rem; }
+.pv-src {
+  padding: 0.3rem 0.7rem;
+  border-radius: 9999px;
+  font-weight: 600;
+  color: rgb(230 237 243 / 0.72);
+  background: rgb(255 255 255 / 0.06);
+  border: 1px solid transparent;
+  cursor: pointer;
+  transition: background-color 0.2s ease, color 0.2s ease;
+}
+.pv-src:hover { background: rgb(255 255 255 / 0.14); color: #fff; }
+.pv-src.is-active {
+  color: #fff;
+  background: var(--color-brand-600, #2f7cb5);
+  border-color: rgb(255 255 255 / 0.25);
+}
+
+.pv-status { color: rgb(230 237 243 / 0.55); font-variant-numeric: tabular-nums; }
+.pv-status--ok::before { content: '● '; color: #34d399; }
+.pv-status--bad { color: #fda4af; }
+.pv-status--bad::before { content: '● '; color: #fb7185; }
+
+.pv-right { margin-left: auto; display: flex; gap: 0.4rem; }
+.pv-btn {
+  padding: 0.3rem 0.7rem;
+  border-radius: 0.5rem;
+  font-weight: 600;
+  color: #e6edf3;
+  background: rgb(255 255 255 / 0.08);
+  border: 1px solid rgb(255 255 255 / 0.14);
+  cursor: pointer;
+  text-decoration: none;
+}
+.pv-btn:hover { background: rgb(255 255 255 / 0.18); }
+
+/* Push the site below the bar without disturbing its own layout. */
+body { padding-top: 2.35rem; }
+.site-header { top: 2.35rem !important; }
+
+.pv-error {
+  max-width: 34rem;
+  margin: 6rem auto;
+  padding: 2rem;
+  border-radius: 1rem;
+  text-align: center;
+  color: var(--color-ink, #15212b);
+  background: #fff;
+  box-shadow: 0 10px 30px -12px rgb(21 33 43 / 0.18);
+}
+.pv-error-title { font-weight: 700; margin-bottom: 0.5rem; }

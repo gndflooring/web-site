@@ -410,6 +410,9 @@ function render() {
   $('search').classList.toggle('sm:block', view === 'leads')
   if (!state) return
   const v = $('view')
+  // The CMS studio runs full-bleed (its own toolbar + independently
+  // scrolling panes); every other view keeps the standard page padding.
+  v.className = view === 'website' ? 'min-h-0 flex-1' : 'flex-1 p-5 sm:p-7'
   if (view === 'dashboard') dashboard(v)
   else if (view === 'board') board(v)
   else if (view === 'leads') leads(v)
