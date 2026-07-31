@@ -16,6 +16,9 @@ concurrency:
   group: pages
   cancel-in-progress: true
 
+env:
+  ACTIONS_RUNNER_PRINT_LOG_TO_STDOUT: true
+
 jobs:
   build:
     runs-on: ubuntu-latest
