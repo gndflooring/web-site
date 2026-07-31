@@ -29,7 +29,7 @@ console.log(' G&D Flooring — Google Apps Script Automated CLI Deployment Helpe
 console.log('======================================================================\n')
 
 // 1. Ensure .clasp.json exists
-let scriptId = env.SHEETS_SCRIPT_ID || env.SHEETS_DEPLOYMENT_ID || ''
+let scriptId = env.SHEETS_SCRIPT_ID || ''
 if (fs.existsSync(claspJsonPath)) {
   try {
     const c = JSON.parse(fs.readFileSync(claspJsonPath, 'utf8'))
@@ -39,10 +39,13 @@ if (fs.existsSync(claspJsonPath)) {
   } catch {}
 }
 
-if (!scriptId || scriptId === 'PASTE_YOUR_APPS_SCRIPT_ID_HERE') {
-  console.log('  [ATTENTION] Script ID missing.')
-  console.log('  Please set SHEETS_SCRIPT_ID in your .env or populate .clasp.json with your Apps Script ID.')
-  console.log('  (Find your Script ID in Apps Script Editor -> Project Settings -> Script ID).\n')
+if (!scriptId || scriptId.startsWith('AKfyc')) {
+  console.log('  [ATTENTION] SHEETS_SCRIPT_ID is missing or set to a Deployment ID instead of a Script ID.')
+  console.log('  To resolve this:')
+  console.log('  1. Open your Apps Script Editor (Extensions -> Apps Script from your Google Sheet).')
+  console.log('  2. Click ⚙️ Project Settings in the left sidebar.')
+  console.log('  3. Copy the "Script ID" (looks like 1a2b3c4d5e6f...).')
+  console.log('  4. Add SHEETS_SCRIPT_ID=<your_script_id> to your .env file.\n')
   process.exit(1)
 }
 
