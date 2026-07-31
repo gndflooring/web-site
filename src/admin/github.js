@@ -339,6 +339,16 @@ export async function ghPublish(message) {
   return { merged: !!merged, sha: '' }
 }
 
+/** How far the draft is ahead of / behind what is live on main. */
+export async function ghDraftStatus() {
+  try {
+    const cmp = await ghApi(`/repos/${REPO}/compare/${BASE}...${DRAFT}`)
+    return { ahead: cmp.ahead_by, behind: cmp.behind_by, status: cmp.status }
+  } catch {
+    return null
+  }
+}
+
 /** Latest deploy workflow run on main. */
 export async function ghDeployStatus() {
   const r = await ghApi(`/repos/${REPO}/actions/runs?branch=${BASE}&per_page=1`)

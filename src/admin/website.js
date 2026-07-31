@@ -10,7 +10,7 @@
 import seed from '../content/site.json'
 import Cropper from 'cropperjs'
 import 'cropperjs/dist/cropper.css'
-import { renderPage, esc, has } from '../content/render.js'
+import { renderPage, renderCommercialPage, esc, has } from '../content/render.js'
 import { initCarousels } from '../components/carousel.js'
 import { initLightbox } from '../components/lightbox.js'
 import {
@@ -25,6 +25,7 @@ import {
   ghCommitDraft,
   ghPublish,
   ghDeployStatus,
+  ghDraftStatus,
   ghResizeImage,
 } from './github.js'
 
@@ -52,7 +53,7 @@ const PHOTO = obj('Photo', [
   { k: 'blur', t: 'number', label: 'Blur' },
 ])
 
-const SCHEMA = [
+const HOME_SCHEMA = [
   { key: 'meta', label: 'SEO / Meta', fields: [
     { k: 'title', t: 'text', label: 'Page title' },
     { k: 'description', t: 'textarea', label: 'Meta description' },
@@ -158,12 +159,66 @@ const SCHEMA = [
   ] },
 ]
 
+// The commercial page lives under one `commercial` key but is split into
+// several cards; `id` keeps them distinct in the UI while `key` stays the
+// path prefix.
+const COMMERCIAL_SCHEMA = [
+  { id: 'commercialHero', key: 'commercial', label: 'Hero', fields: [
+    { k: 'eyebrow', t: 'text', label: 'Eyebrow', md: true },
+    { k: 'heading', t: 'text', label: 'Heading', md: true },
+    { k: 'subcopy', t: 'textarea', label: 'Sub-copy', md: true },
+    { k: 'image', t: 'image', label: 'Background image', ratio: 16 / 9 },
+    { k: 'ctaPrimary', t: 'text', label: 'Primary button', md: true },
+    { k: 'backLabel', t: 'text', label: 'Back-to-residential button', md: true },
+  ] },
+  { id: 'commercialLink', key: 'commercial', label: 'Link from the home page', fields: [
+    { k: 'ctaLabel', t: 'text', label: 'Button label beside “Explore Services”', md: true },
+    { k: 'metaTitle', t: 'text', label: 'Page title (SEO)' },
+    { k: 'metaDescription', t: 'textarea', label: 'Meta description (SEO)' },
+  ] },
+  { id: 'commercialServices', key: 'commercial', label: 'Service Cards', fields: [
+    { k: 'introHeading', t: 'text', label: 'Section heading', md: true },
+    { k: 'intro', t: 'textarea', label: 'Section intro', md: true },
+    { k: 'items', t: 'list', label: 'Cards', of: obj('Service', [
+      { k: 'title', t: 'text', label: 'Title', md: true },
+      { k: 'desc', t: 'textarea', label: 'Description', md: true },
+      { k: 'bullets', t: 'list', of: 'string', label: 'Bullets', md: true },
+      { k: 'images', t: 'images', label: 'Photos — shown as a carousel', ratio: 4 / 3 },
+    ]) },
+  ] },
+  { id: 'commercialSectors', key: 'commercial', label: 'Sectors', fields: [
+    { k: 'sectorsHeading', t: 'text', label: 'Heading', md: true },
+    { k: 'sectors', t: 'list', of: 'string', label: 'Sectors', md: true },
+  ] },
+  { id: 'commercialCta', key: 'commercial', label: 'Call-to-action Band', fields: [
+    { k: 'ctaHeading', t: 'text', label: 'Heading', md: true },
+    { k: 'ctaSubcopy', t: 'textarea', label: 'Sub-copy', md: true },
+    { k: 'ctaButton', t: 'text', label: 'Button label', md: true },
+  ] },
+]
+
+const PAGES = [
+  { id: 'home', label: 'Home page', schema: HOME_SCHEMA },
+  { id: 'commercial', label: 'Commercial page', schema: COMMERCIAL_SCHEMA },
+]
+const sectionId = (sec) => sec.id || sec.key
+
+// Every field defined for a given path prefix, across all pages — the list
+// editors resolve their item shape through this.
+const FIELDS_BY_KEY = {}
+for (const page of PAGES)
+  for (const sec of page.schema) {
+    if (sec.listString) continue
+    FIELDS_BY_KEY[sec.key] = [...(FIELDS_BY_KEY[sec.key] || []), ...(sec.fields || [])]
+  }
+
 /* ---------- module state ---------- */
 let content = null
 let pending = [] // [{ path, base64 }] images queued for the next commit
 let busy = false
 let host = null // the #view element the studio is mounted in
 const tabs = {} // list path → active index
+let activePage = 'home'
 const openSections = new Set(['hero'])
 let paneScroll = 0
 // Queued images have no file at their final /uploads/… URL until the draft is
@@ -186,10 +241,10 @@ function set(path, val) {
 // Item descriptor ('string' | obj) of the list living at `path`.
 function listDescriptor(path) {
   const ks = path.split('.')
-  const sec = SCHEMA.find((s) => s.key === ks[0])
-  if (!sec) return 'string'
-  if (sec.listString) return 'string'
-  let fields = sec.fields || []
+  const listStringSection = PAGES.some((p) => p.schema.some((s) => s.key === ks[0] && s.listString))
+  if (listStringSection) return 'string'
+  let fields = FIELDS_BY_KEY[ks[0]]
+  if (!fields) return 'string'
   let of = 'string'
   for (let i = 1; i < ks.length; i++) {
     if (/^\d+$/.test(ks[i])) continue
@@ -432,12 +487,16 @@ function sectionHtml(sec) {
     inner = sec.fields
       .map((f) => {
         const p = `${sec.key}.${f.k}`
+        // A list of plain strings gets the inline row editor; a list of
+        // objects gets the tabbed one.
+        if (f.t === 'list' && f.of === 'string') return listString(p, f.label || f.k, f.md)
         if (f.t === 'list')
           return `<div><p class="mb-2 text-xs font-700 uppercase tracking-wider text-muted">${esc(f.label || f.k)}</p>${listTabs(p, f)}</div>`
         return field(f, p)
       })
       .join('')
-  return `<details class="card p-5" data-sec="${sec.key}" ${openSections.has(sec.key) ? 'open' : ''}>
+  const id = sectionId(sec)
+  return `<details class="card p-5" data-sec="${id}" ${openSections.has(id) ? 'open' : ''}>
     <summary class="flex cursor-pointer select-none items-center justify-between text-base font-700 text-ink">
       <span class="font-display">${esc(sec.label)}</span>
       <span class="rounded border border-line bg-app px-2 py-0.5 text-xs font-600 uppercase text-muted">${esc(sec.key)}</span>
@@ -476,7 +535,8 @@ function paintPreview() {
   const prev = $('cmsLivePreview')
   if (!prev) return
   const top = prev.scrollTop
-  prev.innerHTML = renderPage(withLocalPreviews(content || seed), { inert: true })
+  const data = withLocalPreviews(content || seed)
+  prev.innerHTML = activePage === 'commercial' ? renderCommercialPage(data, { inert: true }) : renderPage(data, { inert: true })
   prev.scrollTop = top
   initCarousels(prev)
   initLightbox()
@@ -900,6 +960,7 @@ function renderEditor(v) {
         <span class="text-xs text-muted">@${esc(ghUser() || 'github')}</span>
         <button id="wDisc" class="btn-ghost !px-2.5 !py-1 text-xs">Disconnect</button>
         <span id="wStatus" class="text-xs text-muted"></span>
+        <span id="wDeploy" class="flex items-center gap-1.5 rounded-full border border-line bg-app px-2.5 py-1 text-xs"></span>
         <div class="ml-auto flex gap-2">
           <button id="wSave" class="btn-ghost text-xs">Save Draft</button>
           <button id="wPub" class="btn-primary text-xs">Publish to Live</button>
@@ -908,14 +969,19 @@ function renderEditor(v) {
 
       <div class="flex min-h-0 flex-1 overflow-hidden">
         <div id="cmsFormPane" class="w-1/2 shrink-0 space-y-4 overflow-y-auto border-r border-line bg-app p-6">
-          <div class="flex items-center justify-between border-b border-line pb-2">
-            <span class="text-xs font-700 uppercase tracking-wider text-muted">CMS Sections</span>
-            <span class="flex items-center gap-1 text-xs font-600 text-emerald-600">
+          <div class="flex items-center gap-1 border-b border-line pb-2">
+            ${PAGES.map(
+              (pg) => `<button type="button" data-page="${pg.id}"
+                class="rounded-lg px-3 py-1.5 text-xs font-700 transition-colors ${
+                  pg.id === activePage ? 'bg-brand-600 text-white' : 'text-muted hover:bg-app hover:text-ink'
+                }">${esc(pg.label)}</button>`
+            ).join('')}
+            <span class="ml-auto flex items-center gap-1 text-xs font-600 text-emerald-600">
               <span class="h-2 w-2 rounded-full bg-emerald-500"></span> Contextual markdown active
             </span>
           </div>
           <p class="text-xs text-muted">Edits save to <code>content-draft</code>. <span class="font-600">Publish</span> merges to <code>main</code>. Empty sections are dropped from the page.</p>
-          <div class="space-y-4">${SCHEMA.map(sectionHtml).join('')}</div>
+          <div class="space-y-4">${(PAGES.find((p) => p.id === activePage)?.schema || []).map(sectionHtml).join('')}</div>
         </div>
 
         <div class="flex w-1/2 flex-col overflow-hidden bg-cream">
@@ -929,6 +995,7 @@ function renderEditor(v) {
     </div>`
 
   paintPreview()
+  paintDeploy()
   const pane = $('cmsLivePreview')
   if (pane) pane.scrollTop = paneScrollPreview
   wireEditor(el)
@@ -963,6 +1030,13 @@ function wireEditor(el) {
   )
 
   pane.addEventListener('click', (e) => {
+    const pageBtn = e.target.closest('[data-page]')
+    if (pageBtn) {
+      e.preventDefault()
+      activePage = pageBtn.dataset.page
+      paneScroll = 0
+      return renderEditor()
+    }
     const t = e.target.closest('[data-tab],[data-add],[data-addimg],[data-del],[data-move],[data-crop],[data-clear]')
     if (!t) return
     e.preventDefault()
@@ -1021,6 +1095,103 @@ function wireEditor(el) {
 }
 
 /* =============================================================
+   Publish state — a strip that says exactly where a publish is:
+   saved → merged → building → live (or failed), plus whether the
+   draft currently differs from what is live.
+   ============================================================= */
+const deploy = { phase: 'unknown', detail: '', runUrl: '', sha: '', since: 0 }
+let deployTimer = null
+
+const PHASES = {
+  unknown: { dot: 'bg-slate-300', text: 'text-muted', label: 'Checking…' },
+  clean: { dot: 'bg-emerald-500', text: 'text-emerald-700', label: 'Live is up to date' },
+  ahead: { dot: 'bg-amber-500', text: 'text-amber-700', label: 'Draft not published' },
+  saving: { dot: 'bg-brand-500 animate-pulse', text: 'text-brand-700', label: 'Saving draft…' },
+  saved: { dot: 'bg-emerald-500', text: 'text-emerald-700', label: 'Draft saved' },
+  publishing: { dot: 'bg-brand-500 animate-pulse', text: 'text-brand-700', label: 'Merging to main…' },
+  building: { dot: 'bg-brand-500 animate-pulse', text: 'text-brand-700', label: 'Building…' },
+  live: { dot: 'bg-emerald-500', text: 'text-emerald-700', label: 'Published — live' },
+  failed: { dot: 'bg-rose-500', text: 'text-rose-700', label: 'Deploy failed' },
+}
+
+function setPhase(phase, detail = '', extra = {}) {
+  deploy.phase = phase
+  deploy.detail = detail
+  Object.assign(deploy, extra)
+  if (['saving', 'publishing', 'building'].includes(phase) && !deploy.since) deploy.since = Date.now()
+  if (['live', 'failed', 'clean', 'ahead', 'saved'].includes(phase)) deploy.since = 0
+  paintDeploy()
+}
+
+const elapsed = () => {
+  if (!deploy.since) return ''
+  const s = Math.round((Date.now() - deploy.since) / 1000)
+  return s < 60 ? ` · ${s}s` : ` · ${Math.floor(s / 60)}m ${s % 60}s`
+}
+
+function paintDeploy() {
+  const el = $('wDeploy')
+  if (!el) return
+  const p = PHASES[deploy.phase] || PHASES.unknown
+  el.innerHTML = `<span class="h-2 w-2 shrink-0 rounded-full ${p.dot}"></span>
+    <span class="font-600 ${p.text}">${p.label}</span>
+    ${deploy.detail ? `<span class="text-muted">${esc(deploy.detail)}${elapsed()}</span>` : `<span class="text-muted">${elapsed()}</span>`}
+    ${deploy.runUrl ? `<a href="${esc(deploy.runUrl)}" target="_blank" rel="noopener" class="text-brand-700 underline">build log</a>` : ''}
+    ${
+      deploy.phase === 'live'
+        ? `<a href="https://www.gnd-flooring.com/" target="_blank" rel="noopener" class="text-brand-700 underline">view site</a>`
+        : ''
+    }`
+}
+
+/** Where do things stand right now? Runs on mount and after a publish. */
+async function refreshDeployState() {
+  const [draft, run] = await Promise.all([ghDraftStatus(), ghDeployStatus().catch(() => null)])
+  if (!draft && !run) return setPhase('unknown', 'could not reach GitHub')
+  if (run && (run.status === 'in_progress' || run.status === 'queued')) {
+    setPhase('building', `main @ ${String(run.sha).slice(0, 7)}`, { runUrl: run.url, since: Date.now() })
+    watchDeploy()
+    return
+  }
+  if (draft && draft.ahead > 0) {
+    setPhase('ahead', `${draft.ahead} change${draft.ahead === 1 ? '' : 's'} waiting`)
+  } else if (run && run.conclusion === 'failure') {
+    setPhase('failed', `main @ ${String(run.sha).slice(0, 7)}`, { runUrl: run.url })
+  } else {
+    setPhase('clean', run ? `main @ ${String(run.sha).slice(0, 7)}` : '')
+  }
+}
+
+/** Poll the deploy run until it settles, keeping the strip current. */
+function watchDeploy() {
+  clearInterval(deployTimer)
+  const started = Date.now()
+  deployTimer = setInterval(async () => {
+    paintDeploy() // keep the elapsed clock moving
+    if (Date.now() - started > 10 * 60 * 1000) {
+      clearInterval(deployTimer)
+      setPhase('unknown', 'still building — check the log')
+      return
+    }
+    let run = null
+    try {
+      run = await ghDeployStatus()
+    } catch {
+      return
+    }
+    if (!run) return
+    deploy.runUrl = run.url
+    if (run.status !== 'completed') {
+      setPhase('building', `main @ ${String(run.sha).slice(0, 7)}`, { runUrl: run.url })
+      return
+    }
+    clearInterval(deployTimer)
+    if (run.conclusion === 'success') setPhase('live', `main @ ${String(run.sha).slice(0, 7)}`, { runUrl: run.url })
+    else setPhase('failed', `${run.conclusion} · main @ ${String(run.sha).slice(0, 7)}`, { runUrl: run.url })
+  }, 6000)
+}
+
+/* =============================================================
    Save / publish
    ============================================================= */
 async function save(publish) {
@@ -1033,20 +1204,26 @@ async function save(publish) {
   const orig = btn.textContent
   sBtn.disabled = pBtn.disabled = true
   btn.textContent = publish ? 'Publishing…' : 'Saving…'
+  setPhase('saving')
   try {
     await ghCommitDraft(content, pending, publish ? 'Site content (pre-publish)' : 'Update site content')
     pending = []
     if (!publish) {
       btn.textContent = 'Saved ✓'
-      st.textContent = 'Draft saved to content-draft.'
+      st.textContent = ''
+      setPhase('saved', 'not published yet')
+      refreshDeployState()
     } else {
+      setPhase('publishing')
       await ghPublish('Publish site content')
       btn.textContent = 'Published ✓'
-      st.textContent = 'Merged to main — building…'
-      pollDeploy(st)
+      st.textContent = ''
+      setPhase('building', 'merged to main', { since: Date.now() })
+      watchDeploy()
     }
   } catch (e) {
     st.textContent = ''
+    setPhase('failed', e.message.slice(0, 80))
     toast((publish ? 'Publish' : 'Save') + ' failed: ' + e.message)
   } finally {
     setTimeout(() => {
@@ -1054,26 +1231,6 @@ async function save(publish) {
       btn.textContent = orig
     }, 1200)
     busy = false
-  }
-}
-
-async function pollDeploy(st) {
-  for (let i = 0; i < 12; i++) {
-    await new Promise((r) => setTimeout(r, 12000))
-    try {
-      const d = await ghDeployStatus()
-      if (!d) continue
-      if (d.status === 'completed') {
-        st.innerHTML =
-          d.conclusion === 'success'
-            ? `Live ✓ — <a class="text-brand-700 underline" href="https://www.gnd-flooring.com/" target="_blank" rel="noopener">view site</a>`
-            : `Deploy ${esc(d.conclusion)} — <a class="text-brand-700 underline" href="${esc(d.url)}" target="_blank" rel="noopener">logs</a>`
-        return
-      }
-      st.textContent = `Building… (${d.status})`
-    } catch {
-      return
-    }
   }
 }
 
@@ -1132,6 +1289,7 @@ export async function mountWebsite(v) {
   paneScroll = 0
   paneScrollPreview = 0
   renderEditor(v)
+  refreshDeployState()
 }
 
 window.addEventListener('resize', () => {

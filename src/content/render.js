@@ -134,16 +134,22 @@ export const sectionPresent = {
   testimonials: (c) => has(c.testimonials?.heading) || (c.testimonials?.items || []).length > 0,
   ctaBand: (c) => has(c.ctaBand?.heading) || has(c.ctaBand?.subcopy),
   contact: (c) => has(c.contact?.heading) || has(c.contact?.phone) || has(c.contact?.email),
+  commercial: (c) => has(c.commercial?.heading) || (c.commercial?.items || []).length > 0,
 }
 
+// `href` marks a link to another page; the rest are anchors on the home page.
 const NAV = [
   { id: 'services', label: 'Services' },
   { id: 'about', label: 'Why Us' },
   { id: 'process', label: 'Process' },
   { id: 'gallery', label: 'Gallery' },
+  { id: 'commercial', label: 'Commercial', href: '/commercial/' },
   { id: 'contact', label: 'Contact' },
 ]
 const navItems = (c) => NAV.filter((n) => sectionPresent[n.id](c))
+// `base` is '' on the home page and '/' on any other, so anchors keep working
+// once the link has to travel back to the home document.
+const navHref = (n, base = '') => n.href || `${base}#${n.id}`
 const hasContact = (c) => sectionPresent.contact(c)
 // Buttons that scroll to #contact are pointless once contact is gone.
 const contactCta = (c, html) => (hasContact(c) ? html : '')
@@ -157,21 +163,25 @@ export const gen = {
   'meta.ogTitle': (c) => esc(c.meta?.ogTitle),
   'meta.ogDescription': (c) => esc(c.meta?.ogDescription),
 
-  nav: (c) =>
+  nav: (c, base = '') =>
     navItems(c)
-      .map((n) => `<a href="#${n.id}" class="nav-link text-sm font-500">${n.label}</a>`)
+      .map((n) => `<a href="${navHref(n, base)}" class="nav-link text-sm font-500">${n.label}</a>`)
       .join('\n          '),
 
-  navCta: (c) => contactCta(c, `<a href="#contact" class="btn-gold hidden lg:inline-flex">${parseMd(c.hero?.ctaPrimary || 'Get a Free Quote', 'gold')}</a>`),
+  navCta: (c, base = '') =>
+    contactCta(
+      c,
+      `<a href="${base}#contact" class="btn-gold hidden lg:inline-flex">${parseMd(c.hero?.ctaPrimary || 'Get a Free Quote', 'gold')}</a>`
+    ),
 
-  mobileNav: (c) =>
+  mobileNav: (c, base = '') =>
     navItems(c)
       .map(
         (n) =>
-          `<a href="#${n.id}" class="rounded-xl px-4 py-3 text-base font-500 text-ink-700 hover:bg-brand-50">${n.label}</a>`
+          `<a href="${navHref(n, base)}" class="rounded-xl px-4 py-3 text-base font-500 text-ink-700 hover:bg-brand-50">${n.label}</a>`
       )
       .join('\n          ') +
-    contactCta(c, `\n          <a href="#contact" class="btn-gold mt-3 w-full">${parseMd(c.hero?.ctaPrimary || 'Get a Free Quote', 'gold')}</a>`),
+    contactCta(c, `\n          <a href="${base}#contact" class="btn-gold mt-3 w-full">${parseMd(c.hero?.ctaPrimary || 'Get a Free Quote', 'gold')}</a>`),
 
   sectionHero: (c) => {
     const h = c.hero || {}
@@ -202,12 +212,16 @@ export const gen = {
             `<p class="reveal mt-7 max-w-xl text-lg leading-relaxed text-white/80"${ri(2)}>${parseMd(h.subcopy, 'dark')}</p>`
           )}
           ${when(
-            has(h.ctaPrimary) || has(h.ctaSecondary),
+            has(h.ctaPrimary) || has(h.ctaSecondary) || sectionPresent.commercial(c),
             `<div class="reveal mt-10 flex flex-wrap items-center gap-4"${ri(3)}>
             ${contactCta(c, when(has(h.ctaPrimary), `<a href="#contact" class="btn-gold">${parseMd(h.ctaPrimary, 'gold')}</a>`))}
             ${when(
               has(h.ctaSecondary) && sectionPresent.services(c),
               `<a href="#services" class="btn-ghost">${parseMd(h.ctaSecondary, 'dark')} ${icons.arrow}</a>`
+            )}
+            ${when(
+              sectionPresent.commercial(c),
+              `<a href="/commercial/" class="btn-ghost">${parseMd(c.commercial?.ctaLabel || 'Commercial Services', 'dark')} ${icons.arrow}</a>`
             )}
           </div>`
           )}
@@ -572,6 +586,7 @@ export const gen = {
     const mark = brandMark(c, 'h-11 w-11')
     const services = (c.services?.items || []).filter((it) => has(it.title))
     const company = navItems(c).filter((n) => n.id !== 'services')
+    const base = c.__base || ''
     const contactLines = [
       when(has(f.phone), `<li><a href="${esc(f.phoneHref)}" class="hover:text-white">${parseMd(f.phone, 'dark')}</a></li>`),
       when(has(f.email), `<li><a href="mailto:${esc(f.email)}" class="hover:text-white">${parseMd(f.email, 'dark')}</a></li>`),
@@ -590,7 +605,7 @@ export const gen = {
         `<div>
         <h3 class="text-sm font-700 uppercase tracking-wider text-white/80">Services</h3>
         <ul class="mt-5 space-y-3 text-sm text-white/60">
-          ${services.map((it) => `<li><a href="#services" class="hover:text-white">${parseMd(it.title, 'dark')}</a></li>`).join('')}
+          ${services.map((it) => `<li><a href="${base}#services" class="hover:text-white">${parseMd(it.title, 'dark')}</a></li>`).join('')}
         </ul>
       </div>`
       )}
@@ -599,7 +614,7 @@ export const gen = {
         `<div>
         <h3 class="text-sm font-700 uppercase tracking-wider text-white/80">Company</h3>
         <ul class="mt-5 space-y-3 text-sm text-white/60">
-          ${company.map((n) => `<li><a href="#${n.id}" class="hover:text-white">${n.label}</a></li>`).join('')}
+          ${company.map((n) => `<li><a href="${navHref(n, base)}" class="hover:text-white">${n.label}</a></li>`).join('')}
         </ul>
       </div>`
       )}
@@ -683,30 +698,31 @@ export function renderPage(c, opts = {}) {
     ${footerHtml(c)}`
 }
 
-export function headerHtml(c) {
+export function headerHtml(c, base = '') {
   return `<header class="site-header fixed inset-x-0 top-0 z-50 py-5">
       <div class="container-x flex items-center justify-between">
-        <a href="#home" class="brand-mark flex items-center gap-3 text-white">
+        <a href="${base || '#home'}" class="brand-mark flex items-center gap-3 text-white">
           ${brandMark(c, 'h-11 w-11')}
           <span class="font-display text-xl font-600 tracking-tight">${esc(brandName(c))}</span>
         </a>
         <nav class="hidden items-center gap-9 lg:flex" aria-label="Primary">
-          ${gen.nav(c)}
+          ${gen.nav(c, base)}
         </nav>
-        ${gen.navCta(c)}
+        ${gen.navCta(c, base)}
         <button id="menuToggle" class="grid h-11 w-11 place-items-center rounded-xl border border-white/30 text-white lg:hidden" aria-label="Open menu" aria-expanded="false" aria-controls="mobileMenu">
           <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M3 6h18M3 12h18M3 18h18"/></svg>
         </button>
       </div>
       <div id="mobileMenu" class="mobile-menu absolute inset-x-4 top-[calc(100%+0.5rem)] rounded-2xl bg-cream p-6 shadow-lift lg:hidden" data-open="false">
         <nav class="flex flex-col gap-1" aria-label="Mobile">
-          ${gen.mobileNav(c)}
+          ${gen.mobileNav(c, base)}
         </nav>
       </div>
     </header>`
 }
 
-export function footerHtml(c) {
+export function footerHtml(c, base = '') {
+  c = base ? { ...c, __base: base } : c
   return `<footer class="bg-ink text-white">
       <div class="container-x grid gap-12 py-16 md:grid-cols-[1.4fr_1fr_1fr_1fr]">
         ${gen.footer(c)}
@@ -718,4 +734,148 @@ export function footerHtml(c) {
         </div>
       </div>
     </footer>`
+}
+
+/* =============================================================
+   Commercial services — a page of its own, linked from the hero
+   and the nav. Same components as the home page so it inherits
+   the carousels, lightbox and markdown rules for free.
+   ============================================================= */
+export const gen2 = {
+  'commercial.meta.title': (c) => esc(c.commercial?.metaTitle || `Commercial Services — ${brandName(c)}`),
+  'commercial.meta.description': (c) => esc(c.commercial?.metaDescription || c.commercial?.subcopy || ''),
+  commercialPage: (c) => renderCommercialPage(c),
+}
+Object.assign(gen, gen2)
+
+export function renderCommercialPage(c, opts = {}) {
+  const m = c.commercial || {}
+  const items = (m.items || []).filter((it) => has(it.title) || imageList(it).length)
+  const sectors = (m.sectors || []).filter(has)
+
+  return `${headerHtml(c, '/')}
+    <main id="main">
+      <section id="commercial" class="relative flex min-h-[70vh] items-center overflow-hidden">
+        ${when(
+          has(m.image),
+          `<div class="hero-bg absolute inset-0 -z-10 scale-110">
+          <img src="${esc(m.image)}" alt="" class="h-full w-full object-cover" fetchpriority="high"${blurStyle(m.imageBlur)} />
+          <div class="absolute inset-0 bg-gradient-to-br from-ink/85 via-brand-800/75 to-brand-700/60"></div>
+          <div class="absolute inset-0 bg-gradient-to-t from-ink/70 via-transparent to-transparent"></div>
+        </div>`
+        )}
+        ${when(!has(m.image), '<div class="absolute inset-0 -z-10 bg-ink"></div>')}
+        <div class="container-x py-28">
+          <div class="max-w-3xl">
+            ${when(
+              has(m.eyebrow),
+              `<p class="eyebrow reveal text-sand-300"><span class="h-px w-8 bg-sand-300"></span> ${parseMd(m.eyebrow, 'dark')}</p>`
+            )}
+            ${when(
+              has(m.heading),
+              `<h1 class="reveal mt-6 font-display text-4xl font-600 leading-[1.08] text-white sm:text-5xl lg:text-6xl"${ri(1)}>${parseMd(m.heading, 'dark')}</h1>`
+            )}
+            ${when(
+              has(m.subcopy),
+              `<p class="reveal mt-7 max-w-xl text-lg leading-relaxed text-white/80"${ri(2)}>${parseMd(m.subcopy, 'dark')}</p>`
+            )}
+            <div class="reveal mt-10 flex flex-wrap items-center gap-4"${ri(3)}>
+              ${contactCta(
+                c,
+                `<a href="/#contact" class="btn-gold">${parseMd(m.ctaPrimary || c.hero?.ctaPrimary || 'Get a Free Quote', 'gold')}</a>`
+              )}
+              <a href="/" class="btn-ghost">${parseMd(m.backLabel || 'Residential services', 'dark')} ${icons.arrow}</a>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      ${when(
+        has(m.intro) || items.length > 0,
+        `<section class="py-24 lg:py-32">
+        <div class="container-x">
+          ${when(
+            has(m.introHeading) || has(m.intro),
+            `<div class="mx-auto max-w-2xl text-center">
+            ${when(
+              has(m.introHeading),
+              `<h2 class="reveal font-display text-4xl font-600 text-ink sm:text-5xl">${parseMd(m.introHeading, 'light')}</h2>`
+            )}
+            ${when(has(m.intro), `<p class="reveal mt-5 text-lg text-muted"${ri(1)}>${parseMd(m.intro, 'light')}</p>`)}
+          </div>`
+          )}
+          ${when(
+            items.length > 0,
+            `<div class="mt-16 grid gap-7 sm:grid-cols-2 lg:grid-cols-3">
+            ${items
+              .map((it, i) => {
+                const imgs = imageList(it)
+                const bullets = (it.bullets || []).filter(has)
+                return `<article class="card-lift reveal group overflow-hidden rounded-3xl bg-white shadow-soft ring-1 ring-ink/5"${ri(i)}>
+                ${carousel(imgs, { title: it.title || 'Commercial', aspect: '4 / 3' })}
+                <div class="p-7">
+                  ${when(has(it.title), `<h3 class="font-display text-xl font-600 text-ink">${parseMd(it.title, 'light')}</h3>`)}
+                  ${when(has(it.desc), `<p class="mt-3 text-sm leading-relaxed text-muted">${parseMd(it.desc, 'light')}</p>`)}
+                  ${when(
+                    bullets.length > 0,
+                    `<ul class="mt-5 space-y-2 text-sm text-ink-700">${bullets
+                      .map((b) => `<li class="flex items-center gap-2"><span class="text-brand-600">✓</span> ${parseMd(b, 'light')}</li>`)
+                      .join('')}</ul>`
+                  )}
+                  ${contactCta(
+                    c,
+                    `<a href="/#contact" class="mt-6 inline-flex items-center gap-1.5 text-sm font-600 text-brand-700">Request a quote ${icons.svcArrow}</a>`
+                  )}
+                </div>
+              </article>`
+              })
+              .join('')}
+          </div>`
+          )}
+        </div>
+      </section>`
+      )}
+
+      ${when(
+        sectors.length > 0,
+        `<section class="bg-cream-200/50 py-20">
+        <div class="container-x">
+          ${when(
+            has(m.sectorsHeading),
+            `<h2 class="reveal mx-auto max-w-2xl text-center font-display text-3xl font-600 text-ink sm:text-4xl">${parseMd(m.sectorsHeading, 'light')}</h2>`
+          )}
+          <div class="mt-12 flex flex-wrap items-center justify-center gap-3">
+            ${sectors
+              .map(
+                (t, i) =>
+                  `<span class="reveal rounded-full border border-ink/10 bg-white px-5 py-2.5 text-sm font-600 text-ink-700 shadow-soft"${ri(i % 4)}>${parseMd(t, 'light')}</span>`
+              )
+              .join('')}
+          </div>
+        </div>
+      </section>`
+      )}
+
+      ${when(
+        has(m.ctaHeading) || has(m.ctaSubcopy),
+        `<section class="container-x py-20">
+        <div class="reveal relative overflow-hidden rounded-[2.5rem] bg-brand-700 px-8 py-16 text-center text-white shadow-lift sm:px-16 sm:py-20">
+          <div class="absolute -right-16 -top-16 h-64 w-64 rounded-full bg-brand-600/60"></div>
+          <div class="absolute -bottom-20 -left-10 h-64 w-64 rounded-full bg-sand-400/20"></div>
+          <div class="relative">
+            ${when(
+              has(m.ctaHeading),
+              `<h2 class="mx-auto max-w-2xl font-display text-4xl font-600 sm:text-5xl">${parseMd(m.ctaHeading, 'dark')}</h2>`
+            )}
+            ${when(has(m.ctaSubcopy), `<p class="mx-auto mt-5 max-w-xl text-white/75">${parseMd(m.ctaSubcopy, 'dark')}</p>`)}
+            ${contactCta(
+              c,
+              `<div class="mt-9 flex justify-center"><a href="/#contact" class="btn-gold">${parseMd(m.ctaButton || 'Talk to us', 'gold')}</a></div>`
+            )}
+          </div>
+        </div>
+      </section>`
+      )}
+    </main>
+    ${footerHtml(c, '/')}`
 }

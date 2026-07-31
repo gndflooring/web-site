@@ -34,8 +34,8 @@ export default defineConfig(({ mode }) => {
         configureServer(server) {
           server.middlewares.use((req, _res, next) => {
             const [p, q] = (req.url || '').split('?')
-            if (p === '/admin') req.url = '/admin/' + (q ? '?' + q : '')
-            if (p === '/draft') req.url = '/draft/' + (q ? '?' + q : '')
+            for (const dir of ['/admin', '/draft', '/commercial'])
+              if (p === dir) req.url = dir + '/' + (q ? '?' + q : '')
             next()
           })
         },
@@ -56,6 +56,7 @@ export default defineConfig(({ mode }) => {
       rollupOptions: {
         input: {
           main: resolve(process.cwd(), 'index.html'),
+          commercial: resolve(process.cwd(), 'commercial/index.html'),
           admin: resolve(process.cwd(), 'admin/index.html'),
           draft: resolve(process.cwd(), 'draft/index.html'),
         },

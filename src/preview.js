@@ -10,7 +10,7 @@
 import './style.css'
 import './preview.css'
 import bundled from './content/site.json'
-import { renderPage } from './content/render.js'
+import { renderPage, renderCommercialPage, sectionPresent } from './content/render.js'
 import { initSiteUi } from './site-ui.js'
 
 const REPO = __GITHUB_REPO__ || 'gndflooring/web-site'
@@ -27,6 +27,8 @@ const SOURCES = [
 const $ = (id) => document.getElementById(id)
 const params = new URLSearchParams(location.search)
 let source = params.get('source') || (localStorage.getItem(EDITOR_KEY) ? 'editor' : 'bundled')
+let page = params.get('page') === 'commercial' ? 'commercial' : 'home'
+let current = null // last loaded content, so switching page costs no fetch
 
 function status(msg, tone = '') {
   const el = $('pvStatus')
@@ -39,6 +41,23 @@ function drawSources() {
     (s) =>
       `<button class="pv-src${s.id === source ? ' is-active' : ''}" type="button" data-src="${s.id}">${s.label}</button>`
   ).join('')
+  drawPages()
+}
+
+function drawPages() {
+  const el = $('pvPages')
+  if (!el) return
+  const pages = [{ id: 'home', label: 'Home' }]
+  if (!current || sectionPresent.commercial(current)) pages.push({ id: 'commercial', label: 'Commercial' })
+  el.innerHTML =
+    pages.length > 1
+      ? pages
+          .map(
+            (p) =>
+              `<button class="pv-src${p.id === page ? ' is-active' : ''}" type="button" data-page="${p.id}">${p.label}</button>`
+          )
+          .join('')
+      : ''
 }
 
 /** Branch content, via the raw CDN first and the API (with the admin's token) as a fallback. */
@@ -83,19 +102,22 @@ async function load(id) {
 async function render() {
   drawSources()
   status('Loading…')
-  const page = $('page')
+  const root = $('page')
   try {
     const { content, note } = await load(source)
-    page.innerHTML = renderPage(content, { inert: true })
-    initSiteUi(page)
+    current = content
+    drawPages()
+    root.innerHTML = page === 'commercial' ? renderCommercialPage(content, { inert: true }) : renderPage(content, { inert: true })
+    initSiteUi(root)
     // A preview must never submit the quote form.
-    page.querySelectorAll('form').forEach((f) => f.addEventListener('submit', (e) => e.preventDefault()))
+    root.querySelectorAll('form').forEach((f) => f.addEventListener('submit', (e) => e.preventDefault()))
     status(note, 'ok')
     const url = new URL(location.href)
     url.searchParams.set('source', source)
+    url.searchParams.set('page', page)
     history.replaceState(null, '', url)
   } catch (e) {
-    page.innerHTML = `<div class="pv-error"><p class="pv-error-title">Could not load “${source}”</p><p>${e.message}</p></div>`
+    root.innerHTML = `<div class="pv-error"><p class="pv-error-title">Could not load “${source}”</p><p>${e.message}</p></div>`
     status('failed', 'bad')
   }
 }
@@ -104,6 +126,12 @@ $('pvSources').addEventListener('click', (e) => {
   const b = e.target.closest('[data-src]')
   if (!b) return
   source = b.dataset.src
+  render()
+})
+$('pvPages').addEventListener('click', (e) => {
+  const b = e.target.closest('[data-page]')
+  if (!b) return
+  page = b.dataset.page
   render()
 })
 $('pvReload').addEventListener('click', render)

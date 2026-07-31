@@ -46,6 +46,9 @@
   border-color: rgb(255 255 255 / 0.25);
 }
 
+.pv-pages { padding-left: 0.75rem; margin-left: 0.25rem; border-left: 1px solid rgb(255 255 255 / 0.14); }
+.pv-pages:empty { display: none; }
+
 .pv-status { color: rgb(230 237 243 / 0.55); font-variant-numeric: tabular-nums; }
 .pv-status--ok::before { content: '● '; color: #34d399; }
 .pv-status--bad { color: #fda4af; }

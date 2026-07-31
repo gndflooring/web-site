@@ -385,7 +385,9 @@
 
 /* The preview pane is short: a full-viewport hero would swallow it. */
 #cmsLivePreview section#home,
-.cms-preview section#home {
+#cmsLivePreview section#commercial,
+.cms-preview section#home,
+.cms-preview section#commercial {
   min-height: 70vh;
   /* The hero's background layer sits at -z-10. Without its own stacking
      context that would paint behind the pane's background and vanish, so

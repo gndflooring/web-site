@@ -283,5 +283,59 @@
   "brand": {
     "name": "G&D Flooring",
     "logo": "/uploads/1785533224412-logo.svg"
+  },
+  "commercial": {
+    "ctaLabel": "Commercial Services",
+    "backLabel": "Residential services",
+    "eyebrow": "Commercial *Flooring*",
+    "heading": "Floors that keep your *business* moving",
+    "subcopy": "Hard-wearing installations for offices, retail and hospitality — scheduled around your trading hours, delivered with minimal disruption.",
+    "image": "",
+    "imageBlur": 0,
+    "ctaPrimary": "Request a site survey",
+    "introHeading": "Built for *traffic*, finished for guests",
+    "intro": "Commercial floors take a decade of footfall in a year. We specify, install and maintain surfaces that hold up — and still look considered.",
+    "items": [
+      {
+        "title": "Offices & Workplace",
+        "desc": "Acoustic underlays, LVT and carpet tile systems fitted floor by floor, out of hours where needed.",
+        "bullets": [
+          "Phased, out-of-hours fitting",
+          "Acoustic ratings to spec"
+        ],
+        "images": []
+      },
+      {
+        "title": "Retail & Hospitality",
+        "desc": "Statement surfaces that survive trolleys, spills and thousands of visitors a week.",
+        "bullets": [
+          "Slip-resistance to standard",
+          "Rapid-cure options"
+        ],
+        "images": []
+      },
+      {
+        "title": "Maintenance & Refits",
+        "desc": "Planned refinishing, repairs and like-for-like replacement across multi-site estates.",
+        "bullets": [
+          "Multi-site scheduling",
+          "Documented handover"
+        ],
+        "images": []
+      }
+    ],
+    "sectorsHeading": "Sectors we *serve*",
+    "sectors": [
+      "Offices",
+      "Retail",
+      "Hospitality",
+      "Healthcare",
+      "Education",
+      "Fitness",
+      "Property management"
+    ],
+    "ctaHeading": "Planning a commercial fit-out?",
+    "ctaSubcopy": "Send us the drawings or the square footage and we will come back with a specification and a programme.",
+    "ctaButton": "Talk to us"
   }
 }
