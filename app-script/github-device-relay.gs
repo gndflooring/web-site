@@ -66,3 +66,13 @@ function jsonp_(cb, obj) {
     callbackName + '(' + JSON.stringify(obj) + ');'
   ).setMimeType(ContentService.MimeType.JAVASCRIPT)
 }
+
+/** Helper function to run in Apps Script editor to trigger OAuth authorization dialog */
+function testPermissions() {
+  UrlFetchApp.fetch('https://github.com/login/device/code', {
+    method: 'post',
+    payload: { client_id: 'test' },
+    muteHttpExceptions: true,
+  })
+  Logger.log('Permissions verified!')
+}
