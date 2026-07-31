@@ -7,18 +7,25 @@
   },
   "hero": {
     "eyebrow": "Flooring & Renovation Specialists",
-    "headlineLead": "Floors that",
-    "highlight": "elevate",
-    "headlineRest": "every room.",
     "subcopy": "G&D Flooring brings craftsmanship, premium materials, and a meticulous eye to hardwood, luxury vinyl, tile, and full bathroom renovations — built to last and finished beautifully.",
     "ctaPrimary": "Get a Free Quote",
     "ctaSecondary": "Explore Services",
     "image": "/images/hero.svg",
     "stats": [
-      { "value": "15+", "label": "Years of craft" },
-      { "value": "800+", "label": "Floors installed" },
-      { "value": "100%", "label": "Satisfaction focus" }
-    ]
+      {
+        "value": "15+",
+        "label": "Years of craft"
+      },
+      {
+        "value": "800+",
+        "label": "Floors installed"
+      },
+      {
+        "value": "100%",
+        "label": "Satisfaction focus"
+      }
+    ],
+    "headline": "Floors that *elevate* every room."
   },
   "trust": [
     "Licensed & Insured",
@@ -34,30 +41,66 @@
       {
         "title": "Hardwood Flooring",
         "desc": "Solid & engineered hardwood installation, sanding, staining, and refinishing for warmth that lasts generations.",
-        "bullets": ["Custom stains & finishes", "Dust-contained sanding"],
-        "image": "/images/service-hardwood.svg",
-        "alt": "Hardwood flooring placeholder"
+        "bullets": [
+          "Custom stains & finishes",
+          "Dust-contained sanding"
+        ],
+        "images": [
+          {
+            "src": "/images/service-hardwood.svg",
+            "alt": "Hardwood flooring placeholder",
+            "caption": "",
+            "blur": 0
+          }
+        ]
       },
       {
         "title": "Laminate & Vinyl",
         "desc": "Waterproof luxury vinyl plank and premium laminate — the look of wood with everyday, family-proof durability.",
-        "bullets": ["100% waterproof options", "Fast, clean installs"],
-        "image": "/images/service-vinyl.svg",
-        "alt": "Laminate and luxury vinyl placeholder"
+        "bullets": [
+          "100% waterproof options",
+          "Fast, clean installs"
+        ],
+        "images": [
+          {
+            "src": "/images/service-vinyl.svg",
+            "alt": "Laminate and luxury vinyl placeholder",
+            "caption": "",
+            "blur": 0
+          }
+        ]
       },
       {
         "title": "Tile & Stone",
         "desc": "Porcelain, ceramic, and natural stone — precision-set floors, showers, and feature walls with flawless grout lines.",
-        "bullets": ["Heated-floor ready", "Custom patterns & inlays"],
-        "image": "/images/service-tile.svg",
-        "alt": "Tile and stone placeholder"
+        "bullets": [
+          "Heated-floor ready",
+          "Custom patterns & inlays"
+        ],
+        "images": [
+          {
+            "src": "/images/service-tile.svg",
+            "alt": "Tile and stone placeholder",
+            "caption": "",
+            "blur": 0
+          }
+        ]
       },
       {
         "title": "Bathroom Renovations",
         "desc": "Full bathroom transformations — floors, tile surrounds, vanities, and waterproofing handled end to end.",
-        "bullets": ["Full project management", "Waterproofing guaranteed"],
-        "image": "/images/service-bathroom.svg",
-        "alt": "Bathroom renovation placeholder"
+        "bullets": [
+          "Full project management",
+          "Waterproofing guaranteed"
+        ],
+        "images": [
+          {
+            "src": "/images/service-bathroom.svg",
+            "alt": "Bathroom renovation placeholder",
+            "caption": "",
+            "blur": 0
+          }
+        ]
       }
     ]
   },
@@ -71,20 +114,52 @@
     "badgeValue": "15+",
     "badgeLabel": "Years perfecting the craft",
     "features": [
-      { "title": "Master Craftsmanship", "body": "Seasoned installers with an obsessive eye for level, seams, and finish." },
-      { "title": "Licensed & Insured", "body": "Fully covered, code-compliant work backed by a written warranty." },
-      { "title": "On-Time, On-Budget", "body": "Clear timelines and transparent quotes — what we promise is what you pay." },
-      { "title": "Spotless Cleanup", "body": "We leave your home cleaner than we found it — guaranteed." }
+      {
+        "title": "Master Craftsmanship",
+        "body": "Seasoned installers with an obsessive eye for level, seams, and finish."
+      },
+      {
+        "title": "Licensed & Insured",
+        "body": "Fully covered, code-compliant work backed by a written warranty."
+      },
+      {
+        "title": "On-Time, On-Budget",
+        "body": "Clear timelines and transparent quotes — what we promise is what you pay."
+      },
+      {
+        "title": "Spotless Cleanup",
+        "body": "We leave your home cleaner than we found it — guaranteed."
+      }
     ]
   },
   "process": {
     "eyebrow": "How We Work",
     "heading": "A simple, four-step process",
     "steps": [
-      { "title": "Consultation", "desc": "We listen to your vision, measure the space, and talk materials and budget." },
-      { "title": "Design & Quote", "desc": "You get a clear, itemized proposal with samples — no hidden costs, ever." },
-      { "title": "Installation", "desc": "Our craftsmen install with precision, protecting your home throughout." },
-      { "title": "Final Walkthrough", "desc": "We review every detail together and don't leave until you're delighted." }
+      {
+        "title": "Consultation",
+        "desc": "We listen to your vision, measure the space, and talk materials and budget.",
+        "image": "",
+        "alt": ""
+      },
+      {
+        "title": "Design & Quote",
+        "desc": "You get a clear, itemized proposal with samples — no hidden costs, ever.",
+        "image": "",
+        "alt": ""
+      },
+      {
+        "title": "Installation",
+        "desc": "Our craftsmen install with precision, protecting your home throughout.",
+        "image": "",
+        "alt": ""
+      },
+      {
+        "title": "Final Walkthrough",
+        "desc": "We review every detail together and don't leave until you're delighted.",
+        "image": "",
+        "alt": ""
+      }
     ]
   },
   "gallery": {
@@ -92,21 +167,90 @@
     "heading": "A look at our floors",
     "ctaLabel": "Start your project",
     "items": [
-      { "image": "/images/gallery-1.svg", "alt": "Project placeholder 1", "caption": "Hardwood — Living space" },
-      { "image": "/images/gallery-2.svg", "alt": "Project placeholder 2", "caption": "Tile — Kitchen" },
-      { "image": "/images/gallery-3.svg", "alt": "Project placeholder 3", "caption": "Vinyl — Open plan" },
-      { "image": "/images/gallery-4.svg", "alt": "Project placeholder 4", "caption": "Bathroom — Full reno" },
-      { "image": "/images/gallery-5.svg", "alt": "Project placeholder 5", "caption": "Stone — Entryway" },
-      { "image": "/images/gallery-6.svg", "alt": "Project placeholder 6", "caption": "Hardwood — Staircase" }
+      {
+        "images": [
+          {
+            "src": "/images/gallery-1.svg",
+            "alt": "Project placeholder 1",
+            "caption": "Hardwood — Living space",
+            "blur": 0
+          }
+        ]
+      },
+      {
+        "images": [
+          {
+            "src": "/images/gallery-2.svg",
+            "alt": "Project placeholder 2",
+            "caption": "Tile — Kitchen",
+            "blur": 0
+          }
+        ]
+      },
+      {
+        "images": [
+          {
+            "src": "/images/gallery-3.svg",
+            "alt": "Project placeholder 3",
+            "caption": "Vinyl — Open plan",
+            "blur": 0
+          }
+        ]
+      },
+      {
+        "images": [
+          {
+            "src": "/images/gallery-4.svg",
+            "alt": "Project placeholder 4",
+            "caption": "Bathroom — Full reno",
+            "blur": 0
+          }
+        ]
+      },
+      {
+        "images": [
+          {
+            "src": "/images/gallery-5.svg",
+            "alt": "Project placeholder 5",
+            "caption": "Stone — Entryway",
+            "blur": 0
+          }
+        ]
+      },
+      {
+        "images": [
+          {
+            "src": "/images/gallery-6.svg",
+            "alt": "Project placeholder 6",
+            "caption": "Hardwood — Staircase",
+            "blur": 0
+          }
+        ]
+      }
     ]
   },
   "testimonials": {
     "eyebrow": "Kind Words",
     "heading": "Homeowners love the result",
     "items": [
-      { "quote": "The hardwood floors completely transformed our home. The crew was punctual, tidy, and the finish is flawless.", "name": "Placeholder Name", "role": "Homeowner" },
-      { "quote": "Our bathroom renovation was on time and on budget. G&D handled everything and the tile work is stunning.", "name": "Placeholder Name", "role": "Client" },
-      { "quote": "Professional from quote to cleanup. The luxury vinyl looks like real wood and survives our kids and dogs.", "name": "Placeholder Name", "role": "Homeowner" }
+      {
+        "quote": "The hardwood floors completely transformed our home. The crew was punctual, tidy, and the finish is flawless.",
+        "name": "Placeholder Name",
+        "role": "Homeowner",
+        "images": []
+      },
+      {
+        "quote": "Our bathroom renovation was on time and on budget. G&D handled everything and the tile work is stunning.",
+        "name": "Placeholder Name",
+        "role": "Client",
+        "images": []
+      },
+      {
+        "quote": "Professional from quote to cleanup. The luxury vinyl looks like real wood and survives our kids and dogs.",
+        "name": "Placeholder Name",
+        "role": "Homeowner",
+        "images": []
+      }
     ]
   },
   "ctaBand": {
@@ -135,5 +279,9 @@
     "hours": "Mon–Fri 8am–6pm",
     "license": "License #PLACEHOLDER-000000",
     "note": "Placeholder content — replace business details & imagery before launch."
+  },
+  "brand": {
+    "name": "G&D Flooring",
+    "logo": "/uploads/1785533224412-logo.svg"
   }
 }
