@@ -4,6 +4,24 @@
  * Appends public quote form submissions into the Google Sheet.
  */
 
+function getTargetSpreadsheet_() {
+  // 1. Container-bound active spreadsheet
+  var ss = SpreadsheetApp.getActiveSpreadsheet()
+  if (ss) return ss
+
+  // 2. Script Property configured in Apps Script Project Settings
+  try {
+    var propId = PropertiesService.getScriptProperties().getProperty('SHEETS_SPREADSHEET_ID')
+    if (propId) return SpreadsheetApp.openById(propId)
+  } catch (e) {}
+
+  // 3. Injected SPREADSHEET_ID_INJECTED (from .env during clasp deployment) or fallback
+  var injectedId = typeof SPREADSHEET_ID_INJECTED !== 'undefined' ? SPREADSHEET_ID_INJECTED : '18qjPt3IIn_Wtpj25OwNbV4atd3jgHjy7eVprU6rous8'
+  if (injectedId) return SpreadsheetApp.openById(injectedId)
+
+  throw new Error('Spreadsheet ID not configured.')
+}
+
 function doPost(e) {
   try {
     var raw = (e && e.postData && e.postData.contents) || '{}'
@@ -14,10 +32,7 @@ function doPost(e) {
       data = (e && e.parameter) || {}
     }
 
-    var ss = SpreadsheetApp.getActiveSpreadsheet()
-    if (!ss) {
-      ss = SpreadsheetApp.openById('18qjPt3IIn_Wtpj25OwNbV4atd3jgHjy7eVprU6rous8')
-    }
+    var ss = getTargetSpreadsheet_()
     var sheet = ss.getSheetByName('FormResponses') || ss.getSheetByName('Leads') || ss.getSheets()[0]
 
     var timestamp = data.submittedAt || new Date().toISOString()

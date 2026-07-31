@@ -5,6 +5,7 @@ node_modules
 dist
 .vite
 .clasp.json
+app-script/env-config.gs
 *.local
 *.swp
 .DS_Store
