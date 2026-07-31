@@ -9,7 +9,9 @@
     "build": "vite build",
     "preview": "vite preview",
     "setup:check": "node scripts/setup-check.js",
-    "verify:system": "node scripts/verify-full-system.js"
+    "verify:system": "node scripts/verify-full-system.js",
+    "appscript:deploy": "node scripts/deploy-appscript.js",
+    "appscript:login": "npx @google/clasp login"
   },
   "devDependencies": {
     "@tailwindcss/vite": "^4.1.4",

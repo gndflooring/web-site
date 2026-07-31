@@ -1,0 +1,48 @@
+name: Deploy Apps Script Web App
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'app-script/**'
+      - '.github/workflows/deploy-appscript.yml'
+  workflow_dispatch:
+
+jobs:
+  deploy-appscript:
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 24
+
+      - name: Install Clasp
+        run: npm install -g @google/clasp
+
+      - name: Configure Clasp Authentication & Script ID
+        run: |
+          mkdir -p ~/.clasprc.json
+          echo "$CLASPRC_JSON" > ~/.clasprc.json
+          cat <<EOF > .clasp.json
+          {
+            "scriptId": "${{ vars.SHEETS_SCRIPT_ID || vars.SHEETS_DEPLOYMENT_ID }}",
+            "rootDir": "app-script"
+          }
+          EOF
+        env:
+          CLASPRC_JSON: ${{ secrets.CLASPRC_JSON }}
+
+      - name: Push Code & Deploy New Version
+        run: |
+          npx clasp push --force
+          if [ -n "${{ vars.SHEETS_DEPLOYMENT_ID }}" ]; then
+            npx clasp deploy --deploymentId "${{ vars.SHEETS_DEPLOYMENT_ID }}" --description "CI/CD Deployment $(date -u +'%Y-%m-%dT%H:%M:%SZ')"
+          else
+            npx clasp deploy --description "CI/CD Deployment $(date -u +'%Y-%m-%dT%H:%M:%SZ')"
+          fi

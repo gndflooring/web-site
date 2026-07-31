@@ -1,10 +1,10 @@
 .env
 .env.*
 .serena
-app-script
 node_modules
 dist
 .vite
+.clasp.json
 *.local
 *.swp
 .DS_Store
