@@ -85,7 +85,9 @@ try {
   const ghStatus = execSync('/home/mrwho/bin/gh auth status', { stdio: 'pipe' }).toString()
   console.log('  [OK] GitHub CLI is authenticated.')
   
-  if (process.argv.includes('--sync-gh')) {
+  if (process.argv.includes('--pull-gh')) {
+    execSync('node scripts/sync-env-from-gh.js', { stdio: 'inherit' })
+  } else if (process.argv.includes('--sync-gh')) {
     console.log('  Syncing variables to GitHub Actions repository variables...')
     const varsToSync = [
       'SHEETS_URL',
@@ -109,7 +111,9 @@ try {
       }
     }
   } else {
-    console.log('  Tip: Run "node scripts/setup-check.js --sync-gh" to sync these variables to GitHub Repository Variables.')
+    console.log('  Tips:')
+    console.log('  - Run "npm run env:pull" (or "node scripts/sync-env-from-gh.js") to pull variables from GitHub to .env')
+    console.log('  - Run "npm run env:push" (or "node scripts/setup-check.js --sync-gh") to push .env to GitHub Repository Variables')
   }
 } catch {
   console.log('  [NOTICE] gh CLI not authenticated locally. Run "gh auth login" if you want to sync env vars automatically.')
