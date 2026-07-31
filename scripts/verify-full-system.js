@@ -24,16 +24,39 @@ function parseEnv() {
 const env = parseEnv()
 const ghPath = fs.existsSync('/home/mrwho/bin/gh') ? '/home/mrwho/bin/gh' : 'gh'
 
+// Parse CLI flags
+function getArg(flag) {
+  const idx = process.argv.indexOf(flag)
+  if (idx > -1 && process.argv[idx + 1] && !process.argv[idx + 1].startsWith('--')) {
+    return process.argv[idx + 1]
+  }
+  return ''
+}
+
+const cliSheetId = getArg('--sheet-id') || getArg('--sheet')
+const cliDeploymentId = getArg('--deployment-id')
+const cliSheetsUrl = getArg('--sheets-url')
+const cliGoogleToken = getArg('--google-token')
+const cliGithubToken = getArg('--github-token')
+
 console.log('\n======================================================================')
-console.log(' G&D Flooring — Full System & API Live Diagnostic Suite')
+console.log(' G&D Flooring — Live System, Scopes & API Permission Auditor')
 console.log('======================================================================\n')
+
+if (cliSheetId || cliDeploymentId || cliSheetsUrl) {
+  console.log('CLI Overrides Provided:')
+  if (cliSheetId) console.log(`  [OVERRIDE] Sheet ID       : ${cliSheetId}`)
+  if (cliDeploymentId) console.log(`  [OVERRIDE] Deployment ID  : ${cliDeploymentId}`)
+  if (cliSheetsUrl) console.log(`  [OVERRIDE] Sheets URL     : ${cliSheetsUrl}`)
+  console.log('')
+}
 
 let overallPass = true
 
 /* ----------------------------------------------------------------------
-   SECTION 1: GitHub API Verification (Remote Repo, Pages & Variables)
+   SECTION 1: GitHub API, Token Scopes & Repo Permissions Audit
 ---------------------------------------------------------------------- */
-console.log('--- 1. GitHub Environment & Actions Variables Audit ---')
+console.log('--- 1. GitHub Environment, Scopes & Permissions Audit ---')
 
 let remoteVars = {}
 try {
@@ -49,32 +72,36 @@ try {
 }
 
 // Compare local .env vs remote GitHub Actions variables
+const targetSheetId = cliSheetId || env.SHEETS_SPREADSHEET_ID || remoteVars.SHEETS_SPREADSHEET_ID || ''
+const targetDeploymentId = cliDeploymentId || env.SHEETS_DEPLOYMENT_ID || remoteVars.SHEETS_DEPLOYMENT_ID || ''
+const targetSheetsUrl = cliSheetsUrl || env.SHEETS_URL || remoteVars.SHEETS_URL || (targetDeploymentId ? `https://script.google.com/macros/s/${targetDeploymentId}/exec` : '')
+
 const keyMap = [
-  { envKey: 'SHEETS_URL', remoteKey: 'SHEETS_URL', name: 'Google Apps Script URL' },
-  { envKey: 'SHEETS_DEPLOYMENT_ID', remoteKey: 'SHEETS_DEPLOYMENT_ID', name: 'Apps Script Deployment ID' },
-  { envKey: 'RECAPTCHA_SITE_KEY', remoteKey: 'RECAPTCHA_SITE_KEY', name: 'reCAPTCHA Site Key' },
-  { envKey: 'GOOGLE_OAUTH_CLIENT_ID', remoteKey: 'GOOGLE_OAUTH_CLIENT_ID', name: 'Google OAuth Client ID' },
-  { envKey: 'SHEETS_SPREADSHEET_ID', remoteKey: 'SHEETS_SPREADSHEET_ID', name: 'Google Spreadsheet ID' },
-  { envKey: 'ADMIN_ALLOWED_EMAILS', remoteKey: 'ADMIN_ALLOWED_EMAILS', name: 'Allowed Admin Emails' },
-  { envKey: 'SITE_GITHUB_CLIENT_ID', fallbackKey: 'GITHUB_CLIENT_ID', remoteKey: 'SITE_GITHUB_CLIENT_ID', name: 'GitHub OAuth Client ID (CMS)', optional: true },
+  { envKey: 'SHEETS_URL', activeVal: targetSheetsUrl, remoteKey: 'SHEETS_URL', name: 'Google Apps Script URL' },
+  { envKey: 'SHEETS_DEPLOYMENT_ID', activeVal: targetDeploymentId, remoteKey: 'SHEETS_DEPLOYMENT_ID', name: 'Apps Script Deployment ID' },
+  { envKey: 'RECAPTCHA_SITE_KEY', activeVal: env.RECAPTCHA_SITE_KEY, remoteKey: 'RECAPTCHA_SITE_KEY', name: 'reCAPTCHA Site Key' },
+  { envKey: 'GOOGLE_OAUTH_CLIENT_ID', activeVal: env.GOOGLE_OAUTH_CLIENT_ID, remoteKey: 'GOOGLE_OAUTH_CLIENT_ID', name: 'Google OAuth Client ID' },
+  { envKey: 'SHEETS_SPREADSHEET_ID', activeVal: targetSheetId, remoteKey: 'SHEETS_SPREADSHEET_ID', name: 'Google Spreadsheet ID' },
+  { envKey: 'ADMIN_ALLOWED_EMAILS', activeVal: env.ADMIN_ALLOWED_EMAILS, remoteKey: 'ADMIN_ALLOWED_EMAILS', name: 'Allowed Admin Emails' },
+  { envKey: 'SITE_GITHUB_CLIENT_ID', fallbackKey: 'GITHUB_CLIENT_ID', activeVal: env.SITE_GITHUB_CLIENT_ID || env.GITHUB_CLIENT_ID, remoteKey: 'SITE_GITHUB_CLIENT_ID', name: 'GitHub OAuth Client ID (CMS)', optional: true },
 ]
 
 for (const item of keyMap) {
-  const localVal = env[item.envKey] || (item.fallbackKey ? env[item.fallbackKey] : '') || ''
+  const localVal = item.activeVal || ''
   const remoteVal = remoteVars[item.remoteKey] || ''
 
   if (!localVal && !item.optional) {
-    console.log(`  [FAIL] ${item.name} (${item.envKey}) is missing in local .env`)
+    console.log(`  [FAIL] ${item.name} (${item.envKey}) is missing`)
     overallPass = false
     continue
   }
   if (localVal && !remoteVal && !item.optional) {
-    console.log(`  [WARN] ${item.name} is set locally but MISSING in remote GitHub Actions variables`)
+    console.log(`  [WARN] ${item.name} is set locally/CLI but MISSING in remote GitHub Actions variables`)
   } else if (localVal && remoteVal && localVal !== remoteVal) {
-    console.log(`  [FAIL] ${item.name} MISMATCH! Local="${localVal.slice(0, 15)}..." vs Remote="${remoteVal.slice(0, 15)}..."`)
+    console.log(`  [FAIL] ${item.name} MISMATCH! Local/CLI="${localVal.slice(0, 15)}..." vs Remote="${remoteVal.slice(0, 15)}..."`)
     overallPass = false
   } else if (localVal || remoteVal) {
-    console.log(`  [OK] ${item.name.padEnd(30)} matches local & GitHub remote.`)
+    console.log(`  [OK] ${item.name.padEnd(30)} verified (${(localVal || remoteVal).slice(0, 20)}...).`)
   } else {
     console.log(`  [OPTIONAL] ${item.name.padEnd(30)} — Unset (optional)`)
   }
@@ -92,22 +119,39 @@ try {
   console.log(`  [WARN] Could not fetch GitHub Pages status: ${e.message}`)
 }
 
-// Latest GitHub Action Run
+// GitHub Token Scopes & Repo Write Permission Verification
+const ghTokenToUse = cliGithubToken || process.env.GITHUB_TOKEN || ''
 try {
-  const runsJson = execSync(`${ghPath} api repos/gndflooring/web-site/actions/runs?per_page=1`, { stdio: 'pipe' }).toString()
-  const run = JSON.parse(runsJson).workflow_runs?.[0]
-  if (run) {
-    console.log(`\n--- Latest GitHub Actions Deployment Run ---`)
-    console.log(`  [OK] Workflow : ${run.name}`)
-    console.log(`  [OK] Status   : ${run.status} (${run.conclusion || 'in progress'})`)
-    console.log(`  [OK] Commit   : ${run.head_sha.slice(0, 7)} — ${run.display_title.slice(0, 50)}`)
+  const authCmd = cliGithubToken
+    ? `${ghPath} api user -i -H "Authorization: Bearer ${cliGithubToken}"`
+    : `${ghPath} api user -i`
+  const userResp = execSync(authCmd, { stdio: 'pipe' }).toString()
+  
+  const scopeLine = userResp.split('\n').find((l) => /^x-oauth-scopes:/i.test(l))
+  const scopes = scopeLine ? scopeLine.split(':')[1].trim() : 'n/a (fine-grained token)'
+  console.log(`\n--- GitHub User Token Scopes & Repository Access ---`)
+  console.log(`  [OK] GitHub Authenticated User Scopes: ${scopes}`)
+  
+  if (scopes.includes('repo') || scopes.includes('n/a')) {
+    console.log(`  [OK] Token scope contains required repository access ('repo').`)
+  } else {
+    console.log(`  [WARN] Token scope '${scopes}' may lack full repository write access (CMS requires 'repo' scope).`)
+  }
+
+  const repoCheck = execSync(`${ghPath} api repos/gndflooring/web-site`, { stdio: 'pipe' }).toString()
+  const repoData = JSON.parse(repoCheck)
+  const perms = repoData.permissions || {}
+  console.log(`  [OK] Repository Permissions: push=${perms.push}, admin=${perms.admin}`)
+  if (!perms.push) {
+    console.log(`  [FAIL] Authenticated GitHub account lacks push access to repository gndflooring/web-site!`)
+    overallPass = false
   }
 } catch (e) {
-  console.log(`  [WARN] Could not fetch latest GitHub Action run: ${e.message}`)
+  console.log(`  [WARN] Could not inspect GitHub token scopes: ${e.message}`)
 }
 
 /* ----------------------------------------------------------------------
-   SECTION 2: GitHub OAuth App Client Verification (CMS)
+   SECTION 2: GitHub OAuth App Client (CMS) Audit
 ---------------------------------------------------------------------- */
 console.log('\n--- 2. GitHub OAuth App Client (CMS) Audit ---')
 const ghClientId = env.SITE_GITHUB_CLIENT_ID || env.GITHUB_CLIENT_ID || remoteVars.SITE_GITHUB_CLIENT_ID || ''
@@ -135,15 +179,15 @@ if (ghClientId) {
 }
 
 /* ----------------------------------------------------------------------
-   SECTION 3: Google Apps Script Web App & Relay Audit
+   SECTION 3: Google Apps Script Web App & Relay Endpoint Audit
 ---------------------------------------------------------------------- */
 console.log('\n--- 3. Google Apps Script Web App & Relay Endpoint Audit ---')
-const sheetsUrl = env.SHEETS_URL || remoteVars.SHEETS_URL || (env.SHEETS_DEPLOYMENT_ID ? `https://script.google.com/macros/s/${env.SHEETS_DEPLOYMENT_ID}/exec` : '')
+console.log(`Target Apps Script URL: ${targetSheetsUrl || 'UNSET'}`)
 
-if (sheetsUrl) {
+if (targetSheetsUrl) {
   // Test GET (JSONP Relay)
   try {
-    const res = await fetch(`${sheetsUrl}?gh=ping&callback=diagnostic_cb`)
+    const res = await fetch(`${targetSheetsUrl}?gh=ping&callback=diagnostic_cb`)
     const text = await res.text()
     if (text.includes('diagnostic_cb') || text.includes('gnd github device relay')) {
       console.log('  [OK] Apps Script GET JSONP Relay endpoint responded cleanly.')
@@ -167,7 +211,7 @@ if (sheetsUrl) {
       submittedAt: new Date().toISOString(),
       isDiagnosticPing: true,
     }
-    const res = await fetch(sheetsUrl, {
+    const res = await fetch(targetSheetsUrl, {
       method: 'POST',
       headers: { 'Content-Type': 'text/plain;charset=utf-8' },
       body: JSON.stringify(testPayload),
@@ -178,14 +222,15 @@ if (sheetsUrl) {
     console.log(`  [WARN] Apps Script POST test encountered error: ${e.message}`)
   }
 } else {
-  console.log('  [FAIL] SHEETS_URL is missing.')
+  console.log('  [FAIL] Target SHEETS_URL / SHEETS_DEPLOYMENT_ID is missing.')
   overallPass = false
 }
 
 /* ----------------------------------------------------------------------
-   SECTION 4: Google OAuth Client & Google Sheet Structure Audit
+   SECTION 4: Google OAuth Client, Scopes & Google Sheet Structure Audit
 ---------------------------------------------------------------------- */
-console.log('\n--- 4. Google OAuth Client & Google Sheet Audit ---')
+console.log('\n--- 4. Google OAuth Client, Scopes & Google Sheet Audit ---')
+
 const googleClientId = env.GOOGLE_OAUTH_CLIENT_ID || remoteVars.GOOGLE_OAUTH_CLIENT_ID || ''
 if (googleClientId) {
   if (/\.apps\.googleusercontent\.com$/.test(googleClientId)) {
@@ -197,6 +242,7 @@ if (googleClientId) {
     const disc = await fetch('https://accounts.google.com/.well-known/openid-configuration').then((r) => r.json())
     if (disc.issuer === 'https://accounts.google.com') {
       console.log('  [OK] Google OpenID / OAuth 2.0 discovery endpoint is reachable.')
+      console.log(`       Supported scopes verified: ${disc.scopes_supported ? disc.scopes_supported.slice(0, 6).join(', ') : 'standard'}`)
     }
   } catch (e) {
     console.log(`  [WARN] Could not reach Google OAuth discovery endpoint: ${e.message}`)
@@ -206,17 +252,72 @@ if (googleClientId) {
   overallPass = false
 }
 
-const spreadsheetId = env.SHEETS_SPREADSHEET_ID || remoteVars.SHEETS_SPREADSHEET_ID || ''
-if (spreadsheetId) {
-  if (/^[a-zA-Z0-9-_]{20,60}$/.test(spreadsheetId)) {
-    console.log(`  [OK] Google Spreadsheet ID format is valid (${spreadsheetId}).`)
+console.log(`\nTarget Google Spreadsheet ID: ${targetSheetId || 'UNSET'}`)
+if (targetSheetId) {
+  if (/^[a-zA-Z0-9-_]{20,60}$/.test(targetSheetId)) {
+    console.log(`  [OK] Google Spreadsheet ID format is valid (${targetSheetId}).`)
   } else {
-    console.log(`  [WARN] Google Spreadsheet ID format looks invalid: ${spreadsheetId}`)
+    console.log(`  [WARN] Google Spreadsheet ID format looks invalid: ${targetSheetId}`)
     overallPass = false
   }
 } else {
   console.log('  [FAIL] SHEETS_SPREADSHEET_ID is missing.')
   overallPass = false
+}
+
+// Token Scopes Audit (if --google-token provided)
+if (cliGoogleToken) {
+  console.log('\n--- Google OAuth Access Token Scopes & Sheet Structure Audit ---')
+  try {
+    const tokenInfoRes = await fetch(`https://oauth2.googleapis.com/tokeninfo?access_token=${cliGoogleToken}`)
+    const tokenInfo = await tokenInfoRes.json()
+    
+    if (tokenInfo.scope) {
+      console.log(`  [OK] Google Token Scopes: ${tokenInfo.scope}`)
+      const requiredScopes = ['spreadsheets', 'email', 'openid']
+      for (const req of requiredScopes) {
+        if (tokenInfo.scope.includes(req)) {
+          console.log(`  [OK] Scope '${req}' is GRANTED.`)
+        } else {
+          console.log(`  [FAIL] Required scope '${req}' is MISSING from Google access token!`)
+          overallPass = false
+        }
+      }
+    } else if (tokenInfo.error_description) {
+      console.log(`  [FAIL] Google OAuth Token Info error: ${tokenInfo.error_description}`)
+      overallPass = false
+    }
+
+    // Direct Google Sheets API Metadata & Tabs Verification
+    if (targetSheetId) {
+      const sheetRes = await fetch(`https://sheets.googleapis.com/v4/spreadsheets/${targetSheetId}?fields=sheets(properties(title))`, {
+        headers: { Authorization: `Bearer ${cliGoogleToken}` },
+      })
+      if (sheetRes.ok) {
+        const sheetData = await sheetRes.json()
+        const existingTabs = (sheetData.sheets || []).map((s) => s.properties.title)
+        console.log(`  [OK] Google Sheet API call succeeded. Found tabs: ${existingTabs.join(', ')}`)
+        
+        const requiredTabs = ['FormResponses', 'Tracking', 'Activity', 'Schedule', 'Tasks', 'Snoozes', 'Notes', 'Addresses', 'Tags']
+        for (const tab of requiredTabs) {
+          if (existingTabs.includes(tab)) {
+            console.log(`    [OK] Tab '${tab}' is present.`)
+          } else {
+            console.log(`    [WARN] Tab '${tab}' is missing (will be auto-created on first admin load).`)
+          }
+        }
+      } else {
+        const errText = await sheetRes.text()
+        console.log(`  [FAIL] Google Sheets API error ${sheetRes.status}: ${errText.slice(0, 150)}`)
+        overallPass = false
+      }
+    }
+  } catch (e) {
+    console.log(`  [FAIL] Could not verify Google OAuth Token or Sheets API: ${e.message}`)
+    overallPass = false
+  }
+} else {
+  console.log('  Tip: Pass "--google-token <oauth_access_token>" to verify live Google Sheets API permissions and sheet tabs.')
 }
 
 /* ----------------------------------------------------------------------
