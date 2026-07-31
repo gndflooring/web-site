@@ -1,5 +1,5 @@
 // Google Identity Services (token model) — browser-only OAuth for a static site.
-import { CLIENT_ID, SCOPES, ALLOWED_EMAILS } from './config.js'
+import { CLIENT_ID, SCOPES, ALLOWED_EMAILS, SPREADSHEET_ID } from './config.js'
 
 const STORE_KEY = 'gnd_admin_token'
 let tokenClient = null
