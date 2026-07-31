@@ -29,8 +29,8 @@ export const TABS = {
 export const LEAD_COLS = [
   'submittedAt',
   'name',
-  'email',
   'phone',
+  'email',
   'service',
   'message',
   'source',

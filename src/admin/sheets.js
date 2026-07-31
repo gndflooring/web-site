@@ -114,6 +114,22 @@ export async function loadAll() {
   const leads = get(0).map((r, i) => {
     const o = { _row: i + 1 }
     LEAD_COLS.forEach((k, c) => (o[k] = r[c] ?? ''))
+
+    // Normalize if phone and email are swapped in legacy rows
+    if (o.email && o.email.replace(/\s/g, '').match(/^[\d+()\-.]+$/) && o.phone && o.phone.includes('@')) {
+      const tmp = o.email
+      o.email = o.phone
+      o.phone = tmp
+    } else if (o.email && o.email.replace(/\s/g, '').match(/^[\d+()\-.]+$/) && !o.phone) {
+      o.phone = o.email
+      o.email = ''
+    }
+
+    // Ensure any lead row with content gets an ID so it is rendered in the UI
+    const hasData = o.name || o.email || o.phone || o.message || o.submittedAt
+    if (!o.id && hasData) {
+      o.id = `lead_row_${i + 1}`
+    }
     return o
   })
 

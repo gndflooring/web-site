@@ -40,16 +40,18 @@ function doPost(e) {
     var service = data.service || ''
     var message = data.message || ''
     var source = data.source || 'gnd-flooring.com'
+    var leadId = data.id || ('lead_' + Date.now() + '_' + Math.floor(Math.random() * 10000))
 
     sheet.appendRow([
-      timestamp,
-      name,
-      phone,
-      email,
-      service,
-      message,
-      source,
-      'New'
+      timestamp, // Col A: submittedAt
+      name,      // Col B: name
+      phone,     // Col C: phone
+      email,     // Col D: email
+      service,   // Col E: service
+      message,   // Col F: message
+      source,    // Col G: source
+      timestamp, // Col H: timestamp
+      leadId     // Col I: id
     ])
 
     return ContentService.createTextOutput(JSON.stringify({ ok: true, status: 'success' }))
