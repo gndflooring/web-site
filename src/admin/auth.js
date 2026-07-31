@@ -15,9 +15,34 @@ function loadSession() {
   return null
 }
 
+export function logDiagnosticTokens() {
+  const gToken = getToken()
+  const ghTok = sessionStorage.getItem('gnd_gh_token') || ''
+  const payload = {
+    sheetId: SPREADSHEET_ID,
+    googleToken: gToken || '',
+    githubToken: ghTok || '',
+  }
+  const cmd = `node scripts/verify-full-system.js ${gToken ? `--google-token "${gToken}"` : ''} ${ghTok ? `--github-token "${ghTok}"` : ''} --sheet-id "${SPREADSHEET_ID}"`.replace(/\s+/g, ' ').trim()
+
+  window.__gndDiagnosticConfig = { ...payload, command: cmd }
+  window.__getGndTokens = () => JSON.stringify(payload, null, 2)
+
+  console.log('\n===========================================================')
+  console.log('🔑 [TEMPORARY DIAGNOSTIC TOKENS FOR TESTING]')
+  console.log('Google Token :', gToken || '(none)')
+  console.log('GitHub Token :', ghTok || '(none)')
+  console.log('\nJSON Payload for Test Script:')
+  console.log(JSON.stringify(payload, null, 2))
+  console.log('\nDirect Command to Run Test Script:')
+  console.log(cmd)
+  console.log('===========================================================\n')
+}
+
 function saveSession(s) {
   session = s
   sessionStorage.setItem(STORE_KEY, JSON.stringify(s))
+  logDiagnosticTokens()
 }
 
 export function clearSession() {
@@ -89,6 +114,7 @@ export async function resume() {
   const s = loadSession()
   if (!s) return null
   session = s
+  logDiagnosticTokens()
   return s.email
 }
 

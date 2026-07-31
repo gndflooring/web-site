@@ -3,6 +3,8 @@
 // GitHub account; the token lives only in sessionStorage; nothing is stored
 // server-side. All repo writes go browser → api.github.com as the user.
 
+import { logDiagnosticTokens } from './auth.js'
+
 const CLIENT_ID = __GITHUB_CLIENT_ID__
 const REPO = __GITHUB_REPO__ // "owner/repo"
 const RELAY = __SHEETS_URL__ // existing Apps Script /exec (also serves the JSONP relay)
@@ -73,6 +75,7 @@ export async function ghPollToken(deviceCode, interval, expiresIn, onTick) {
       } catch {
         /* ignore */
       }
+      logDiagnosticTokens()
       return r.access_token
     }
     if (r.error === 'slow_down') waitMs += 5000

@@ -33,11 +33,27 @@ function getArg(flag) {
   return ''
 }
 
-const cliSheetId = getArg('--sheet-id') || getArg('--sheet')
-const cliDeploymentId = getArg('--deployment-id')
-const cliSheetsUrl = getArg('--sheets-url')
-const cliGoogleToken = getArg('--google-token')
-const cliGithubToken = getArg('--github-token')
+let jsonConfig = {}
+const cliJsonRaw = getArg('--config-json') || getArg('--json')
+if (cliJsonRaw) {
+  try {
+    if (fs.existsSync(cliJsonRaw)) {
+      jsonConfig = JSON.parse(fs.readFileSync(cliJsonRaw, 'utf8'))
+      console.log(`[CONFIG] Read JSON config file: ${cliJsonRaw}`)
+    } else {
+      jsonConfig = JSON.parse(cliJsonRaw)
+      console.log(`[CONFIG] Parsed inline JSON payload`)
+    }
+  } catch (e) {
+    console.log(`[WARN] Could not parse --config-json payload: ${e.message}`)
+  }
+}
+
+const cliSheetId = getArg('--sheet-id') || getArg('--sheet') || jsonConfig.sheetId || jsonConfig.SHEETS_SPREADSHEET_ID
+const cliDeploymentId = getArg('--deployment-id') || jsonConfig.deploymentId || jsonConfig.SHEETS_DEPLOYMENT_ID
+const cliSheetsUrl = getArg('--sheets-url') || jsonConfig.sheetsUrl || jsonConfig.SHEETS_URL
+const cliGoogleToken = getArg('--google-token') || jsonConfig.googleToken || jsonConfig.google_token
+const cliGithubToken = getArg('--github-token') || jsonConfig.githubToken || jsonConfig.github_token
 
 console.log('\n======================================================================')
 console.log(' G&D Flooring — Live System, Scopes & API Permission Auditor')
