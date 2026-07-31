@@ -24,30 +24,67 @@ export const ghUser = () => sessionStorage.getItem('gnd_gh_user') || ''
 
 /* ---------- JSONP to the relay (GitHub device endpoints lack CORS) ---------- */
 let jsonpN = 0
+let relayVerified = false
+
+async function verifyRelay() {
+  if (relayVerified) return
+  if (!RELAY) throw new Error('SHEETS_URL (Apps Script relay) is not configured.')
+  try {
+    const res = await fetch(`${RELAY}?gh=ping`, { method: 'GET', redirect: 'follow' })
+    const text = await res.text()
+    if (text.includes('ServiceLogin') || text.includes('accounts.google.com') || (text.includes('<!DOCTYPE html>') && !text.includes('gnd github device relay'))) {
+      throw new Error(
+        'Apps Script relay configuration error: Google redirected to login. In Google Apps Script, click Deploy -> Manage Deployments and set "Who has access" to "Anyone".'
+      )
+    }
+    relayVerified = true
+  } catch (err) {
+    if (err.message.includes('Apps Script relay configuration error')) throw err
+  }
+}
+
 function jsonp(params) {
   return new Promise((resolve, reject) => {
-    const cb = `__ghcb_${Date.now()}_${jsonpN++}`
-    const s = document.createElement('script')
-    const to = setTimeout(() => {
-      cleanup()
-      reject(new Error('Relay timeout'))
-    }, 20000)
-    function cleanup() {
-      clearTimeout(to)
-      delete window[cb]
-      s.remove()
-    }
-    window[cb] = (data) => {
-      cleanup()
-      resolve(data)
-    }
-    const qs = new URLSearchParams({ ...params, callback: cb }).toString()
-    s.src = `${RELAY}?${qs}`
-    s.onerror = () => {
-      cleanup()
-      reject(new Error('Relay unreachable'))
-    }
-    document.head.appendChild(s)
+    verifyRelay()
+      .then(() => {
+        const cb = `__ghcb_${Date.now()}_${jsonpN++}`
+        const s = document.createElement('script')
+        let cleaned = false
+
+        function cleanup() {
+          if (cleaned) return
+          cleaned = true
+          clearTimeout(to)
+          // Keep a temporary no-op handler so late or timed-out JSONP responses don't throw Uncaught ReferenceError
+          window[cb] = () => {
+            delete window[cb]
+          }
+          setTimeout(() => {
+            if (window[cb]) delete window[cb]
+          }, 30000)
+          s.remove()
+        }
+
+        const to = setTimeout(() => {
+          cleanup()
+          reject(new Error('Relay timeout — Google Apps Script did not respond in time.'))
+        }, 20000)
+
+        window[cb] = (data) => {
+          cleanup()
+          delete window[cb]
+          resolve(data)
+        }
+
+        const qs = new URLSearchParams({ ...params, callback: cb }).toString()
+        s.src = `${RELAY}?${qs}`
+        s.onerror = () => {
+          cleanup()
+          reject(new Error('Relay unreachable — Google Apps Script endpoint failed or redirected to Google Login.'))
+        }
+        document.head.appendChild(s)
+      })
+      .catch(reject)
   })
 }
 

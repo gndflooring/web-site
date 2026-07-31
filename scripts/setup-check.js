@@ -63,6 +63,10 @@ if (sheetsUrl) {
     const text = await res.text()
     if (text.includes('gnd github device relay') || text.includes('test(')) {
       console.log('  [OK] Google Apps Script Web App endpoint responded successfully (relay active).')
+    } else if (text.includes('ServiceLogin') || text.includes('accounts.google.com') || text.includes('<!DOCTYPE html>')) {
+      console.log('  [FAIL] Google Apps Script endpoint redirected to Google Login!')
+      console.log('         -> FIX: Open Google Apps Script -> Deploy -> Manage Deployments -> Set "Who has access" to "Anyone".')
+      pass = false
     } else {
       console.log('  [WARN] Endpoint reached, but response was unexpected:', text.slice(0, 100))
     }

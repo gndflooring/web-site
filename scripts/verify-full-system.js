@@ -207,6 +207,10 @@ if (targetSheetsUrl) {
     const text = await res.text()
     if (text.includes('diagnostic_cb') || text.includes('gnd github device relay')) {
       console.log('  [OK] Apps Script GET JSONP Relay endpoint responded cleanly.')
+    } else if (text.includes('ServiceLogin') || text.includes('accounts.google.com') || text.includes('<!DOCTYPE html>')) {
+      console.log('  [FAIL] Apps Script GET redirected to Google Login page!')
+      console.log('         -> CRITICAL FIX: In Apps Script editor, click Deploy -> Manage Deployments and set "Who has access" to "Anyone".')
+      overallPass = false
     } else {
       console.log('  [WARN] Apps Script GET responded, but relay marker was missing:', text.slice(0, 120))
     }
