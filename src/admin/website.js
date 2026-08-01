@@ -10,9 +10,10 @@
 import seed from '../content/site.json'
 import Cropper from 'cropperjs'
 import 'cropperjs/dist/cropper.css'
-import { renderPage, renderCommercialPage, esc, has } from '../content/render.js'
+import { renderPage, renderCommercialPage, parseMd, esc, has } from '../content/render.js'
 import { initCarousels } from '../components/carousel.js'
 import { initLightbox } from '../components/lightbox.js'
+import { initWordCycles } from '../components/word-cycle.js'
 import {
   ghConfigured,
   ghConnected,
@@ -326,9 +327,11 @@ export function migrate(c) {
 /* =============================================================
    Form pane
    ============================================================= */
+// Every *md* badge is the way into the cheat sheet — the formatting is only
+// useful if it is discoverable from the field you are typing in.
 const mdHint = (f) =>
   f.md
-    ? `<span class="ml-1.5 font-500 normal-case tracking-normal text-brand-600" title="Markdown supported: *highlight*, **bold**, _italic_, [link](url)">*md*</span>`
+    ? `<button type="button" data-mdhelp class="ml-1.5 font-500 normal-case tracking-normal text-brand-600 underline decoration-dotted underline-offset-2 hover:text-brand-700" title="Formatting cheat sheet">*md*</button>`
     : ''
 
 function field(f, path) {
@@ -547,6 +550,7 @@ function paintPreview() {
   prev.scrollTop = top
   initCarousels(prev)
   initLightbox()
+  initWordCycles(prev)
   const hdr = prev.querySelector('.site-header')
   if (hdr) {
     // On the site the header is fixed and overlays the hero; sticky inside a
@@ -645,6 +649,29 @@ function ensureModals() {
       </div>
     </div>
 
+    <div id="mdHelpModal" hidden class="fixed inset-0 z-[72] flex items-center justify-center bg-ink/70 p-4 backdrop-blur-sm">
+      <div class="flex max-h-[88vh] w-full max-w-3xl flex-col overflow-hidden rounded-2xl border border-line bg-surface shadow-2xl">
+        <div class="flex items-start justify-between gap-4 border-b border-line bg-app px-6 py-4">
+          <div>
+            <h3 class="font-display text-lg font-700 text-ink">Text formatting</h3>
+            <p class="text-xs text-muted">Type these in any field marked <span class="font-mono text-brand-600">*md*</span>. Click a snippet to copy it.</p>
+          </div>
+          <div class="flex shrink-0 items-center gap-3">
+            <div class="flex rounded-lg border border-line bg-surface p-0.5 text-xs font-600">
+              <button type="button" data-mdbg="light" class="rounded px-2.5 py-1">On light</button>
+              <button type="button" data-mdbg="dark" class="rounded px-2.5 py-1">On dark</button>
+            </div>
+            <button id="closeMdHelp" class="text-lg font-700 text-muted hover:text-ink">✕</button>
+          </div>
+        </div>
+        <div id="mdHelpBody" class="min-h-0 flex-1 overflow-y-auto px-6 py-1"></div>
+        <p class="border-t border-line bg-app px-6 py-3 text-[11px] leading-relaxed text-muted">
+          The accent colour is chosen for you — the same <span class="font-mono">*word*</span> reads gold on a dark band and blue on cream, which is what the two previews above show.
+          Rotating words hold still for anyone whose device asks for reduced motion, and they only ever see the first option — so put the one that matters most first.
+        </p>
+      </div>
+    </div>
+
     <div id="confirmModal" hidden class="fixed inset-0 z-[75] flex items-center justify-center bg-ink/70 p-4 backdrop-blur-sm">
       <div class="w-full max-w-sm space-y-4 rounded-2xl border border-line bg-surface p-6 shadow-2xl">
         <h4 id="confirmTitle" class="font-display text-lg font-700 text-ink">Confirm action</h4>
@@ -657,6 +684,7 @@ function ensureModals() {
     </div>`
   while (wrap.firstElementChild) document.body.appendChild(wrap.firstElementChild)
   wireCropModal()
+  wireMdHelp()
 }
 
 const show = (id) => $(id).removeAttribute('hidden')
@@ -679,6 +707,78 @@ function confirmDialog(title, msg, onOk) {
     close()
     onOk()
   }
+}
+
+/* =============================================================
+   Formatting cheat sheet — every rule the copy understands, each
+   one previewed through the site's own parser so what the editor
+   sees here is exactly what the page will do.
+   ============================================================= */
+const MD_RULES = [
+  { syn: '*Des Moines*', what: 'Accent word', note: 'Italic, in whichever accent colour suits the background it lands on.' },
+  { syn: '**twenty years**', what: 'Bold', note: 'Plain emphasis, no colour change.' },
+  { syn: '_hand-finished_', what: 'Italic', note: 'Italic only — for a turn of phrase rather than a keyword.' },
+  { syn: '[See our work](/commercial/)', what: 'Link', note: 'Use /page for somewhere on this site, https://… for anywhere else.' },
+  { syn: '<Des Moines, Urbandale, Ames>', what: 'Rotating words', note: 'The options take turns in the same spot, sliding up. Separate them with commas.' },
+  { syn: '<Offices, Retail, Hospitality | fade>', what: 'Fade instead', note: 'The quiet one: no movement, just a dissolve.' },
+  { syn: '<Ames, Ankeny, Altoona | flip>', what: 'Flip instead', note: 'A card turning over — the showiest of the four.' },
+  { syn: '<hardwood, vinyl, tile | type 3s>', what: 'Type instead', note: 'Erased and retyped, caret and all. Add seconds to set how long each word stays — 2.6s if you leave it out.' },
+  { syn: '*<Des Moines, Urbandale, Ames>*', what: 'Both at once', note: 'A rotation in the accent colour — what the commercial headline uses.' },
+]
+
+let mdHelpBg = 'light'
+
+function paintMdHelp() {
+  const body = $('mdHelpBody')
+  if (!body) return
+  const dark = mdHelpBg === 'dark'
+  document.querySelectorAll('[data-mdbg]').forEach((b) => {
+    const on = b.dataset.mdbg === mdHelpBg
+    b.className = `rounded px-2.5 py-1 transition-colors ${on ? 'bg-brand-600 text-white' : 'text-muted hover:text-ink'}`
+  })
+  body.innerHTML = MD_RULES.map(
+    (r) => `<div class="grid gap-2.5 border-b border-line py-3.5 last:border-0 sm:grid-cols-2 sm:items-center sm:gap-5">
+      <div class="min-w-0">
+        <button type="button" data-mdcopy="${esc(r.syn)}"
+          class="block w-full truncate rounded-lg border border-line bg-app px-2.5 py-1.5 text-left font-mono text-[11px] text-ink transition-colors hover:border-brand-300 hover:bg-brand-50"
+          title="Click to copy">${esc(r.syn)}</button>
+        <p class="mt-1.5 text-[11px] leading-snug text-muted"><span class="font-700 text-ink">${esc(r.what)}</span> — ${esc(r.note)}</p>
+      </div>
+      <div class="rounded-lg px-3.5 py-3 font-display text-lg font-600 ${dark ? 'bg-ink text-white' : 'bg-cream text-ink'}">${parseMd(
+        r.syn,
+        dark ? 'dark' : 'light'
+      )}</div>
+    </div>`
+  ).join('')
+  initWordCycles(body)
+}
+
+function openMdHelp() {
+  ensureModals()
+  show('mdHelpModal') // before painting: a hidden box has no width to measure
+  paintMdHelp()
+}
+
+function wireMdHelp() {
+  const modal = $('mdHelpModal')
+  $('closeMdHelp').onclick = () => hide('mdHelpModal')
+  modal.addEventListener('click', (e) => {
+    if (e.target === modal) return hide('mdHelpModal')
+    const bg = e.target.closest('[data-mdbg]')
+    if (bg) {
+      mdHelpBg = bg.dataset.mdbg
+      return paintMdHelp()
+    }
+    const copy = e.target.closest('[data-mdcopy]')
+    if (copy)
+      navigator.clipboard
+        ?.writeText(copy.dataset.mdcopy)
+        .then(() => toast('Copied — paste it into any *md* field'))
+        .catch(() => toast('Copy blocked — select the snippet and copy it by hand'))
+  })
+  document.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape') hide('mdHelpModal')
+  })
 }
 
 /* ---------- crop studio ---------- */
@@ -994,6 +1094,7 @@ function renderEditor(v) {
             <span class="ml-auto flex items-center gap-1 text-xs font-600 text-emerald-600">
               <span class="h-2 w-2 rounded-full bg-emerald-500"></span> Contextual markdown active
             </span>
+            <button type="button" data-mdhelp class="btn-ghost !px-2.5 !py-1 text-xs">Formatting help</button>
           </div>
           <p class="text-xs text-muted">Edits save to <code>content-draft</code>. <span class="font-600">Publish</span> merges to <code>main</code>. Empty sections are dropped from the page.</p>
           <div class="space-y-4">${(PAGES.find((p) => p.id === activePage)?.schema || []).map(sectionHtml).join('')}</div>
@@ -1047,6 +1148,10 @@ function wireEditor(el) {
   )
 
   pane.addEventListener('click', (e) => {
+    if (e.target.closest('[data-mdhelp]')) {
+      e.preventDefault()
+      return openMdHelp()
+    }
     const pageBtn = e.target.closest('[data-page]')
     if (pageBtn) {
       e.preventDefault()

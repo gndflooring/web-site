@@ -14,6 +14,32 @@ export const esc = (s) =>
 // A value counts as present only if it would put something on the page.
 export const has = (v) => (Array.isArray(v) ? v.length > 0 : String(v ?? '').trim() !== '')
 
+/* Rotating words: <Des Moines, Urbandale, Ames> puts the options in the same
+   spot, taking turns. An optional "| style seconds" tail says how they change
+   and how long each one stays:  <Ames, Ankeny | flip 4s>.
+   The markup is inert — src/components/word-cycle.js does the cycling, and
+   without it (or under reduced motion) the first option simply stands. */
+const CYCLE_ANIMS = ['slide', 'fade', 'flip', 'type']
+
+function wordCycle(body) {
+  const [list, ...tail] = body.split('|')
+  const opts = list
+    .split(',')
+    .map((o) => o.trim())
+    .filter(Boolean)
+  if (opts.length < 2) return null // not a list — leave the text alone
+
+  const mod = tail.join(' ').trim().toLowerCase()
+  const anim = CYCLE_ANIMS.find((a) => new RegExp(`\\b${a}\\b`).test(mod)) || 'slide'
+  const secs = Number((mod.match(/(\d+(?:\.\d+)?)\s*s/) || [])[1])
+  const hold = Math.round(Math.min(20, Math.max(0.6, secs || 2.6)) * 1000)
+
+  const items = opts
+    .map((o, i) => `<span class="wc-item${i ? '' : ' is-in'}"${i ? ' aria-hidden="true"' : ''}>${o}</span>`)
+    .join('')
+  return `<span class="wc" data-word-cycle data-anim="${anim}" data-hold="${hold}">${items}</span>`
+}
+
 // Contextual markdown. The accent colour depends on what the text sits on, so
 // the same *word* reads as gold on ink, teal on sand, brand blue on cream.
 export function parseMd(s, bgContext = 'light') {
@@ -23,6 +49,11 @@ export function parseMd(s, bgContext = 'light') {
   if (bgContext === 'dark') hl = 'text-sand-300 font-semibold'
   else if (bgContext === 'sand' || bgContext === 'gold') hl = 'text-teal-900 font-bold'
   else if (bgContext === 'eyebrow-light') hl = 'text-teal-700 font-bold'
+
+  // Rotating words first, and deliberately: the markup it emits carries no
+  // *, _, [ or ], so every rule below still reads the copy around it — which
+  // is what lets *<Des Moines, Ames>* accent the whole rotation.
+  text = text.replace(/&lt;([\s\S]*?)&gt;/g, (m, body) => wordCycle(body) || m)
 
   // **bold** first: the single-* rule would otherwise eat the inner asterisks
   // and leave the outer pair as literal text.

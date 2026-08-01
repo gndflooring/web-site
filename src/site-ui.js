@@ -3,6 +3,7 @@
 // stays in main.js so a preview can never create a real lead.
 import { initCarousels } from './components/carousel.js'
 import { initLightbox } from './components/lightbox.js'
+import { initWordCycles } from './components/word-cycle.js'
 
 /** Wire a rendered page. Safe to call again after re-rendering. */
 export function initSiteUi(root = document) {
@@ -91,4 +92,7 @@ export function initSiteUi(root = document) {
   /* Carousels + the shared image viewer */
   initCarousels(root)
   initLightbox()
+
+  /* Rotating words from the <A, B, C> markdown rule */
+  initWordCycles(root)
 }

@@ -11,6 +11,7 @@
 
 import { parseMd } from '../content/render.js'
 import { carouselImages, carouselIndex, pauseCarousels } from './carousel.js'
+import { initWordCycles } from './word-cycle.js'
 
 const MIN_SCALE = 1
 const MAX_SCALE = 6
@@ -108,6 +109,7 @@ function paint() {
   $('.lb-title').classList.toggle('is-empty', !title && state.images.length < 2)
   $('.lb-caption').innerHTML = parseMd(im.caption, 'dark')
   $('.lb-caption').classList.toggle('is-empty', !im.caption)
+  initWordCycles($('.lb-caption')) // a caption may hold a <A, B, C> rotation
   state.root.classList.toggle('has-many', state.images.length > 1)
 
   $('.lb-sheet').innerHTML =

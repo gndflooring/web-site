@@ -7,7 +7,7 @@
     </linearGradient>
     <!-- userSpaceOnUse: an objectBoundingBox gradient would not paint the
          D's stem, whose bounding box has zero width. -->
-    <linearGradient id="gd-gold" gradientUnits="userSpaceOnUse" x1="14" y1="18" x2="52" y2="48">
+    <linearGradient id="gd-gold" gradientUnits="userSpaceOnUse" x1="10" y1="12" x2="56" y2="54">
       <stop offset="0" stop-color="#f0e3ca"/>
       <stop offset="0.42" stop-color="#c49a5e"/>
       <stop offset="1" stop-color="#966d38"/>
@@ -17,30 +17,27 @@
   <!-- Tile: Guatemalan sky-blue, deepened so it reads on light and dark -->
   <rect x="0" y="0" width="64" height="64" rx="15" fill="url(#gd-tile)"/>
 
-  <!-- The flag's two vertical bands, whispered rather than stated -->
-  <rect x="7" y="7" width="2.5" height="50" rx="1.25" fill="#ffffff" opacity="0.20"/>
-  <rect x="54.5" y="7" width="2.5" height="50" rx="1.25" fill="#ffffff" opacity="0.20"/>
+  <!-- Gold frame: the edge of the mark, not an inset hairline. -->
+  <rect x="1.35" y="1.35" width="61.3" height="61.3" rx="13.7" fill="none" stroke="url(#gd-gold)" stroke-width="2.7"/>
 
-  <!-- Gold hairline inset — the luxury cue -->
-  <rect x="4.25" y="4.25" width="55.5" height="55.5" rx="11.5" fill="none" stroke="url(#gd-gold)" stroke-width="1" opacity="0.9"/>
-
-  <!-- Ampersand behind the monogram, in a light teal so it reads as depth
-       rather than as a third letter. -->
-  <text x="32" y="32.5" text-anchor="middle" dominant-baseline="central"
+  <!-- Ampersand behind the monogram — a hint of depth, not a third letter. -->
+  <text x="32" y="33" text-anchor="middle" dominant-baseline="central"
         font-family="Georgia, 'Times New Roman', 'Iowan Old Style', serif"
-        font-size="34" font-style="italic" fill="#b6f2e8" opacity="0.22">&amp;</text>
+        font-size="50" font-style="italic" fill="#b6f2e8" opacity="0.15">&amp;</text>
 
-  <!-- G and D share a cap height of 17 and near-equal widths (17 vs 15.2),
-       spaced so their strokes clear each other and the ampersand shows
-       through the gap. -->
-  <g fill="none" stroke="url(#gd-gold)" stroke-width="3.3" stroke-linecap="round" stroke-linejoin="round">
+  <!-- G and D, sized against each other rather than drawn to fit:
+       the G is a 24.5-wide circle, the D 21 wide and a touch shorter, so the
+       round letter overshoots the flat one the way a typeface would set them.
+       Both sit on 7 units of margin, and the G's aperture is opened to ~12% of
+       its height so it can never be mistaken for an O. -->
+  <g fill="none" stroke="url(#gd-gold)" stroke-width="3.8" stroke-linecap="round" stroke-linejoin="round">
     <g id="mark-g">
-      <path d="M29.2 28.41 A8.5 8.5 0 1 0 29.2 35.59"/>
-      <path d="M29.2 35.59 V32.1 H24.3"/>
+      <path d="M27.97 26.34 A10.4 10.4 0 1 0 28.89 35.90"/>
+      <path d="M28.89 35.90 V33.2 H22.5"/>
     </g>
     <g id="mark-d">
-      <path d="M38 23.5 V40.5"/>
-      <path d="M38 23.5 H39.2 A12 8.5 0 0 1 39.2 40.5 H38"/>
+      <path d="M37.9 22.15 V41.85"/>
+      <path d="M37.9 22.15 H39.1 A16 9.85 0 0 1 39.1 41.85 H37.9"/>
     </g>
   </g>
 </svg>

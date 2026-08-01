@@ -1,4 +1,27 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64">
-  <rect width="64" height="64" rx="14" fill="#275f8c"/>
-  <text x="32" y="42" text-anchor="middle" font-family="Georgia, serif" font-size="26" font-weight="700" fill="#fff">G&amp;D</text>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" role="img" aria-label="G&amp;D">
+  <title>G&amp;D</title>
+  <!-- The same mark as public/images/logo.svg, cut down for a browser tab: no
+       ampersand (it is invisible at 16px and only adds noise below 32) and a
+       slightly heavier monogram stroke so the letters hold together. -->
+  <defs>
+    <linearGradient id="fav-tile" gradientUnits="userSpaceOnUse" x1="32" y1="0" x2="32" y2="64">
+      <stop offset="0" stop-color="#3183bd"/>
+      <stop offset="1" stop-color="#1d3f5b"/>
+    </linearGradient>
+    <linearGradient id="fav-gold" gradientUnits="userSpaceOnUse" x1="10" y1="12" x2="56" y2="54">
+      <stop offset="0" stop-color="#f0e3ca"/>
+      <stop offset="0.42" stop-color="#c49a5e"/>
+      <stop offset="1" stop-color="#966d38"/>
+    </linearGradient>
+  </defs>
+
+  <rect x="0" y="0" width="64" height="64" rx="15" fill="url(#fav-tile)"/>
+  <rect x="1.35" y="1.35" width="61.3" height="61.3" rx="13.7" fill="none" stroke="url(#fav-gold)" stroke-width="2.7"/>
+
+  <g fill="none" stroke="url(#fav-gold)" stroke-width="4.2" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M27.97 26.34 A10.4 10.4 0 1 0 28.89 35.90"/>
+    <path d="M28.89 35.90 V33.2 H22.5"/>
+    <path d="M37.9 22.15 V41.85"/>
+    <path d="M37.9 22.15 H39.1 A16 9.85 0 0 1 39.1 41.85 H37.9"/>
+  </g>
 </svg>

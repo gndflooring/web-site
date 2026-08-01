@@ -358,3 +358,76 @@ html.lb-open { overflow: hidden; }
   inset: 0;
   background: linear-gradient(to bottom, rgb(21 33 43 / 0.35) 0%, rgb(21 33 43 / 0.1) 45%, #fff 100%);
 }
+
+/* ---------------- Rotating words ---------------- */
+/* Markup from the `<A, B, C>` markdown rule; cycled by
+   src/components/word-cycle.js.
+   Until that module says otherwise, the options it isn't showing are out of the
+   layout altogether, so with no JS — or under reduced motion, where nothing
+   cycles — the sentence closes up around the first option as if the others were
+   never written. Once live, they stack in one grid cell and JS keeps the box as
+   wide as the word on screen. */
+.wc {
+  display: inline-grid;
+  justify-items: start;
+  text-align: left;
+}
+.wc-item {
+  grid-area: 1 / 1;
+  white-space: nowrap;
+  display: none;
+}
+.wc-item.is-in { display: block; }
+.wc.is-live .wc-item { display: block; opacity: 0; }
+.wc.is-live .wc-item.is-in { opacity: 1; }
+
+.wc.is-live { transition: width 0.45s cubic-bezier(0.22, 1, 0.36, 1); }
+/* The two words are staggered rather than cross-dissolved: the outgoing one is
+   gone before the incoming one arrives, so they are never legible on top of
+   each other — and in a tightly leaded headline nothing bleeds into the line
+   above. */
+.wc.is-live .wc-item {
+  transition: opacity 0.26s ease 0.16s, transform 0.42s cubic-bezier(0.22, 1, 0.36, 1);
+}
+.wc.is-live .wc-item.is-out {
+  transition: opacity 0.16s ease, transform 0.42s cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+/* slide — the default: words roll up through the line. */
+.wc--slide .wc-item { transform: translateY(0.32em); }
+.wc--slide .wc-item.is-in { transform: translateY(0); }
+.wc--slide .wc-item.is-out { transform: translateY(-0.32em); }
+
+/* fade — the quietest: no movement at all. */
+.wc--fade .wc-item { transform: none; }
+
+/* flip — the showiest: a card turning over on its top edge. */
+.wc--flip { perspective: 700px; }
+.wc--flip .wc-item { transform: rotateX(-92deg); transform-origin: 50% 0; }
+.wc--flip .wc-item.is-in { transform: rotateX(0); }
+.wc--flip .wc-item.is-out { transform: rotateX(92deg); transform-origin: 50% 100%; }
+
+/* type — one word erased and the next typed, caret and all. Only ever one word
+   in the box, so it keeps its own width and needs no measuring. */
+.wc--type.is-live .wc-item { display: none; opacity: 1; transform: none; }
+.wc--type.is-live .wc-item.is-in { display: block; }
+.wc--type .wc-item.is-in::after {
+  content: '';
+  display: inline-block;
+  width: 0.07em;
+  height: 0.95em;
+  margin-left: 0.06em;
+  translate: 0 0.1em;
+  background: currentColor;
+  animation: wc-caret 1s steps(1) infinite;
+}
+@keyframes wc-caret {
+  0%, 50% { opacity: 1; }
+  50.01%, 100% { opacity: 0; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .wc.is-live,
+  .wc.is-live .wc-item { transition: none; }
+  .wc--type .wc-item.is-in::after { animation: none; }
+}
