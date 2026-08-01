@@ -10,7 +10,7 @@
 import seed from '../content/site.json'
 import Cropper from 'cropperjs'
 import 'cropperjs/dist/cropper.css'
-import { renderPage, renderCommercialPage, parseMd, esc, has } from '../content/render.js'
+import { renderPage, renderCommercialPage, parseMd, ACCENTS, esc, has } from '../content/render.js'
 import { initCarousels } from '../components/carousel.js'
 import { initLightbox } from '../components/lightbox.js'
 import { initWordCycles } from '../components/word-cycle.js'
@@ -744,6 +744,10 @@ function confirmDialog(title, msg, onOk) {
    one previewed through the site's own parser so what the editor
    sees here is exactly what the page will do.
    ============================================================= */
+// Two of the accent names are literal rather than adaptive, so they only work
+// on one kind of background. The table says so beside them.
+const ACCENT_ONLY_ON = { white: 'dark bands only', ink: 'light sections only' }
+
 const MD_RULES = [
   { syn: '*Des Moines*', what: 'Accent word', note: 'Italic, in whichever accent colour suits the background it lands on.' },
   { syn: '*Des Moines*{teal}', what: '…in a colour you pick', note: 'teal, gold, blue, white, ink or muted. Each still adapts its shade to the background. Use it when one sentence needs two different accents.' },
@@ -782,6 +786,37 @@ function paintMdHelp() {
       )}</div>
     </div>`
   ).join('')
+
+  // Every name the parser knows, shown on both backgrounds — the whole point
+  // of a named colour is that its shade changes with what it sits on, so one
+  // preview would only tell half the story. Driven off the parser's own table,
+  // so this cannot drift from what the site actually understands.
+  body.insertAdjacentHTML(
+    'beforeend',
+    `<div class="border-t border-line pt-4 pb-2">
+      <p class="text-xs font-700 text-ink">Colours you can name</p>
+      <p class="mt-1 text-[11px] leading-snug text-muted">Any of these goes in the braces: <span class="font-mono">*your words*{name}</span>. The first four pick their own shade for whatever they land on. <span class="font-600 text-ink">white</span> and <span class="font-600 text-ink">ink</span> are literal — they stay exactly that colour, which is why each one vanishes on the background it matches. The previews below show it happening rather than warn you about it.</p>
+      <div class="mt-3 grid grid-cols-[auto_1fr_1fr] items-center gap-x-3 gap-y-2">
+        <span></span>
+        <span class="text-[10px] font-700 uppercase tracking-wider text-muted">On light sections</span>
+        <span class="text-[10px] font-700 uppercase tracking-wider text-muted">On dark bands</span>
+        ${Object.keys(ACCENTS)
+          .map(
+            (name) => `
+          <span class="flex flex-col gap-0.5">
+            <button type="button" data-mdcopy="*your words*{${name}}"
+              class="rounded-lg border border-line bg-app px-2 py-1 text-left font-mono text-[11px] text-ink transition-colors hover:border-brand-300 hover:bg-brand-50"
+              title="Click to copy">{${name}}</button>
+            ${when(ACCENT_ONLY_ON[name], `<span class="text-[10px] leading-tight text-muted">${esc(ACCENT_ONLY_ON[name] || '')}</span>`)}
+          </span>
+          <span class="rounded-md bg-cream px-3 py-1.5 font-display text-base font-600 text-ink">${parseMd(`*Sample text*{${name}}`, 'light')}</span>
+          <span class="rounded-md bg-ink px-3 py-1.5 font-display text-base font-600 text-white">${parseMd(`*Sample text*{${name}}`, 'dark')}</span>`
+          )
+          .join('')}
+      </div>
+      <p class="mt-3 text-[11px] leading-snug text-muted">A name it does not know falls back to the automatic accent, so a typo can never print braces on the live site.</p>
+    </div>`
+  )
   initWordCycles(body)
 }
 

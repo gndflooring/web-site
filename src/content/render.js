@@ -50,7 +50,7 @@ function wordCycle(body) {
    sits on — a teal that reads on the ink hero would disappear on cream — so a
    name picks the hue and the background picks the shade. Written out as whole
    class names on purpose: Tailwind scans this file for them. */
-const ACCENTS = {
+export const ACCENTS = {
   teal: { dark: 'text-teal-300', light: 'text-teal-700' },
   gold: { dark: 'text-sand-300', light: 'text-sand-600' },
   // brand-600 on light is the eyebrow's own blue, so *word*{blue} in an eyebrow
