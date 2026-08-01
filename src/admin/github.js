@@ -164,6 +164,8 @@ const utf8ToB64 = (str) => {
 // (blobs/trees/commits/refs) are refused before the Contents endpoint is,
 // so a 403 there is worth retrying the simpler route.
 const isDenied = (e) => /GitHub 403/.test(e.message)
+// 422 "Update is not a fast forward" — the branch moved since we read it.
+const isStale = (e) => /GitHub 422/.test(e.message) && /fast forward/i.test(e.message)
 const WRITE_HELP =
   'GitHub denied write access to ' +
   REPO +
@@ -228,8 +230,15 @@ export async function ghCommitDraft(siteObj, images, message) {
   }
 }
 
-/** One atomic commit: blobs → tree → commit → ref. Needs Git Data write. */
-async function commitViaGitData(targetBranch, siteObj, images, message) {
+/**
+ * One atomic commit: blobs → tree → commit → ref. Needs Git Data write.
+ *
+ * The ref is updated without force, so GitHub rejects the write with 422
+ * "Update is not a fast forward" if the branch moved while we were building
+ * the commit — a deploy, another tab, a push from a laptop. That is exactly
+ * the case worth retrying: re-read the head and rebuild on top of it.
+ */
+async function commitViaGitData(targetBranch, siteObj, images, message, attempt = 0) {
   const ref = await ghApi(`/repos/${REPO}/git/ref/heads/${targetBranch}`)
   const headSha = ref.object.sha
   const headCommit = await ghApi(`/repos/${REPO}/git/commits/${headSha}`)
@@ -261,10 +270,17 @@ async function commitViaGitData(targetBranch, siteObj, images, message) {
       parents: [headSha],
     }),
   })
-  await ghApi(`/repos/${REPO}/git/refs/heads/${targetBranch}`, {
-    method: 'PATCH',
-    body: JSON.stringify({ sha: commit.sha, force: false }),
-  })
+  try {
+    await ghApi(`/repos/${REPO}/git/refs/heads/${targetBranch}`, {
+      method: 'PATCH',
+      body: JSON.stringify({ sha: commit.sha, force: false }),
+    })
+  } catch (e) {
+    if (!isStale(e) || attempt >= 2) throw e
+    // Someone moved the branch under us; rebuild on the new head.
+    console.warn(`${targetBranch} moved while committing — retrying (${attempt + 1})`)
+    return commitViaGitData(targetBranch, siteObj, images, message, attempt + 1)
+  }
   return commit.sha
 }
 
@@ -368,11 +384,16 @@ export async function ghSyncDraft({ siteObj } = {}) {
   const main = await ghApi(`/repos/${REPO}/git/ref/heads/${BASE}`)
   try {
     if (!ahead) {
-      await ghApi(`/repos/${REPO}/git/refs/heads/${DRAFT}`, {
-        method: 'PATCH',
-        body: JSON.stringify({ sha: main.object.sha, force: false }),
-      })
-      return { action: 'fast-forward', ahead, behind }
+      try {
+        await ghApi(`/repos/${REPO}/git/refs/heads/${DRAFT}`, {
+          method: 'PATCH',
+          body: JSON.stringify({ sha: main.object.sha, force: false }),
+        })
+        return { action: 'fast-forward', ahead, behind }
+      } catch (e) {
+        // The compare was already out of date; fall through and replay.
+        if (!isStale(e)) throw e
+      }
     }
 
     // Diverged: rebuild the draft on main, carrying the files it added.
