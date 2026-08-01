@@ -26,6 +26,7 @@ import {
   ghPublish,
   ghDeployStatus,
   ghDraftStatus,
+  ghSyncDraft,
   ghResizeImage,
 } from './github.js'
 
@@ -1106,6 +1107,7 @@ const PHASES = {
   unknown: { dot: 'bg-slate-300', text: 'text-muted', label: 'Checking…' },
   clean: { dot: 'bg-emerald-500', text: 'text-emerald-700', label: 'Live is up to date' },
   ahead: { dot: 'bg-amber-500', text: 'text-amber-700', label: 'Draft not published' },
+  syncing: { dot: 'bg-brand-500 animate-pulse', text: 'text-brand-700', label: 'Syncing with live…' },
   saving: { dot: 'bg-brand-500 animate-pulse', text: 'text-brand-700', label: 'Saving draft…' },
   saved: { dot: 'bg-emerald-500', text: 'text-emerald-700', label: 'Draft saved' },
   publishing: { dot: 'bg-brand-500 animate-pulse', text: 'text-brand-700', label: 'Merging to main…' },
@@ -1118,7 +1120,7 @@ function setPhase(phase, detail = '', extra = {}) {
   deploy.phase = phase
   deploy.detail = detail
   Object.assign(deploy, extra)
-  if (['saving', 'publishing', 'building'].includes(phase) && !deploy.since) deploy.since = Date.now()
+  if (['syncing', 'saving', 'publishing', 'building'].includes(phase) && !deploy.since) deploy.since = Date.now()
   if (['live', 'failed', 'clean', 'ahead', 'saved'].includes(phase)) deploy.since = 0
   paintDeploy()
 }
@@ -1204,8 +1206,17 @@ async function save(publish) {
   const orig = btn.textContent
   sBtn.disabled = pBtn.disabled = true
   btn.textContent = publish ? 'Publishing…' : 'Saving…'
-  setPhase('saving')
   try {
+    if (publish) {
+      // Pull first: replay the draft on top of live so the merge that follows
+      // is a fast-forward rather than a conflict.
+      setPhase('syncing')
+      const sync = await ghSyncDraft({ siteObj: content })
+      if (sync.action === 'rebased') toast(`Draft replayed on live (was ${sync.behind} behind)`)
+      else if (sync.action === 'fast-forward') toast('Draft brought up to date with live')
+      else if (sync.action === 'failed') toast('Could not sync with live — publishing anyway')
+    }
+    setPhase('saving')
     await ghCommitDraft(content, pending, publish ? 'Site content (pre-publish)' : 'Update site content')
     pending = []
     if (!publish) {
@@ -1280,6 +1291,10 @@ export async function mountWebsite(v) {
   v.innerHTML = '<p class="p-10 text-center text-muted">Loading content…</p>'
   try {
     await ghEnsureDraft()
+    // A draft left behind by deploys or another machine is brought forward
+    // before anything is read, so edits start from what is live.
+    const sync = await ghSyncDraft()
+    if (sync.action === 'fast-forward') toast(`Draft synced with live (was ${sync.behind} behind)`)
     content = migrate((await ghLoadSiteJson()) || JSON.parse(JSON.stringify(seed)))
   } catch (e) {
     content = migrate(JSON.parse(JSON.stringify(seed)))

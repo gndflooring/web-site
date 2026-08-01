@@ -339,6 +339,87 @@ export async function ghPublish(message) {
   return { merged: !!merged, sha: '' }
 }
 
+/**
+ * Bring content-draft in line with main so a publish can fast-forward.
+ *
+ *   behind 0            → nothing to do
+ *   behind, not ahead   → fast-forward the ref (no history rewritten)
+ *   diverged            → replay the draft on top of main: the editor's
+ *                         site.json plus every upload the draft added, as a
+ *                         single commit parented on main
+ *
+ * Replaying is safe here because the draft only ever carries content — one
+ * JSON document the editor holds in full, and image files that are pure
+ * additions. Returns { action, ahead, behind } and never throws: a sync that
+ * cannot run should not block a save.
+ */
+export async function ghSyncDraft({ siteObj } = {}) {
+  const nothing = { action: 'none', ahead: 0, behind: 0 }
+  let cmp
+  try {
+    cmp = await ghApi(`/repos/${REPO}/compare/${BASE}...${DRAFT}`)
+  } catch {
+    return nothing
+  }
+  const ahead = cmp.ahead_by || 0
+  const behind = cmp.behind_by || 0
+  if (!behind) return { action: 'none', ahead, behind }
+
+  const main = await ghApi(`/repos/${REPO}/git/ref/heads/${BASE}`)
+  try {
+    if (!ahead) {
+      await ghApi(`/repos/${REPO}/git/refs/heads/${DRAFT}`, {
+        method: 'PATCH',
+        body: JSON.stringify({ sha: main.object.sha, force: false }),
+      })
+      return { action: 'fast-forward', ahead, behind }
+    }
+
+    // Diverged: rebuild the draft on main, carrying the files it added.
+    const mainCommit = await ghApi(`/repos/${REPO}/git/commits/${main.object.sha}`)
+    const tree = (cmp.files || [])
+      .filter((f) => f.status !== 'removed' && f.filename.startsWith('public/uploads/'))
+      .map((f) => ({ path: f.filename, mode: '100644', type: 'blob', sha: f.sha }))
+
+    const json = siteObj || (await ghLoadSiteJson())
+    if (json) {
+      const blob = await ghApi(`/repos/${REPO}/git/blobs`, {
+        method: 'POST',
+        body: JSON.stringify({ content: JSON.stringify(json, null, 2) + '\n', encoding: 'utf-8' }),
+      })
+      tree.push({ path: 'src/content/site.json', mode: '100644', type: 'blob', sha: blob.sha })
+    }
+    if (!tree.length) {
+      await ghApi(`/repos/${REPO}/git/refs/heads/${DRAFT}`, {
+        method: 'PATCH',
+        body: JSON.stringify({ sha: main.object.sha, force: true }),
+      })
+      return { action: 'fast-forward', ahead, behind }
+    }
+
+    const newTree = await ghApi(`/repos/${REPO}/git/trees`, {
+      method: 'POST',
+      body: JSON.stringify({ base_tree: mainCommit.tree.sha, tree }),
+    })
+    const commit = await ghApi(`/repos/${REPO}/git/commits`, {
+      method: 'POST',
+      body: JSON.stringify({
+        message: 'Sync draft with live',
+        tree: newTree.sha,
+        parents: [main.object.sha],
+      }),
+    })
+    await ghApi(`/repos/${REPO}/git/refs/heads/${DRAFT}`, {
+      method: 'PATCH',
+      body: JSON.stringify({ sha: commit.sha, force: true }),
+    })
+    return { action: 'rebased', ahead, behind }
+  } catch (e) {
+    console.warn('Draft sync unavailable:', e.message)
+    return { action: 'failed', ahead, behind, error: e.message }
+  }
+}
+
 /** How far the draft is ahead of / behind what is live on main. */
 export async function ghDraftStatus() {
   try {
