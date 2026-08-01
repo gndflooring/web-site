@@ -346,7 +346,7 @@
     "eyebrow": "Central Iowa Commercial *General Contractor*",
     "heading": "Construction that keeps your business running in *<Des Moines, Urbandale, Ames, West Des Moines | steady>*",
     "subcopy": "Hard-wearing installations, renovations and construction for offices, retail and hospitality across Greater Des Moines and Central Iowa — scheduled around your trading hours, delivered with minimal disruption.",
-    "image": "",
+    "image": "/uploads/1785611505785-img-0049.jpg",
     "imageBlur": 0,
     "ctaPrimary": "Request a site survey",
     "introHeading": "Built for *traffic*, finished for guests",
@@ -368,7 +368,14 @@
           "Slip-resistance to standard",
           "Rapid-cure options"
         ],
-        "images": []
+        "images": [
+          {
+            "src": "/uploads/1785611541325-img-0049.jpg",
+            "alt": "",
+            "caption": "",
+            "blur": 0
+          }
+        ]
       },
       {
         "title": "Maintenance & Refits",
