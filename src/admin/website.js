@@ -901,6 +901,7 @@ async function queueUpload(r, path, isNew, blur = 0) {
     if (path.endsWith('.src')) set(path.replace(/\.src$/, '.blur'), blur)
     else if (blur) set(path + 'Blur', blur)
   }
+  markDirty()
   toast('Image queued — Save draft to upload')
   renderEditor()
 }
@@ -961,11 +962,18 @@ function renderEditor(v) {
         <span class="text-xs text-muted">@${esc(ghUser() || 'github')}</span>
         <button id="wDisc" class="btn-ghost !px-2.5 !py-1 text-xs">Disconnect</button>
         <span id="wStatus" class="text-xs text-muted"></span>
-        <span id="wDeploy" class="flex items-center gap-1.5 rounded-full border border-line bg-app px-2.5 py-1 text-xs"></span>
         <div class="ml-auto flex gap-2">
           <button id="wSave" class="btn-ghost text-xs">Save Draft</button>
           <button id="wPub" class="btn-primary text-xs">Publish to Live</button>
         </div>
+      </div>
+
+      <!-- Where the current changes are: still in the editor, saved to the
+           draft, or live on the site. -->
+      <div class="flex shrink-0 flex-wrap items-center gap-x-4 gap-y-1 border-b border-line bg-app px-5 py-2 text-xs">
+        <span class="font-700 uppercase tracking-wider text-muted">Your changes</span>
+        <div id="wTrack" class="flex items-center gap-2"></div>
+        <div id="wTrackLinks" class="ml-auto flex items-center gap-3"></div>
       </div>
 
       <div class="flex min-h-0 flex-1 overflow-hidden">
@@ -1012,6 +1020,7 @@ function wireEditor(el) {
   el.querySelectorAll('[data-path]').forEach((inp) =>
     inp.addEventListener('input', () => {
       set(inp.dataset.path, inp.value)
+      markDirty()
       renderLivePreview()
     })
   )
@@ -1020,6 +1029,7 @@ function wireEditor(el) {
     inp.addEventListener('input', () => {
       const n = Number(inp.value) || 0
       set(inp.dataset.num, n)
+      markDirty()
       const out = inp.nextElementSibling
       if (out) out.textContent = n + 'px'
       renderLivePreview()
@@ -1100,8 +1110,10 @@ function wireEditor(el) {
    saved → merged → building → live (or failed), plus whether the
    draft currently differs from what is live.
    ============================================================= */
-const deploy = { phase: 'unknown', detail: '', runUrl: '', sha: '', since: 0 }
+const deploy = { phase: 'unknown', detail: '', runUrl: '', sha: '', since: 0, ahead: 0, liveAt: 0 }
 let deployTimer = null
+let idleTimer = null
+let dirty = false // edits made since the last successful save
 
 const PHASES = {
   unknown: { dot: 'bg-slate-300', text: 'text-muted', label: 'Checking…' },
@@ -1125,25 +1137,82 @@ function setPhase(phase, detail = '', extra = {}) {
   paintDeploy()
 }
 
+function markDirty() {
+  if (dirty) return
+  dirty = true
+  paintDeploy()
+}
+
 const elapsed = () => {
   if (!deploy.since) return ''
   const s = Math.round((Date.now() - deploy.since) / 1000)
   return s < 60 ? ` · ${s}s` : ` · ${Math.floor(s / 60)}m ${s % 60}s`
 }
 
+// Where the changes currently sit: in the editor, saved to the draft, or live.
+function trackSteps() {
+  const p = deploy.phase
+  const busyDraft = p === 'saving'
+  const busyLive = p === 'syncing' || p === 'publishing' || p === 'building'
+  const failed = p === 'failed'
+  const allLive = (p === 'live' || p === 'clean') && !dirty
+
+  return [
+    {
+      label: 'Editor',
+      state: dirty ? 'current' : 'done',
+      note: dirty ? 'unsaved changes' : '',
+    },
+    {
+      label: 'Draft',
+      state: busyDraft ? 'busy' : dirty ? 'todo' : 'done',
+      note: p === 'saved' ? 'saved' : deploy.ahead > 0 ? `${deploy.ahead} unpublished` : '',
+    },
+    {
+      label: 'Live',
+      state: failed ? 'error' : busyLive ? 'busy' : allLive && deploy.ahead === 0 ? 'done' : 'todo',
+      note: failed ? 'deploy failed' : busyLive ? PHASES[p].label.replace('…', '') : allLive ? agoText() : '',
+    },
+  ]
+}
+
+const STEP_STYLE = {
+  done: { dot: 'bg-emerald-500', text: 'text-ink' },
+  current: { dot: 'bg-amber-500', text: 'text-amber-800' },
+  busy: { dot: 'bg-brand-500 animate-pulse', text: 'text-brand-800' },
+  todo: { dot: 'bg-slate-300', text: 'text-muted' },
+  error: { dot: 'bg-rose-500', text: 'text-rose-700' },
+}
+
+function agoText() {
+  if (!deploy.liveAt) return ''
+  const s = Math.round((Date.now() - deploy.liveAt) / 1000)
+  if (s < 60) return 'just now'
+  if (s < 3600) return `${Math.floor(s / 60)}m ago`
+  return `${Math.floor(s / 3600)}h ago`
+}
+
 function paintDeploy() {
-  const el = $('wDeploy')
-  if (!el) return
-  const p = PHASES[deploy.phase] || PHASES.unknown
-  el.innerHTML = `<span class="h-2 w-2 shrink-0 rounded-full ${p.dot}"></span>
-    <span class="font-600 ${p.text}">${p.label}</span>
-    ${deploy.detail ? `<span class="text-muted">${esc(deploy.detail)}${elapsed()}</span>` : `<span class="text-muted">${elapsed()}</span>`}
-    ${deploy.runUrl ? `<a href="${esc(deploy.runUrl)}" target="_blank" rel="noopener" class="text-brand-700 underline">build log</a>` : ''}
-    ${
-      deploy.phase === 'live'
-        ? `<a href="https://www.gnd-flooring.com/" target="_blank" rel="noopener" class="text-brand-700 underline">view site</a>`
-        : ''
-    }`
+  const track = $('wTrack')
+  if (!track) return
+  const steps = trackSteps()
+  track.innerHTML = steps
+    .map((st, i) => {
+      const sty = STEP_STYLE[st.state] || STEP_STYLE.todo
+      return `${i ? '<span class="h-px w-5 bg-line"></span>' : ''}
+        <span class="flex items-center gap-1.5 whitespace-nowrap">
+          <span class="h-2 w-2 shrink-0 rounded-full ${sty.dot}"></span>
+          <span class="font-700 ${sty.text}">${st.label}</span>
+          ${st.note ? `<span class="text-muted">${esc(st.note)}${st.state === 'busy' ? elapsed() : ''}</span>` : ''}
+        </span>`
+    })
+    .join('')
+
+  const links = $('wTrackLinks')
+  if (links)
+    links.innerHTML = `${deploy.detail ? `<span class="text-muted">${esc(deploy.detail)}</span>` : ''}
+      ${deploy.runUrl ? `<a href="${esc(deploy.runUrl)}" target="_blank" rel="noopener" class="font-600 text-brand-700 underline">build log ↗</a>` : ''}
+      <a href="https://www.gnd-flooring.com/" target="_blank" rel="noopener" class="font-600 text-brand-700 underline">live site ↗</a>`
 }
 
 /** Where do things stand right now? Runs on mount and after a publish. */
@@ -1155,18 +1224,31 @@ async function refreshDeployState() {
     watchDeploy()
     return
   }
+  deploy.ahead = draft ? draft.ahead : 0
+  if (run?.updatedAt) deploy.liveAt = Date.parse(run.updatedAt) || 0
   if (draft && draft.ahead > 0) {
-    setPhase('ahead', `${draft.ahead} change${draft.ahead === 1 ? '' : 's'} waiting`)
+    setPhase('ahead', `${draft.ahead} change${draft.ahead === 1 ? '' : 's'} on the draft`, { runUrl: run?.url || '' })
   } else if (run && run.conclusion === 'failure') {
     setPhase('failed', `main @ ${String(run.sha).slice(0, 7)}`, { runUrl: run.url })
   } else {
-    setPhase('clean', run ? `main @ ${String(run.sha).slice(0, 7)}` : '')
+    setPhase('clean', run ? `main @ ${String(run.sha).slice(0, 7)}` : '', { runUrl: run?.url || '' })
   }
+  scheduleIdleRefresh()
+}
+
+// While nothing is in flight, re-check every half minute so a deploy started
+// elsewhere (another machine, a push) shows up here without a reload.
+function scheduleIdleRefresh() {
+  clearTimeout(idleTimer)
+  idleTimer = setTimeout(() => {
+    if (!deployTimer && host && host.classList.contains('cms-view')) refreshDeployState()
+  }, 30000)
 }
 
 /** Poll the deploy run until it settles, keeping the strip current. */
 function watchDeploy() {
   clearInterval(deployTimer)
+  clearTimeout(idleTimer)
   const started = Date.now()
   deployTimer = setInterval(async () => {
     paintDeploy() // keep the elapsed clock moving
@@ -1188,8 +1270,12 @@ function watchDeploy() {
       return
     }
     clearInterval(deployTimer)
+    deployTimer = null
+    deploy.ahead = 0
+    deploy.liveAt = Date.now()
     if (run.conclusion === 'success') setPhase('live', `main @ ${String(run.sha).slice(0, 7)}`, { runUrl: run.url })
     else setPhase('failed', `${run.conclusion} · main @ ${String(run.sha).slice(0, 7)}`, { runUrl: run.url })
+    scheduleIdleRefresh()
   }, 6000)
 }
 
@@ -1223,6 +1309,7 @@ async function save(publish) {
     setPhase('saving')
     await ghCommitDraft(content, pending, publish ? 'Site content (pre-publish)' : 'Update site content', { parentSha })
     pending = []
+    dirty = false
     if (!publish) {
       btn.textContent = 'Saved ✓'
       st.textContent = ''

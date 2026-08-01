@@ -462,7 +462,13 @@ export async function ghDeployStatus() {
   const r = await ghApi(`/repos/${REPO}/actions/runs?branch=${BASE}&per_page=1`)
   const run = (r.workflow_runs || [])[0]
   return run
-    ? { status: run.status, conclusion: run.conclusion, url: run.html_url, sha: run.head_sha }
+    ? {
+        status: run.status,
+        conclusion: run.conclusion,
+        url: run.html_url,
+        sha: run.head_sha,
+        updatedAt: run.updated_at,
+      }
     : null
 }
 
