@@ -264,15 +264,15 @@
     "eyebrow": "Get In *Touch*",
     "heading": "Let's plan your *project*",
     "subcopy": "Tell us about your space and we'll get back within *one business day* with next steps. All estimates are free.",
-    "phone": "(555) 123-4567",
-    "phoneHref": "tel:+15551234567",
-    "email": "hello@gnd-flooring.com",
+    "phone": "515-681-4868",
+    "phoneHref": "tel:+15156814868",
+    "email": "sales@gnd-flooring.com",
     "hours": "Mon–Fri 8am–6pm · Sat 9am–2pm",
     "openingHours": [
       "Mo-Fr 08:00-18:00",
       "Sa 09:00-14:00"
     ],
-    "serviceArea": "Greater Des Moines & Central Iowa — *within 50 miles*",
+    "serviceArea": "Greater Des Moines & Central Iowa",
     "addressStreet": "",
     "addressLocality": "Des Moines",
     "addressRegion": "IA",
@@ -292,7 +292,7 @@
   "footer": {
     "blurb": "Premium flooring & renovation craftsmanship for Greater Des Moines and Central Iowa. Hardwood, vinyl, tile & *bathroom transformations* — done right.",
     "license": "License #PLACEHOLDER-000000",
-    "note": "Placeholder content — replace business details & imagery before launch."
+    "note": ""
   },
   "brand": {
     "name": "G&D Flooring",
