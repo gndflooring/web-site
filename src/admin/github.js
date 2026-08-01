@@ -127,6 +127,14 @@ export async function ghPollToken(deviceCode, interval, expiresIn, onTick) {
 async function ghApi(path, opts = {}) {
   const res = await fetch(`${API}${path}`, {
     ...opts,
+    // Never read GitHub through the HTTP cache. Authenticated responses carry
+    // `Cache-Control: private, max-age=60`, so a second GET of the same URL
+    // inside a minute is answered by the browser with the body from the first
+    // one. For a branch ref that means a save made shortly after another one
+    // builds its commit on a sha that has already moved, and the ref update
+    // comes back 422 "Update is not a fast forward" — including on every
+    // retry, since the retry re-read is served from the same cache entry.
+    cache: 'no-store',
     headers: {
       Authorization: `Bearer ${ghToken()}`,
       Accept: 'application/vnd.github+json',
@@ -279,12 +287,14 @@ async function commitViaGitData(targetBranch, siteObj, images, message, attempt 
       body: JSON.stringify({ sha: commit.sha, force: false }),
     })
   } catch (e) {
-    if (!isStale(e) || attempt >= 3) throw e
+    if (!isStale(e) || attempt >= 4) throw e
     // The branch moved, or our read of it was stale. Wait for the ref to
     // settle — an immediate re-read tends to return the same stale sha —
-    // then rebuild on whatever is actually there.
+    // then rebuild on whatever is actually there. The reads are uncached, so
+    // this now converges on a genuinely moving branch (another tab, a laptop)
+    // rather than replaying one cached answer.
     console.warn(`${targetBranch} moved while committing — retrying (${attempt + 1})`)
-    await new Promise((r) => setTimeout(r, 600 * (attempt + 1)))
+    await new Promise((r) => setTimeout(r, Math.min(4000, 500 * 2 ** attempt)))
     return commitViaGitData(targetBranch, siteObj, images, message, attempt + 1, '')
   }
   return commit.sha
