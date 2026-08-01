@@ -27,7 +27,9 @@ jobs:
 
       - name: Configure Clasp Authentication & Script ID
         run: |
-          mkdir -p ~/.clasprc.json
+          # No mkdir here: ~/.clasprc.json is a FILE. Creating it as a
+          # directory is what made every run of this workflow fail on the
+          # redirect below with "Is a directory".
           echo "$CLASPRC_JSON" > ~/.clasprc.json
           cat <<EOF > .clasp.json
           {

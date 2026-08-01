@@ -25,6 +25,37 @@
  * not a secret. Nothing here needs Script Properties.
  */
 
+/**
+ * Guards, and why they are not a CAPTCHA.
+ *
+ * There is nothing here to steal: no secret, no token, no data, and the two
+ * GitHub endpoints behind it are public and unauthenticated. What a CAPTCHA
+ * would defend is the Apps Script quota this deployment shares with the
+ * contact form — and it would defend it badly, because the poll runs every
+ * five seconds for up to fifteen minutes, so each authorisation would need
+ * ~180 single-use reCAPTCHA tokens and ~180 extra UrlFetch calls to verify
+ * them. That spends more of the quota than the abuse it prevents.
+ *
+ * These two cost nothing per request and address the actual risk:
+ *   1. the relay only ever speaks for our own OAuth app, so it cannot be
+ *      borrowed as a free proxy for someone else's device flow;
+ *   2. a global ceiling per minute, so a burst cannot starve the form.
+ * Set GITHUB_CLIENT_ID in Script Properties to arm the first one.
+ */
+var RELAY_MAX_PER_MIN = 150
+
+function relayWithinBudget_() {
+  try {
+    var cache = CacheService.getScriptCache()
+    var key = 'ghrelay-' + Math.floor(Date.now() / 60000)
+    var n = Number(cache.get(key) || 0) + 1
+    cache.put(key, String(n), 120)
+    return n <= RELAY_MAX_PER_MIN
+  } catch (err) {
+    return true // never let the limiter itself break a legitimate sign-in
+  }
+}
+
 function doGet(e) {
   var p = (e && e.parameter) || {}
   var cb = p.callback
@@ -32,6 +63,16 @@ function doGet(e) {
 
   if (gh !== 'device_code' && gh !== 'poll') {
     return jsonp_(cb, { ok: true, service: 'gnd github device relay' })
+  }
+
+  var expected = PropertiesService.getScriptProperties().getProperty('GITHUB_CLIENT_ID')
+  if (expected && p.client_id !== expected) {
+    return jsonp_(cb, { error: 'forbidden_client', error_description: 'This relay only serves its own OAuth app.' })
+  }
+  if (!relayWithinBudget_()) {
+    // slow_down is part of the device-flow spec, so the client already knows
+    // to back off rather than to give up.
+    return jsonp_(cb, { error: 'slow_down', error_description: 'Relay busy — retrying shortly.' })
   }
 
   try {

@@ -33,6 +33,16 @@ import {
 
 const $ = (id) => document.getElementById(id)
 
+/** Clipboard write that reports whether it worked, rather than throwing. */
+async function copyText(s) {
+  try {
+    await navigator.clipboard.writeText(s)
+    return true
+  } catch {
+    return false
+  }
+}
+
 function toast(msg) {
   const t = $('toast')
   if (!t) return
@@ -1474,10 +1484,26 @@ export async function mountWebsite(v) {
       flow.textContent = 'Requesting code…'
       try {
         const d = await ghStartDeviceFlow()
+        // Copy before opening the tab: a browser will not write to the
+        // clipboard from a document that has lost focus, and the click that
+        // started this flow is the gesture authorising the write.
+        const copied = await copyText(d.user_code)
         flow.innerHTML = `<p>1. Open <a class="text-brand-700 underline" href="${esc(d.verification_uri)}" target="_blank" rel="noopener">${esc(d.verification_uri)}</a></p>
-          <p class="mt-2">2. Enter this code:</p>
-          <p class="my-2 font-mono text-2xl font-700 tracking-widest">${esc(d.user_code)}</p>
-          <p class="text-muted">Waiting for authorization…</p>`
+          <p class="mt-2">2. Paste the code:</p>
+          <div class="my-2 flex items-center justify-center gap-3">
+            <span class="font-mono text-2xl font-700 tracking-widest">${esc(d.user_code)}</span>
+            <button type="button" data-copy="${esc(d.user_code)}" class="btn-ghost !px-2.5 !py-1 text-xs">Copy</button>
+          </div>
+          <p id="wCopied" class="text-xs ${copied ? 'text-emerald-600' : 'text-muted'}">${
+            copied ? '✓ Copied to your clipboard' : 'Copy it with the button above'
+          }</p>
+          <p class="mt-2 text-muted">Waiting for authorization…</p>`
+        flow.querySelector('[data-copy]').addEventListener('click', async (ev) => {
+          const ok = await copyText(ev.currentTarget.dataset.copy)
+          const note = $('wCopied')
+          note.textContent = ok ? '✓ Copied to your clipboard' : 'Copy failed — select the code and copy it by hand'
+          note.className = `text-xs ${ok ? 'text-emerald-600' : 'text-rose-600'}`
+        })
         window.open(d.verification_uri, '_blank', 'noopener')
         await ghPollToken(d.device_code, d.interval, d.expires_in)
         await ghEnsureDraft()

@@ -20,10 +20,11 @@
   <!-- Gold frame: the edge of the mark, not an inset hairline. -->
   <rect x="1.35" y="1.35" width="61.3" height="61.3" rx="13.7" fill="none" stroke="url(#gd-gold)" stroke-width="2.7"/>
 
-  <!-- Ampersand behind the monogram — a hint of depth, not a third letter. -->
-  <text x="32" y="33" text-anchor="middle" dominant-baseline="central"
-        font-family="Georgia, 'Times New Roman', 'Iowan Old Style', serif"
-        font-size="50" font-style="italic" fill="#b6f2e8" opacity="0.15">&amp;</text>
+  <!-- Ampersand behind the monogram, in a light teal so it reads as depth
+       rather than as a third letter. Outlined from Fraunces italic at its
+       display optical size — the face the wordmark is set in — so the mark
+       cannot change shape on a machine that lacks the font. -->
+  <path d="M22.66 40.8 40.5 25.57Q41.49 24.73 42.08 24.02Q42.66 23.31 42.92 22.6Q43.17 21.88 43.17 21.06Q43.15 20.24 42.83 19.65Q42.52 19.06 42.19 18.54Q41.86 18.02 41.84 17.37Q41.83 16.64 42.29 16.09Q42.76 15.54 43.62 15.5Q44.47 15.48 45.11 16.26Q45.74 17.05 45.74 18.28Q45.78 19.38 45.39 20.43Q45 21.49 44.05 22.63Q43.11 23.78 41.49 25.16L23.7 40.41Q22.73 41.21 22.09 42.01Q21.44 42.8 21.14 43.56Q20.83 44.33 20.83 45.11Q20.85 45.99 21.17 46.57Q21.48 47.14 21.8 47.61Q22.12 48.08 22.15 48.67Q22.17 49.38 21.68 49.92Q21.18 50.46 20.33 50.5Q19.39 50.52 18.84 49.77Q18.29 49.03 18.26 47.65Q18.24 46.1 19.31 44.43Q20.38 42.76 22.66 40.8ZM38.02 37.89Q38.1 37.07 37.83 36.42Q37.56 35.77 37.28 35.13Q37.01 34.5 37.09 33.72Q37.13 33.23 37.45 32.73Q37.78 32.23 38.36 31.89Q38.93 31.55 39.72 31.55Q40.54 31.55 41.02 32.1Q41.51 32.66 41.4 33.74Q41.27 35.94 40.3 37.78Q39.33 39.63 37.73 41Q36.14 42.37 34.14 43.12Q32.15 43.88 29.89 43.88Q27.15 43.88 25.3 42.49Q23.46 41.1 22.77 38.71Q22.08 36.31 22.79 33.25Q23.33 30.88 24.54 28.98Q25.75 27.08 27.39 25.74Q29.03 24.39 30.93 23.69Q32.82 22.98 34.74 22.98Q36.73 22.98 38.01 23.63Q39.29 24.28 39.87 25.35Q40.45 26.41 40.33 27.64Q40.31 28.07 40.13 28.35Q39.94 28.63 39.66 28.61Q38.45 28.63 37.48 29.02Q36.51 29.41 35.37 30.4Q35.49 30.06 35.69 29.33Q35.9 28.59 36.04 27.15Q36.21 25.25 35.77 24.25Q35.32 23.24 34.31 23.24Q33.1 23.24 31.95 24.25Q30.81 25.25 29.82 27.33Q28.83 29.41 28.08 32.64Q27.26 36.14 27.64 38.48Q28.01 40.82 29.15 42Q30.28 43.17 31.79 43.17Q33.02 43.17 34.13 42.75Q35.24 42.33 36.07 41.62Q36.9 40.92 37.42 39.96Q37.95 39.01 38.02 37.89Z" fill="#b6f2e8" opacity="0.15"/>
 
   <!-- G and D, sized against each other rather than drawn to fit:
        the G is a 24.5-wide circle, the D 21 wide and a touch shorter, so the
