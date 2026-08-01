@@ -1,13 +1,13 @@
 {
   "meta": {
-    "title": "G&D Flooring — Premium Flooring & Renovations",
-    "description": "G&D Flooring is a premium flooring contractor specializing in hardwood, luxury vinyl, tile & stone, and bathroom renovations. Craftsmanship you can stand on.",
-    "ogTitle": "G&D Flooring — Premium Flooring & Renovations",
-    "ogDescription": "Hardwood, luxury vinyl, tile & stone, and bathroom renovations. Craftsmanship you can stand on."
+    "title": "Hardwood, Vinyl & Tile Flooring in Des Moines | G&D Flooring",
+    "description": "Licensed flooring contractors serving Greater Des Moines, West Des Moines, Urbandale and Ames. Hardwood, luxury vinyl, tile & bathroom renovations. Free on-site estimates.",
+    "ogTitle": "Hardwood, Vinyl & Tile Flooring in Des Moines — G&D Flooring",
+    "ogDescription": "Flooring and bathroom renovations across Central Iowa. Free on-site estimates, lifetime workmanship warranty."
   },
   "hero": {
-    "eyebrow": "Flooring & Renovation Specialists You Can *Trust*",
-    "subcopy": "G&D Flooring brings craftsmanship, premium materials, and a meticulous eye to hardwood, luxury vinyl, tile, and full bathroom renovations — built to last and finished beautifully.",
+    "eyebrow": "Central Iowa Flooring & Renovation *Specialists*",
+    "subcopy": "G&D Flooring brings craftsmanship, premium materials and a meticulous eye to hardwood, luxury vinyl, tile and full bathroom renovations — for homes across Greater Des Moines, West Des Moines, Urbandale and Ames.",
     "ctaPrimary": "Get a Free Quote",
     "ctaSecondary": "Explore Services",
     "image": "/uploads/1785533401766-482022264-600938916113585-48503508381486.jpg",
@@ -25,7 +25,7 @@
         "label": "Satisfaction focus"
       }
     ],
-    "headline": "Floors that *elevate* every room."
+    "headline": "Floors that *elevate* every room in Des Moines"
   },
   "trust": [
     "Licensed & Insured",
@@ -34,9 +34,9 @@
     "Locally Owned & Operated"
   ],
   "services": {
-    "eyebrow": "Our Services",
-    "heading": "A full catalog of flooring craft",
-    "subcopy": "From timeless hardwood to a complete bathroom transformation — every project gets the same obsessive attention to detail.",
+    "eyebrow": "Our *Services*",
+    "heading": "Flooring we install across *Central Iowa*",
+    "subcopy": "From timeless hardwood to a complete bathroom transformation — every Des Moines project gets the same *obsessive attention* to detail.",
     "items": [
       {
         "title": "Hardwood Flooring",
@@ -105,7 +105,7 @@
     ]
   },
   "about": {
-    "eyebrow": "Why G&D",
+    "eyebrow": "Why Central Iowa Chooses *G&D*",
     "headingLead": "Built on detail,",
     "headingRest": "finished with pride",
     "body": "We treat every home like our own. From the first measurement to the final sweep, you work with the same dedicated team — no shortcuts, no surprises.",
@@ -133,8 +133,8 @@
     ]
   },
   "process": {
-    "eyebrow": "How We Work",
-    "heading": "A simple, four-step process",
+    "eyebrow": "How We *Work*",
+    "heading": "How your flooring installation *works*",
     "steps": [
       {
         "title": "Consultation",
@@ -163,8 +163,8 @@
     ]
   },
   "gallery": {
-    "eyebrow": "Recent Work",
-    "heading": "A look at our floors",
+    "eyebrow": "Recent *Work*",
+    "heading": "Recent flooring projects in *Des Moines*",
     "ctaLabel": "Start your project",
     "items": [
       {
@@ -230,8 +230,8 @@
     ]
   },
   "testimonials": {
-    "eyebrow": "Kind Words",
-    "heading": "Homeowners love the result",
+    "eyebrow": "Kind *Words*",
+    "heading": "What *Central Iowa* homeowners say",
     "items": [
       {
         "quote": "The hardwood floors completely transformed our home. The crew was punctual, tidy, and the finish is flawless.",
@@ -255,28 +255,42 @@
   },
   "ctaBand": {
     "heading": "Ready to transform your floors?",
-    "subcopy": "Book a free, no-obligation on-site estimate. We'll bring the samples and the honest advice.",
+    "subcopy": "Book a *free*, no-obligation on-site estimate anywhere in Greater Des Moines. We'll bring the samples and honest advice.",
     "primaryLabel": "Get a Free Quote",
     "callLabel": "Call (555) 123-4567",
     "callHref": "tel:+15551234567"
   },
   "contact": {
-    "eyebrow": "Get In Touch",
-    "heading": "Let's plan your project",
-    "subcopy": "Tell us about your space and we'll get back within one business day with next steps. All estimates are free.",
+    "eyebrow": "Get In *Touch*",
+    "heading": "Let's plan your *project*",
+    "subcopy": "Tell us about your space and we'll get back within *one business day* with next steps. All estimates are free.",
     "phone": "(555) 123-4567",
     "phoneHref": "tel:+15551234567",
     "email": "hello@gnd-flooring.com",
-    "serviceArea": "Greater Your City — within 50 miles",
-    "address": "123 Placeholder Ave, Suite 100, Your City, ST 00000",
-    "hours": "Mon–Fri 8am–6pm · Sat 9am–2pm"
+    "hours": "Mon–Fri 8am–6pm · Sat 9am–2pm",
+    "openingHours": [
+      "Mo-Fr 08:00-18:00",
+      "Sa 09:00-14:00"
+    ],
+    "serviceArea": "Greater Des Moines & Central Iowa — *within 50 miles*",
+    "addressStreet": "",
+    "addressLocality": "Des Moines",
+    "addressRegion": "IA",
+    "addressPostal": "",
+    "addressCountry": "US",
+    "areaServed": [
+      "Des Moines",
+      "West Des Moines",
+      "Urbandale",
+      "Ankeny",
+      "Ames",
+      "Central Iowa"
+    ],
+    "priceRange": "$$",
+    "sameAs": []
   },
   "footer": {
-    "blurb": "Premium flooring & renovation craftsmanship. Hardwood, vinyl, tile & full bathroom transformations — done right.",
-    "phone": "(555) 123-4567",
-    "phoneHref": "tel:+15551234567",
-    "email": "hello@gnd-flooring.com",
-    "hours": "Mon–Fri 8am–6pm",
+    "blurb": "Premium flooring & renovation craftsmanship for Greater Des Moines and Central Iowa. Hardwood, vinyl, tile & *bathroom transformations* — done right.",
     "license": "License #PLACEHOLDER-000000",
     "note": "Placeholder content — replace business details & imagery before launch."
   },
@@ -288,8 +302,8 @@
     "ctaLabel": "Commercial Services",
     "backLabel": "Residential services",
     "eyebrow": "Commercial *Flooring*",
-    "heading": "Floors that keep your *business* moving",
-    "subcopy": "Hard-wearing installations for offices, retail and hospitality — scheduled around your trading hours, delivered with minimal disruption.",
+    "heading": "Commercial flooring for *Des Moines* businesses",
+    "subcopy": "Hard-wearing installations for offices, retail and hospitality across Central Iowa — scheduled around your trading hours, delivered with minimal disruption.",
     "image": "",
     "imageBlur": 0,
     "ctaPrimary": "Request a site survey",
@@ -324,7 +338,7 @@
         "images": []
       }
     ],
-    "sectorsHeading": "Sectors we *serve*",
+    "sectorsHeading": "Sectors we serve across *Central Iowa*",
     "sectors": [
       "Offices",
       "Retail",
@@ -334,8 +348,10 @@
       "Fitness",
       "Property management"
     ],
-    "ctaHeading": "Planning a commercial fit-out?",
+    "ctaHeading": "Planning a commercial fit-out in Des Moines?",
     "ctaSubcopy": "Send us the drawings or the square footage and we will come back with a specification and a programme.",
-    "ctaButton": "Talk to us"
+    "ctaButton": "Talk to us",
+    "metaTitle": "Commercial Flooring Contractors in Des Moines | G&D Flooring",
+    "metaDescription": "Commercial flooring for offices, retail and hospitality across Greater Des Moines, West Des Moines, Urbandale and Ames. Out-of-hours fitting, minimal disruption."
   }
 }

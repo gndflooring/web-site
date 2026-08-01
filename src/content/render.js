@@ -546,13 +546,13 @@ export const gen = {
         )
       ),
       when(
-        has(k.serviceArea) || has(k.address),
+        has(k.serviceArea) || has(addressLine(k)),
         row(
           '<path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0z"/><circle cx="12" cy="10" r="3"/>',
           'Service Area',
           `${when(has(k.serviceArea), `<p class="text-lg font-600 text-ink">${parseMd(k.serviceArea, 'light')}</p>`)}${when(
-            has(k.address),
-            `<p class="text-sm text-muted">${parseMd(k.address, 'light')}</p>`
+            has(addressLine(k)),
+            `<p class="text-sm text-muted">${esc(addressLine(k))}</p>`
           )}`
         )
       ),
@@ -587,10 +587,12 @@ export const gen = {
     const services = (c.services?.items || []).filter((it) => has(it.title))
     const company = navItems(c).filter((n) => n.id !== 'services')
     const base = c.__base || ''
+    // Phone, email and hours live once, in `contact`.
+    const k = c.contact || {}
     const contactLines = [
-      when(has(f.phone), `<li><a href="${esc(f.phoneHref)}" class="hover:text-white">${parseMd(f.phone, 'dark')}</a></li>`),
-      when(has(f.email), `<li><a href="mailto:${esc(f.email)}" class="hover:text-white">${parseMd(f.email, 'dark')}</a></li>`),
-      when(has(f.hours), `<li>${parseMd(f.hours, 'dark')}</li>`),
+      when(has(k.phone), `<li><a href="${esc(k.phoneHref)}" class="hover:text-white">${parseMd(k.phone, 'dark')}</a></li>`),
+      when(has(k.email), `<li><a href="mailto:${esc(k.email)}" class="hover:text-white">${parseMd(k.email, 'dark')}</a></li>`),
+      when(has(k.hours), `<li>${parseMd(k.hours, 'dark')}</li>`),
       when(has(f.license), `<li>${parseMd(f.license, 'dark')}</li>`),
     ].join('')
     return `<div>
@@ -632,6 +634,90 @@ export const gen = {
   // Whole-block regions used by index.html
   header: (c) => headerHtml(c),
   footerBlock: (c) => footerHtml(c),
+  headMeta: (c) => headMeta(c, { path: '/' }),
+}
+
+/* ---------- contact, structured data and head tags ---------- */
+export const SITE_URL = 'https://www.gnd-flooring.com'
+
+/** One-line postal address from its parts; empty when nothing is set. */
+export function addressLine(k = {}) {
+  return [k.addressStreet, k.addressLocality, [k.addressRegion, k.addressPostal].filter(has).join(' ')]
+    .filter(has)
+    .join(', ')
+}
+
+/**
+ * schema.org business record, built from `contact` so it can never drift
+ * from what the page says. Fields with no value are omitted rather than
+ * published empty — a wrong phone number is worse than no phone number.
+ */
+export function jsonLd(c) {
+  const k = c.contact || {}
+  const url = c.brand?.url || SITE_URL
+  const data = {
+    '@context': 'https://schema.org',
+    '@type': 'HomeAndConstructionBusiness',
+    name: brandName(c),
+    url,
+    ...(has(c.brand?.logo) ? { logo: url + c.brand.logo, image: url + c.brand.logo } : {}),
+    ...(has(c.meta?.description) ? { description: c.meta.description } : {}),
+    ...(has(k.phone) ? { telephone: k.phoneHref ? k.phoneHref.replace(/^tel:/, '') : k.phone } : {}),
+    ...(has(k.email) ? { email: k.email } : {}),
+    ...(has(k.priceRange) ? { priceRange: k.priceRange } : {}),
+  }
+
+  const addr = {
+    ...(has(k.addressStreet) ? { streetAddress: k.addressStreet } : {}),
+    ...(has(k.addressLocality) ? { addressLocality: k.addressLocality } : {}),
+    ...(has(k.addressRegion) ? { addressRegion: k.addressRegion } : {}),
+    ...(has(k.addressPostal) ? { postalCode: k.addressPostal } : {}),
+    ...(has(k.addressCountry) ? { addressCountry: k.addressCountry } : {}),
+  }
+  if (Object.keys(addr).length) data.address = { '@type': 'PostalAddress', ...addr }
+
+  const areas = (k.areaServed || []).filter(has)
+  if (areas.length) data.areaServed = areas.map((a) => ({ '@type': 'Place', name: a }))
+
+  const hours = (k.openingHours || []).filter(has)
+  if (hours.length) data.openingHours = hours
+
+  const sameAs = (k.sameAs || []).filter(has)
+  if (sameAs.length) data.sameAs = sameAs
+
+  const services = (c.services?.items || []).filter((it) => has(it.title))
+  if (services.length)
+    data.hasOfferCatalog = {
+      '@type': 'OfferCatalog',
+      name: 'Flooring services',
+      itemListElement: services.map((it) => ({
+        '@type': 'Offer',
+        itemOffered: { '@type': 'Service', name: String(it.title).replace(/[*_]/g, '') },
+      })),
+    }
+
+  return `<script type="application/ld+json">${JSON.stringify(data, null, 2).replace(/</g, '\\u003c')}</script>`
+}
+
+/** description + canonical + Open Graph + Twitter, per page. */
+export function headMeta(c, { path = '/', title, description } = {}) {
+  const url = (c.brand?.url || SITE_URL) + path
+  const t = title || c.meta?.ogTitle || c.meta?.title || brandName(c)
+  const d = description || c.meta?.ogDescription || c.meta?.description || ''
+  const img = has(c.hero?.image) ? (c.brand?.url || SITE_URL) + c.hero.image : ''
+  return `<meta name="description" content="${esc(d)}" />
+    <link rel="canonical" href="${esc(url)}" />
+    <meta property="og:type" content="website" />
+    <meta property="og:site_name" content="${esc(brandName(c))}" />
+    <meta property="og:title" content="${esc(t)}" />
+    <meta property="og:description" content="${esc(d)}" />
+    <meta property="og:url" content="${esc(url)}" />
+    ${img ? `<meta property="og:image" content="${esc(img)}" />` : ''}
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:title" content="${esc(t)}" />
+    <meta name="twitter:description" content="${esc(d)}" />
+    ${img ? `<meta name="twitter:image" content="${esc(img)}" />` : ''}
+    ${jsonLd(c)}`
 }
 
 /* ---------- brand ---------- */
@@ -745,6 +831,12 @@ export const gen2 = {
   'commercial.meta.title': (c) => esc(c.commercial?.metaTitle || `Commercial Services — ${brandName(c)}`),
   'commercial.meta.description': (c) => esc(c.commercial?.metaDescription || c.commercial?.subcopy || ''),
   commercialPage: (c) => renderCommercialPage(c),
+  headMetaCommercial: (c) =>
+    headMeta(c, {
+      path: '/commercial/',
+      title: c.commercial?.metaTitle || `Commercial Services — ${brandName(c)}`,
+      description: c.commercial?.metaDescription || c.commercial?.subcopy || '',
+    }),
 }
 Object.assign(gen, gen2)
 
