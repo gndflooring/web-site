@@ -21,6 +21,10 @@
         "label": "Floors installed"
       },
       {
+        "label": "Renovations",
+        "value": "100+"
+      },
+      {
         "value": "100%",
         "label": "Satisfaction focus"
       }
@@ -63,8 +67,14 @@
         ],
         "images": [
           {
-            "src": "/images/service-vinyl.svg",
-            "alt": "Laminate and luxury vinyl placeholder",
+            "src": "/uploads/1785610235672-img-0928.jpg",
+            "alt": "",
+            "caption": "",
+            "blur": 0
+          },
+          {
+            "src": "/uploads/1785610192781-img-0927.jpg",
+            "alt": "",
             "caption": "",
             "blur": 0
           }
@@ -101,6 +111,31 @@
             "blur": 0
           }
         ]
+      },
+      {
+        "title": "Concrete",
+        "desc": "G&D Flooring LLC delivers quality concrete work built to last. From driveways and sidewalks to patios and slabs, we handle removal, preparation, and professional installation.\n",
+        "bullets": [],
+        "images": [
+          {
+            "src": "/uploads/1785610534626-img-1015.jpg",
+            "alt": "",
+            "caption": "Concrete *Driveway*{blue}",
+            "blur": 0
+          },
+          {
+            "src": "/uploads/1785610743558-img-0103.jpg",
+            "alt": "",
+            "caption": "New Build Driveway",
+            "blur": 0
+          },
+          {
+            "src": "/uploads/1785610775262-img-6786.jpg",
+            "alt": "",
+            "caption": "Basement *Foundations*{sand}",
+            "blur": 0
+          }
+        ]
       }
     ]
   },
@@ -119,16 +154,16 @@
         "body": "Seasoned installers with an obsessive eye for level, seams, and finish."
       },
       {
-        "title": "Licensed & Insured",
-        "body": "Fully covered, code-compliant work backed by a written warranty."
+        "title": "Spotless Cleanup",
+        "body": "We leave your home cleaner than we found it — guaranteed."
       },
       {
         "title": "On-Time, On-Budget",
         "body": "Clear timelines and transparent quotes — what we promise is what you pay."
       },
       {
-        "title": "Spotless Cleanup",
-        "body": "We leave your home cleaner than we found it — guaranteed."
+        "title": "Licensed & Insured",
+        "body": "Fully covered, code-compliant work backed by a written warranty."
       }
     ]
   },
@@ -139,7 +174,7 @@
       {
         "title": "Consultation",
         "desc": "We listen to your vision, measure the space, and talk materials and budget.",
-        "image": "",
+        "image": "/uploads/1785611014496-img-6787.jpg",
         "alt": ""
       },
       {
@@ -170,8 +205,8 @@
       {
         "images": [
           {
-            "src": "/images/gallery-1.svg",
-            "alt": "Project placeholder 1",
+            "src": "/uploads/1785611082899-hero-sample.jpg",
+            "alt": "Hardwood Example",
             "caption": "Hardwood — Living space",
             "blur": 0
           }
@@ -237,7 +272,14 @@
         "quote": "The hardwood floors completely transformed our home. The crew was punctual, tidy, and the finish is flawless.",
         "name": "Placeholder Name",
         "role": "Homeowner",
-        "images": []
+        "images": [
+          {
+            "src": "/uploads/1785611113957-img-0927.jpg",
+            "alt": "",
+            "caption": "",
+            "blur": 0
+          }
+        ]
       },
       {
         "quote": "Our bathroom renovation was on time and on budget. G&D handled everything and the tile work is stunning.",
@@ -254,11 +296,11 @@
     ]
   },
   "ctaBand": {
-    "heading": "Ready to transform your floors?",
+    "heading": "Ready to transform your *home*{teal}?",
     "subcopy": "Book a *free*, no-obligation on-site estimate anywhere in Greater Des Moines. We'll bring the samples and honest advice.",
     "primaryLabel": "Get a Free Quote",
-    "callLabel": "Call (555) 123-4567",
-    "callHref": "tel:+15551234567"
+    "callLabel": "Call (515)-681-4868",
+    "callHref": "tel:+15156814868"
   },
   "contact": {
     "eyebrow": "Get In *Touch*",
