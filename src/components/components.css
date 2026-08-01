@@ -181,10 +181,18 @@ html.lb-open { overflow: hidden; }
 }
 
 /* Title and caption ride on the picture itself — nothing to hunt for.
-   The layer never swallows a wheel/drag event meant for the image. */
+   The layer never swallows a wheel/drag event meant for the image.
+   Its box is the picture's, not the stage's: a landscape image in a portrait
+   window is centred with empty bands above and below, and an overlay pinned
+   to the stage would leave the title floating on the backdrop. The vars are
+   set from the image's rendered size (see fitOverlay in lightbox.js) and fall
+   back to the whole stage before the first measurement. */
 .lb-overlay {
   position: absolute;
-  inset: 0;
+  left: var(--lb-x, 0px);
+  top: var(--lb-y, 0px);
+  width: var(--lb-w, 100%);
+  height: var(--lb-h, 100%);
   z-index: 2;
   display: flex;
   flex-direction: column;
@@ -198,7 +206,7 @@ html.lb-open { overflow: hidden; }
   display: inline-flex;
   align-items: baseline;
   gap: 0.75rem;
-  max-width: min(80vw, 46rem);
+  max-width: min(100%, 46rem);
   padding: 0.55rem 1.15rem;
   border-radius: 9999px;
   font-family: var(--font-display, Georgia, serif);
@@ -224,7 +232,7 @@ html.lb-open { overflow: hidden; }
 }
 
 .lb-caption {
-  max-width: min(80vw, 46rem);
+  max-width: min(100%, 46rem);
   margin: 0;
   padding: 0.6rem 1.25rem;
   border-radius: 1rem;

@@ -95,6 +95,26 @@ function zoomAt(nextScale, clientX, clientY) {
   applyTransform()
 }
 
+/**
+ * Put the overlay on the picture rather than on the stage.
+ *
+ * The image is centred in a stage that fills the window, so anything shorter
+ * than the stage leaves empty bands above and below — and a title pinned to
+ * the stage floats on the backdrop instead of sitting on the photo. offset*
+ * is deliberate over getBoundingClientRect: it ignores the zoom transform, so
+ * the overlay stays on the picture's resting box while it is scaled.
+ */
+function fitOverlay() {
+  const img = $('.lb-image')
+  const overlay = $('.lb-overlay')
+  if (!img || !overlay || !img.offsetWidth || !img.offsetHeight) return
+  const s = overlay.style
+  s.setProperty('--lb-x', `${img.offsetLeft}px`)
+  s.setProperty('--lb-y', `${img.offsetTop}px`)
+  s.setProperty('--lb-w', `${img.offsetWidth}px`)
+  s.setProperty('--lb-h', `${img.offsetHeight}px`)
+}
+
 function paint() {
   const im = state.images[state.index]
   if (!im) return
@@ -125,6 +145,9 @@ function paint() {
   const active = $('.lb-thumb.is-active')
   if (active) active.scrollIntoView({ block: 'nearest', inline: 'center' })
   resetView()
+  // The new image's box is only known once it has decoded; measure now for the
+  // cached case (no load event fires) and again on load for the rest.
+  fitOverlay()
 }
 
 function step(delta) {
@@ -134,6 +157,14 @@ function step(delta) {
 }
 
 function wire(root) {
+  // Both are needed: `load` for a picture that arrives over the wire, resize
+  // for a window that changes shape while the viewer is open (or a phone that
+  // is rotated), since the contained image resizes with it.
+  root.querySelector('.lb-image').addEventListener('load', fitOverlay)
+  window.addEventListener('resize', () => {
+    if (!root.hasAttribute('hidden')) fitOverlay()
+  })
+
   root.addEventListener('click', (e) => {
     if (e.target.closest('[data-lb-close]')) return closeLightbox()
     if (e.target.closest('[data-lb-reset]')) return resetView()
