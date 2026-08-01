@@ -299,8 +299,7 @@
     "heading": "Ready to transform your *home*{teal}?",
     "subcopy": "Book a *free*, no-obligation on-site estimate anywhere in Greater Des Moines. We'll bring the samples and honest advice.",
     "primaryLabel": "Get a Free Quote",
-    "callLabel": "Call (515)-681-4868",
-    "callHref": "tel:+15156814868"
+    "callPrefix": "Call"
   },
   "contact": {
     "eyebrow": "Get In *Touch*",
@@ -329,11 +328,11 @@
       "Central Iowa"
     ],
     "priceRange": "$$",
-    "sameAs": []
+    "sameAs": [],
+    "license": "License #PLACEHOLDER-000000"
   },
   "footer": {
     "blurb": "Premium flooring & renovation craftsmanship for Greater Des Moines and Central Iowa. Hardwood, vinyl, tile & *bathroom transformations* — done right.",
-    "license": "License #PLACEHOLDER-000000",
     "note": ""
   },
   "brand": {
