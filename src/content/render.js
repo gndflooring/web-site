@@ -142,6 +142,25 @@ const featureIcons = [
 const ri = (i) => (i ? ` style="--reveal-i: ${i}"` : '')
 
 /**
+ * A row of cards, or a rail once there are more than fit one.
+ *
+ * Wrapping to a second row that holds one or two cards reads as an accident
+ * rather than a layout, so past `perRow` the cards become a scrollable rail:
+ * the next card stays half-visible, which is the signal that there is more,
+ * and arrows plus a progress bar are added by src/components/rail.js. Grid
+ * classes are passed in whole because Tailwind scans this file for them.
+ */
+function cardRow(cards, { perRow, gridClass, label = 'items' }) {
+  if (cards.length <= perRow) return `<div class="${gridClass}">${cards.join('')}</div>`
+  return `<div class="rail mt-16" data-rail role="group" aria-label="${esc(label)}, scrollable">
+    <div class="rail-track" data-rail-track>${cards.map((card) => `<div class="rail-item">${card}</div>`).join('')}</div>
+    <button class="rail-nav rail-nav--prev" type="button" data-rail-step="-1" aria-label="Previous ${esc(label)}">${icons.prev}</button>
+    <button class="rail-nav rail-nav--next" type="button" data-rail-step="1" aria-label="More ${esc(label)}">${icons.next}</button>
+    <div class="rail-progress" data-rail-bar aria-hidden="true"><span></span></div>
+  </div>`
+}
+
+/**
  * Carousel markup. Behaviour is attached by src/components/carousel.js; the
  * whole thing is a lightbox trigger, and captions travel with each image as
  * raw markdown in data-caption so the lightbox can render them in its own
@@ -341,9 +360,8 @@ export const gen = {
         </div>
         ${when(
           items.length > 0,
-          `<div class="mt-16 grid gap-7 sm:grid-cols-2 lg:grid-cols-4">
-          ${items
-            .map((it, i) => {
+          cardRow(
+            items.map((it, i) => {
               const imgs = imageList(it)
               const bullets = (it.bullets || []).filter(has)
               return `<article class="card-lift reveal group overflow-hidden rounded-3xl bg-white shadow-soft ring-1 ring-ink/5"${ri(i)}>
@@ -363,9 +381,9 @@ export const gen = {
                 )}
               </div>
             </article>`
-            })
-            .join('')}
-        </div>`
+            }),
+            { perRow: 4, gridClass: 'mt-16 grid gap-7 sm:grid-cols-2 lg:grid-cols-4', label: 'services' }
+          )
         )}
       </div>
     </section>`
@@ -557,6 +575,11 @@ export const gen = {
   sectionCtaBand: (c) => {
     if (!sectionPresent.ctaBand(c)) return ''
     const b = c.ctaBand || {}
+    // The number is never typed twice: this button reads it from `contact`,
+    // the same place the contact block, the footer and the SEO record read it,
+    // so changing the phone there changes it everywhere.
+    const k = c.contact || {}
+    const callText = `${b.callPrefix || 'Call'} ${k.phone || ''}`.trim()
     return `<section class="container-x">
       <div class="reveal relative overflow-hidden rounded-[2.5rem] bg-brand-700 px-8 py-16 text-center text-white shadow-lift sm:px-16 sm:py-20">
         <div class="absolute -right-16 -top-16 h-64 w-64 rounded-full bg-brand-600/60"></div>
@@ -568,10 +591,10 @@ export const gen = {
           )}
           ${when(has(b.subcopy), `<p class="mx-auto mt-5 max-w-xl text-white/75">${parseMd(b.subcopy, 'dark')}</p>`)}
           ${when(
-            has(b.primaryLabel) || has(b.callLabel),
+            has(b.primaryLabel) || has(k.phone),
             `<div class="mt-9 flex flex-wrap justify-center gap-4">
             ${contactCta(c, when(has(b.primaryLabel), `<a href="#contact" class="btn-gold">${parseMd(b.primaryLabel, 'gold')}</a>`))}
-            ${when(has(b.callLabel), `<a href="${esc(b.callHref)}" class="btn-ghost">${parseMd(b.callLabel, 'dark')}</a>`)}
+            ${when(has(k.phone), `<a href="${esc(k.phoneHref || `tel:${String(k.phone).replace(/[^\d+]/g, '')}`)}" class="btn-ghost">${esc(callText)}</a>`)}
           </div>`
           )}
         </div>
@@ -652,7 +675,9 @@ export const gen = {
       when(has(k.phone), `<li><a href="${esc(k.phoneHref)}" class="hover:text-white">${parseMd(k.phone, 'dark')}</a></li>`),
       when(has(k.email), `<li><a href="mailto:${esc(k.email)}" class="hover:text-white">${parseMd(k.email, 'dark')}</a></li>`),
       when(has(k.hours), `<li>${parseMd(k.hours, 'dark')}</li>`),
-      when(has(f.license), `<li>${parseMd(f.license, 'dark')}</li>`),
+      // The licence lives with the other business details now; content saved
+      // before that move still keeps it under `footer`.
+      when(has(k.license) || has(f.license), `<li>${parseMd(has(k.license) ? k.license : f.license, 'dark')}</li>`),
     ].join('')
     return `<div>
         <div class="flex items-center gap-3">
@@ -957,9 +982,8 @@ export function renderCommercialPage(c, opts = {}) {
           )}
           ${when(
             items.length > 0,
-            `<div class="mt-16 grid gap-7 sm:grid-cols-2 lg:grid-cols-3">
-            ${items
-              .map((it, i) => {
+            cardRow(
+              items.map((it, i) => {
                 const imgs = imageList(it)
                 const bullets = (it.bullets || []).filter(has)
                 return `<article class="card-lift reveal group overflow-hidden rounded-3xl bg-white shadow-soft ring-1 ring-ink/5"${ri(i)}>
@@ -979,9 +1003,9 @@ export function renderCommercialPage(c, opts = {}) {
                   )}
                 </div>
               </article>`
-              })
-              .join('')}
-          </div>`
+              }),
+              { perRow: 3, gridClass: 'mt-16 grid gap-7 sm:grid-cols-2 lg:grid-cols-3', label: 'services' }
+            )
           )}
         </div>
       </section>`

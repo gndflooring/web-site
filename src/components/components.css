@@ -439,3 +439,108 @@ html.lb-open { overflow: hidden; }
   .wc.is-live .wc-item { transition: none; }
   .wc--type .wc-item.is-in::after { animation: none; }
 }
+
+/* ---------------- Card rail ---------------- */
+/* More cards than fit a row: a second row of one or two cards reads as an
+   accident, so they become a rail instead. Native scrolling does the work —
+   the JS in src/components/rail.js only adds the arrows and the progress bar.
+   The next card is deliberately half-visible: the peek is the clearest signal
+   that there is more, and it survives with no JS and no hover. */
+.rail { position: relative; }
+
+.rail-track {
+  display: grid;
+  grid-auto-flow: column;
+  grid-auto-columns: clamp(15.5rem, 78vw, 19.5rem);
+  gap: 1.75rem;
+  overflow-x: auto;
+  overscroll-behavior-x: contain;
+  scroll-snap-type: x proximity;
+  /* Room for the cards' lift-on-hover shadow, which would otherwise be clipped
+     by the scroll container. */
+  padding: 0.5rem 0.5rem 1.25rem;
+  margin: -0.5rem -0.5rem -1.25rem;
+  scrollbar-width: none;
+}
+.rail-track::-webkit-scrollbar { display: none; }
+.rail-item {
+  scroll-snap-align: start;
+  min-width: 0;
+  display: flex;
+}
+.rail-item > * { width: 100%; }
+
+/* Edge fades: only on the side that actually has more. */
+.rail::before,
+.rail::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  bottom: 2.25rem;
+  width: 3.5rem;
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity 0.25s ease;
+  z-index: 2;
+}
+.rail::before {
+  left: -0.5rem;
+  background: linear-gradient(to right, var(--rail-fade, #fbf7f0), transparent);
+}
+.rail::after {
+  right: -0.5rem;
+  background: linear-gradient(to left, var(--rail-fade, #fbf7f0), transparent);
+}
+.rail.can-prev::before,
+.rail.can-next::after { opacity: 1; }
+
+.rail-nav {
+  position: absolute;
+  top: calc(50% - 2.25rem);
+  z-index: 3;
+  display: none;
+  place-items: center;
+  width: 2.75rem;
+  height: 2.75rem;
+  border-radius: 9999px;
+  color: var(--color-ink, #15212b);
+  background: #fff;
+  border: 1px solid rgb(21 33 43 / 0.08);
+  box-shadow: 0 10px 30px -8px rgb(21 33 43 / 0.35);
+  cursor: pointer;
+  transition: opacity 0.25s ease, transform 0.25s ease;
+}
+.rail.is-scrollable .rail-nav { display: grid; }
+.rail-nav--prev { left: -0.75rem; }
+.rail-nav--next { right: -0.75rem; }
+.rail-nav:hover { transform: scale(1.06); }
+.rail:not(.can-prev) .rail-nav--prev,
+.rail:not(.can-next) .rail-nav--next { opacity: 0; pointer-events: none; }
+
+/* How much is left, at a glance — the part a peek alone cannot tell you. */
+.rail-progress {
+  display: none;
+  height: 3px;
+  margin-top: 1.5rem;
+  border-radius: 9999px;
+  background: rgb(21 33 43 / 0.08);
+  overflow: hidden;
+}
+.rail.is-scrollable .rail-progress { display: block; }
+.rail-progress span {
+  display: block;
+  height: 100%;
+  width: 34%;
+  border-radius: inherit;
+  background: var(--color-brand-600, #2f7cb5);
+  transform: translateX(calc(var(--rail-p, 0) * (100cqw - 100%)));
+  transition: transform 0.12s linear;
+}
+.rail-progress { container-type: inline-size; }
+
+@media (min-width: 1024px) {
+  .rail-track { scroll-padding-left: 0.5rem; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .rail::before, .rail::after, .rail-nav, .rail-progress span { transition: none; }
+}

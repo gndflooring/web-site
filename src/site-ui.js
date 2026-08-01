@@ -4,6 +4,7 @@
 import { initCarousels } from './components/carousel.js'
 import { initLightbox } from './components/lightbox.js'
 import { initWordCycles } from './components/word-cycle.js'
+import { initRails } from './components/rail.js'
 
 /** Wire a rendered page. Safe to call again after re-rendering. */
 export function initSiteUi(root = document) {
@@ -95,4 +96,7 @@ export function initSiteUi(root = document) {
 
   /* Rotating words from the <A, B, C> markdown rule */
   initWordCycles(root)
+
+  /* Card rails — arrows and progress for rows that overflow */
+  initRails(root)
 }

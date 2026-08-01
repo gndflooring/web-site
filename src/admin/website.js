@@ -14,6 +14,7 @@ import { renderPage, renderCommercialPage, parseMd, esc, has } from '../content/
 import { initCarousels } from '../components/carousel.js'
 import { initLightbox } from '../components/lightbox.js'
 import { initWordCycles } from '../components/word-cycle.js'
+import { initRails } from '../components/rail.js'
 import {
   ghConfigured,
   ghConnected,
@@ -146,8 +147,7 @@ const HOME_SCHEMA = [
     { k: 'heading', t: 'text', label: 'Heading', md: true },
     { k: 'subcopy', t: 'textarea', label: 'Sub-copy', md: true },
     { k: 'primaryLabel', t: 'text', label: 'Primary button', md: true },
-    { k: 'callLabel', t: 'text', label: 'Call button label', md: true },
-    { k: 'callHref', t: 'text', label: 'Call link (tel:)' },
+    { k: 'callPrefix', t: 'text', label: 'Call button wording — the number is added from Contact below' },
   ] },
   // One home for the business details: the contact block, the footer and the
   // search-engine record are all generated from these.
@@ -161,6 +161,7 @@ const HOME_SCHEMA = [
     { k: 'hours', t: 'text', label: 'Hours (as shown)', md: true },
     { k: 'openingHours', t: 'list', of: 'string', label: 'Hours for search engines (Mo-Fr 08:00-18:00)' },
     { k: 'serviceArea', t: 'text', label: 'Service area (as shown)', md: true },
+    { k: 'license', t: 'text', label: 'License line — shown in the footer', md: true },
     { k: 'areaServed', t: 'list', of: 'string', label: 'Towns served — used in the SEO record' },
     { k: 'addressStreet', t: 'text', label: 'Street address (leave blank if you have no storefront)' },
     { k: 'addressLocality', t: 'text', label: 'City' },
@@ -172,7 +173,6 @@ const HOME_SCHEMA = [
   ] },
   { key: 'footer', label: 'Footer', fields: [
     { k: 'blurb', t: 'textarea', label: 'Blurb', md: true },
-    { k: 'license', t: 'text', label: 'License line', md: true },
     { k: 'note', t: 'textarea', label: 'Bottom note', md: true },
   ] },
 ]
@@ -323,6 +323,25 @@ export function migrate(c) {
     delete item.image
     delete item.alt
     if (keepCaption) delete item.caption
+  }
+  // The licence is a business detail and is shown among them in the footer, so
+  // it is edited among them too. Anything saved before that keeps working.
+  if (c.footer && has(c.footer.license)) {
+    c.contact = c.contact || {}
+    if (!has(c.contact.license)) c.contact.license = c.footer.license
+    delete c.footer.license
+  }
+  // The call button used to carry its own copy of the phone number, which went
+  // stale the moment the real one was entered in Contact. Only the wording in
+  // front of the number survives; the number itself now comes from Contact.
+  const b = c.ctaBand
+  if (b && (b.callLabel != null || b.callHref != null)) {
+    if (!has(b.callPrefix))
+      b.callPrefix = String(b.callLabel || 'Call')
+        .replace(/[+(]?[\d][\d\s().-]{5,}/g, '') // drop the number it had baked in
+        .trim() || 'Call'
+    delete b.callLabel
+    delete b.callHref
   }
   ;(c.services?.items || []).forEach((it) => toImages(it, false))
   ;(c.gallery?.items || []).forEach((it) => toImages(it, true))
@@ -561,6 +580,7 @@ function paintPreview() {
   initCarousels(prev)
   initLightbox()
   initWordCycles(prev)
+  initRails(prev)
   const hdr = prev.querySelector('.site-header')
   if (hdr) {
     // On the site the header is fixed and overlays the hero; sticky inside a
