@@ -211,11 +211,11 @@ export async function ghLoadSiteJson() {
  * Atomic commit to content-draft (or main if draft unavailable): site.json (utf-8) + any images (base64).
  * images: [{ path, base64 }]
  */
-export async function ghCommitDraft(siteObj, images, message) {
+export async function ghCommitDraft(siteObj, images, message, { parentSha } = {}) {
   const hasDraft = await ghEnsureDraft()
   const targetBranch = hasDraft ? DRAFT : BASE
   try {
-    return await commitViaGitData(targetBranch, siteObj, images, message)
+    return await commitViaGitData(targetBranch, siteObj, images, message, 0, parentSha)
   } catch (e) {
     if (!isDenied(e)) throw e
     // The app cannot use the Git Data API. The Contents API is a separate
@@ -238,9 +238,12 @@ export async function ghCommitDraft(siteObj, images, message) {
  * the commit — a deploy, another tab, a push from a laptop. That is exactly
  * the case worth retrying: re-read the head and rebuild on top of it.
  */
-async function commitViaGitData(targetBranch, siteObj, images, message, attempt = 0) {
-  const ref = await ghApi(`/repos/${REPO}/git/ref/heads/${targetBranch}`)
-  const headSha = ref.object.sha
+async function commitViaGitData(targetBranch, siteObj, images, message, attempt = 0, parentSha = '') {
+  // A caller that just wrote the ref (the draft sync) hands us the sha it
+  // wrote: reads right after a forced update can still return the old value,
+  // and building on that stale parent is exactly what makes the ref update
+  // "not a fast forward".
+  const headSha = parentSha || (await ghApi(`/repos/${REPO}/git/ref/heads/${targetBranch}`)).object.sha
   const headCommit = await ghApi(`/repos/${REPO}/git/commits/${headSha}`)
 
   const tree = []
@@ -276,10 +279,13 @@ async function commitViaGitData(targetBranch, siteObj, images, message, attempt 
       body: JSON.stringify({ sha: commit.sha, force: false }),
     })
   } catch (e) {
-    if (!isStale(e) || attempt >= 2) throw e
-    // Someone moved the branch under us; rebuild on the new head.
+    if (!isStale(e) || attempt >= 3) throw e
+    // The branch moved, or our read of it was stale. Wait for the ref to
+    // settle — an immediate re-read tends to return the same stale sha —
+    // then rebuild on whatever is actually there.
     console.warn(`${targetBranch} moved while committing — retrying (${attempt + 1})`)
-    return commitViaGitData(targetBranch, siteObj, images, message, attempt + 1)
+    await new Promise((r) => setTimeout(r, 600 * (attempt + 1)))
+    return commitViaGitData(targetBranch, siteObj, images, message, attempt + 1, '')
   }
   return commit.sha
 }
@@ -389,7 +395,7 @@ export async function ghSyncDraft({ siteObj } = {}) {
           method: 'PATCH',
           body: JSON.stringify({ sha: main.object.sha, force: false }),
         })
-        return { action: 'fast-forward', ahead, behind }
+        return { action: 'fast-forward', ahead, behind, sha: main.object.sha }
       } catch (e) {
         // The compare was already out of date; fall through and replay.
         if (!isStale(e)) throw e
@@ -415,7 +421,7 @@ export async function ghSyncDraft({ siteObj } = {}) {
         method: 'PATCH',
         body: JSON.stringify({ sha: main.object.sha, force: true }),
       })
-      return { action: 'fast-forward', ahead, behind }
+      return { action: 'fast-forward', ahead, behind, sha: main.object.sha }
     }
 
     const newTree = await ghApi(`/repos/${REPO}/git/trees`, {
@@ -434,7 +440,7 @@ export async function ghSyncDraft({ siteObj } = {}) {
       method: 'PATCH',
       body: JSON.stringify({ sha: commit.sha, force: true }),
     })
-    return { action: 'rebased', ahead, behind }
+    return { action: 'rebased', ahead, behind, sha: commit.sha }
   } catch (e) {
     console.warn('Draft sync unavailable:', e.message)
     return { action: 'failed', ahead, behind, error: e.message }

@@ -1207,17 +1207,21 @@ async function save(publish) {
   sBtn.disabled = pBtn.disabled = true
   btn.textContent = publish ? 'Publishing…' : 'Saving…'
   try {
+    let parentSha = ''
     if (publish) {
       // Pull first: replay the draft on top of live so the merge that follows
       // is a fast-forward rather than a conflict.
       setPhase('syncing')
       const sync = await ghSyncDraft({ siteObj: content })
+      // Commit on the sha the sync just wrote — re-reading the ref this soon
+      // can still hand back the previous one.
+      parentSha = sync.sha || ''
       if (sync.action === 'rebased') toast(`Draft replayed on live (was ${sync.behind} behind)`)
       else if (sync.action === 'fast-forward') toast('Draft brought up to date with live')
       else if (sync.action === 'failed') toast('Could not sync with live — publishing anyway')
     }
     setPhase('saving')
-    await ghCommitDraft(content, pending, publish ? 'Site content (pre-publish)' : 'Update site content')
+    await ghCommitDraft(content, pending, publish ? 'Site content (pre-publish)' : 'Update site content', { parentSha })
     pending = []
     if (!publish) {
       btn.textContent = 'Saved ✓'
