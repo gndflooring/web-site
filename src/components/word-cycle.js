@@ -42,6 +42,10 @@ function start(el) {
   const anim = el.dataset.anim || 'slide'
   const hold = Math.max(600, Number(el.dataset.hold) || 2600)
   const typing = anim === 'type'
+  // A steady rotator never gets an explicit width: every option is in the grid
+  // cell, so the box simply stays as wide as the longest one and the line
+  // breaks the same way whichever word is showing.
+  const fixed = typing || el.hasAttribute('data-steady')
   el.classList.add('is-live', `wc--${anim}`)
 
   let i = 0
@@ -50,9 +54,9 @@ function start(el) {
   running.add(inst)
 
   // The typewriter's width follows the text it is typing (the other options are
-  // display:none), so only the cross-fading styles need a measured box.
+  // display:none), so only a hugging cross-fade needs a measured box.
   const sizeTo = (node) => {
-    if (typing) return
+    if (fixed) return
     const w = node.getBoundingClientRect().width
     if (w) el.style.width = `${w}px`
   }

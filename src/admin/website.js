@@ -723,6 +723,7 @@ const MD_RULES = [
   { syn: '<Offices, Retail, Hospitality | fade>', what: 'Fade instead', note: 'The quiet one: no movement, just a dissolve.' },
   { syn: '<Ames, Ankeny, Altoona | flip>', what: 'Flip instead', note: 'A card turning over — the showiest of the four.' },
   { syn: '<hardwood, vinyl, tile | type 3s>', what: 'Type instead', note: 'Erased and retyped, caret and all. Add seconds to set how long each word stays — 2.6s if you leave it out.' },
+  { syn: '<Ames, Ankeny, West Des Moines | steady>', what: 'Keep the line still', note: 'Holds room for the longest option so the words around it never move. Worth adding whenever the options differ a lot in length — otherwise a long one can push the rest of the sentence onto another line.' },
   { syn: '*<Des Moines, Urbandale, Ames>*', what: 'Both at once', note: 'A rotation in the accent colour — what the commercial headline uses.' },
 ]
 

@@ -33,11 +33,17 @@ function wordCycle(body) {
   const anim = CYCLE_ANIMS.find((a) => new RegExp(`\\b${a}\\b`).test(mod)) || 'slide'
   const secs = Number((mod.match(/(\d+(?:\.\d+)?)\s*s/) || [])[1])
   const hold = Math.round(Math.min(20, Math.max(0.6, secs || 2.6)) * 1000)
+  // "steady" holds the box at the width of the longest option instead of
+  // letting it hug each word. The sentence stops closing up around the
+  // rotation, and in exchange nothing after it can ever be re-wrapped.
+  const steady = /\bsteady\b/.test(mod)
 
   const items = opts
     .map((o, i) => `<span class="wc-item${i ? '' : ' is-in'}"${i ? ' aria-hidden="true"' : ''}>${o}</span>`)
     .join('')
-  return `<span class="wc" data-word-cycle data-anim="${anim}" data-hold="${hold}">${items}</span>`
+  return `<span class="wc" data-word-cycle data-anim="${anim}" data-hold="${hold}"${
+    steady ? ' data-steady' : ''
+  }>${items}</span>`
 }
 
 // Contextual markdown. The accent colour depends on what the text sits on, so
