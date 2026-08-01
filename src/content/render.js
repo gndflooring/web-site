@@ -46,8 +46,24 @@ function wordCycle(body) {
   }>${items}</span>`
 }
 
+/* Named accent colours for *text*{colour}. Each one still adapts to what it
+   sits on — a teal that reads on the ink hero would disappear on cream — so a
+   name picks the hue and the background picks the shade. Written out as whole
+   class names on purpose: Tailwind scans this file for them. */
+const ACCENTS = {
+  teal: { dark: 'text-teal-300', light: 'text-teal-700' },
+  gold: { dark: 'text-sand-300', light: 'text-sand-600' },
+  // brand-600 on light is the eyebrow's own blue, so *word*{blue} in an eyebrow
+  // reads as one colour rather than nearly-one.
+  blue: { dark: 'text-brand-300', light: 'text-brand-600' },
+  white: { dark: 'text-white', light: 'text-white' },
+  ink: { dark: 'text-ink', light: 'text-ink' },
+  muted: { dark: 'text-white/70', light: 'text-muted' },
+}
+
 // Contextual markdown. The accent colour depends on what the text sits on, so
-// the same *word* reads as gold on ink, teal on sand, brand blue on cream.
+// the same *word* reads as gold on ink, teal on sand, brand blue on cream —
+// unless the copy names a colour: *word*{teal}.
 export function parseMd(s, bgContext = 'light') {
   if (!has(s)) return ''
   let text = esc(s)
@@ -64,7 +80,13 @@ export function parseMd(s, bgContext = 'light') {
   // **bold** first: the single-* rule would otherwise eat the inner asterisks
   // and leave the outer pair as literal text.
   text = text.replace(/\*\*([^*]+)\*\*/g, `<strong class="font-bold">$1</strong>`)
-  text = text.replace(/\*([^*]+)\*/g, `<span class="italic ${hl}">$1</span>`)
+  // *word* takes the accent for its background; *word*{teal} names one instead,
+  // which is how two accents can sit in the same sentence without clashing.
+  text = text.replace(/\*([^*]+)\*(?:\{([a-z]+)\})?/g, (m, inner, name) => {
+    const named = name && ACCENTS[name]
+    const cls = named ? `${named[bgContext === 'dark' ? 'dark' : 'light']} font-semibold` : hl
+    return `<span class="italic ${cls}">${inner}</span>`
+  })
   text = text.replace(/_([^_]+)_/g, `<em class="italic">$1</em>`)
   text = text.replace(/\[([^\]]+)\]\(([^)]+)\)/g, `<a href="$2" class="underline hover:opacity-80">$1</a>`)
   return text

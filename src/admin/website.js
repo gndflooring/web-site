@@ -716,6 +716,7 @@ function confirmDialog(title, msg, onOk) {
    ============================================================= */
 const MD_RULES = [
   { syn: '*Des Moines*', what: 'Accent word', note: 'Italic, in whichever accent colour suits the background it lands on.' },
+  { syn: '*Des Moines*{teal}', what: '…in a colour you pick', note: 'teal, gold, blue, white, ink or muted. Each still adapts its shade to the background. Use it when one sentence needs two different accents.' },
   { syn: '**twenty years**', what: 'Bold', note: 'Plain emphasis, no colour change.' },
   { syn: '_hand-finished_', what: 'Italic', note: 'Italic only — for a turn of phrase rather than a keyword.' },
   { syn: '[See our work](/commercial/)', what: 'Link', note: 'Use /page for somewhere on this site, https://… for anywhere else.' },

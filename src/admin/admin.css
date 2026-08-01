@@ -22,6 +22,16 @@
   --color-sand-500: #ab7f44;
   --color-sand-600: #8a6432;
 
+  /* Teal — second accent, kept in step with src/style.css so the preview
+     pane and the site agree. Deeper and bluer than Tailwind's default teal. */
+  --color-teal-200: #a5d5d0;
+  --color-teal-300: #4fada4;
+  --color-teal-400: #3d968f;
+  --color-teal-500: #2f7f79;
+  --color-teal-600: #276a65;
+  --color-teal-700: #205853;
+  --color-teal-900: #143733;
+
   /* Neutrals (admin + site preview) */
   --color-cream: #fbf7f0;
   --color-cream-200: #f4ecdf;

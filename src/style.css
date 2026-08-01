@@ -27,6 +27,18 @@
   --color-sand-600: #8a6432;
 
   /* Neutrals */
+  /* Teal — the second accent, for copy that needs to stand apart from the
+     sand gold. Deliberately not Tailwind's teal: that ramp is green enough to
+     read as mint beside the gold, which cheapens a headline. This one is
+     deeper and a touch blue, so it sits with the brand blue. */
+  --color-teal-200: #a5d5d0;
+  --color-teal-300: #4fada4;
+  --color-teal-400: #3d968f;
+  --color-teal-500: #2f7f79;
+  --color-teal-600: #276a65;
+  --color-teal-700: #205853;
+  --color-teal-900: #143733;
+
   --color-cream: #fbf7f0;
   --color-cream-200: #f4ecdf;
   --color-ink: #15212b;
